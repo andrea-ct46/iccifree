@@ -1,1 +1,60 @@
- 
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ICCI FREE - Completa il tuo profilo</title>
+    <link rel="stylesheet" href="css/auth.css">
+    <style>
+        .auth-container { max-width: 550px; }
+        .info-text { color: #aaa; text-align: center; margin-bottom: 24px; }
+        .avatar-upload { text-align: center; margin-bottom: 20px; }
+        .avatar-preview { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; background: #000; border: 3px solid var(--gray); margin-bottom: 15px; cursor: pointer; }
+        #avatarInput { display: none; }
+    </style>
+</head>
+<body>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class.spinner"></div>
+    </div>
+
+    <div class="auth-container">
+        <div class="logo">
+            <h1><span class="icci">ICCI</span><span class="free">FREE</span></h1>
+        </div>
+        
+        <p class="info-text">Ultimo passo! Completa il tuo profilo per entrare nella community.</p>
+        <div class="message error-message" id="errorMessage"></div>
+
+        <form id="setupProfileForm">
+            
+            <div class="avatar-upload">
+                <img src="https://placehold.co/120x120/000000/888888?text=Avatar" alt="Avatar Preview" class="avatar-preview" id="avatarPreview" onclick="document.getElementById('avatarInput').click()">
+                <input type="file" id="avatarInput" accept="image/png, image/jpeg, image/gif">
+                <label class="form-label">Tocca l'immagine per caricarne una (Opzionale)</label>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Username *</label>
+                <input type="text" class="form-input" id="username" placeholder="Il tuo username unico" required minlength="3" maxlength="20" pattern="[a-zA-Z0-9_]+">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Data di Nascita *</label>
+                <input type="date" class="form-input" id="dob" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Bio (Opzionale)</label>
+                <textarea class="form-input" id="bio" placeholder="Raccontaci qualcosa di te..." maxlength="150" rows="3" style="resize: vertical;"></textarea>
+            </div>
+            
+            <button type="submit" class="submit-btn">Salva e Entra in ICCI FREE</button>
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase.js"></script>
+    <script src="js/setup-profile.js"></script>
+</body>
+</html> 
