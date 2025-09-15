@@ -1,0 +1,133 @@
+/* Importiamo alcuni stili comuni dalla dashboard per coerenza */
+@import url('/css/dashboard.css');
+
+body {
+    background-color: var(--black);
+    color: var(--white);
+}
+
+/* Contenitore per i messaggi di caricamento o errore */
+.message-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    height: 80vh; /* Occupa gran parte dello schermo */
+}
+
+/* Intestazione del profilo */
+.profile-header {
+    display: flex;
+    gap: 30px;
+    align-items: center;
+    background-color: var(--gray-dark);
+    padding: 40px;
+    border-bottom: 1px solid var(--gray-medium);
+}
+
+.profile-avatar img {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    border: 4px solid var(--green);
+}
+
+.profile-info h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+}
+
+.profile-stats {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 15px;
+    color: var(--gray-light);
+}
+
+.profile-stats strong {
+    color: var(--white);
+    font-weight: bold;
+}
+
+.profile-info p { /* Stile per la biografia */
+    max-width: 600px;
+}
+
+/* Pulsanti di azione (Segui / Modifica Profilo) */
+.profile-actions {
+    margin-top: 20px;
+}
+
+.profile-actions .action-btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: background-color 0.2s;
+    border: none;
+    cursor: pointer;
+}
+
+.profile-actions .follow {
+    background-color: var(--green);
+    color: var(--black);
+}
+
+.profile-actions .edit {
+    background-color: var(--gray-medium);
+    color: var(--white);
+}
+
+/* Contenuto del profilo (Streams, Clips, etc.) */
+.profile-content {
+    padding: 40px;
+}
+
+.content-tabs {
+    border-bottom: 1px solid var(--gray-medium);
+    margin-bottom: 30px;
+}
+
+.content-tabs .tab {
+    background: none;
+    border: none;
+    color: var(--gray-light);
+    padding: 15px 20px;
+    font-size: 1rem;
+    cursor: pointer;
+    position: relative;
+}
+
+.content-tabs .tab.active {
+    color: var(--white);
+}
+
+/* Linea verde sotto il tab attivo */
+.content-tabs .tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background-color: var(--green);
+}
+
+/* Adattabilità per schermi piccoli (mobile) */
+@media (max-width: 768px) {
+    .profile-header {
+        flex-direction: column;
+        text-align: center;
+        padding: 20px;
+    }
+
+    .profile-stats {
+        justify-content: center;
+    }
+    
+    .profile-content {
+        padding: 20px;
+    }
+}
+
