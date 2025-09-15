@@ -1,12 +1,11 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Seleziona gli elementi del form
+    // Gestione dei form (login/signup con email)
     const loginForm = document.getElementById('loginForm');
     const signupForm = document.getElementById('signupForm');
     const errorMessageDiv = document.getElementById('errorMessage');
     const successMessageDiv = document.getElementById('successMessage');
     const loadingOverlay = document.getElementById('loadingOverlay');
 
-    // Funzioni di utilità per l'interfaccia
     const showMessage = (message, type = 'error') => {
         const div = type === 'error' ? errorMessageDiv : successMessageDiv;
         div.textContent = message;
@@ -16,10 +15,9 @@ document.addEventListener('DOMContentLoaded', () => {
         errorMessageDiv.classList.remove('show');
         successMessageDiv.classList.remove('show');
     };
-    const showLoading = () => loadingOverlay.classList.add('show');
-    const hideLoading = () => loadingOverlay.classList.remove('show');
+    const showLoading = () => loadingOverlay?.classList.add('show');
+    const hideLoading = () => loadingOverlay?.classList.remove('show');
 
-    // Gestione del form di LOGIN
     if (loginForm) {
         loginForm.addEventListener('submit', async (event) => {
             event.preventDefault();
@@ -30,8 +28,6 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
                 if (error) throw error;
-                // Dopo il login con email, mandiamo direttamente alla dashboard
-                // perché il profilo dovrebbe essere già completo.
                 window.location.href = '/dashboard.html';
             } catch (error) {
                 showMessage(error.message || 'Email o password non corretti.');
@@ -41,7 +37,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Gestione del form di SIGN UP
     if (signupForm) {
         signupForm.addEventListener('submit', async (event) => {
             event.preventDefault();
@@ -50,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const email = document.getElementById('signupEmail').value;
             const password = document.getElementById('signupPassword').value;
             try {
-                const { data, error } = await supabaseClient.auth.signUp({ email, password });
+                const { error } = await supabaseClient.auth.signUp({ email, password });
                 if (error) throw error;
                 showMessage('Registrazione completata! Controlla la tua email per il link di conferma.', 'success');
                 signupForm.reset();
@@ -90,30 +85,28 @@ function switchTab(tabName) {
 }
 
 async function signInWithProvider(providerName) {
-    const loadingOverlay = document.getElementById('loadingOverlay');
-    if(loadingOverlay) loadingOverlay.classList.add('show');
-
+    document.getElementById('loadingOverlay')?.classList.add('show');
     const { error } = await supabaseClient.auth.signInWithOAuth({
         provider: providerName,
         options: {
-            // --- MODIFICA ARCHITETTURALE ---
+            // MODIFICA ARCHITETTURALE:
             // Reindirizziamo SEMPRE al nostro gatekeeper 'callback.html'.
+            // Questo è il punto centrale della soluzione per mobile.
             redirectTo: window.location.origin + '/callback.html'
         }
     });
     if (error) {
         document.getElementById('errorMessage').textContent = `Errore con ${providerName}: ${error.message}`;
         document.getElementById('errorMessage').classList.add('show');
-        if(loadingOverlay) loadingOverlay.classList.remove('show');
+        document.getElementById('loadingOverlay')?.classList.remove('show');
     }
 }
 
-// Funzioni specifiche per ogni provider
 function signInWithGoogle() { signInWithProvider('google'); }
 function signInWithDiscord() { signInWithProvider('discord'); }
 function showForgotPassword() { alert("Funzionalità di recupero password in arrivo!"); }
 
-// Controllo per utenti già loggati
+// Controllo per utenti già loggati (li manda alla dashboard se tornano su auth.html)
 (async function() {
     const user = await checkUser();
     if (user) {
