@@ -12,6 +12,9 @@
         p { font-size: 18px; }
         button { padding: 10px 20px; font-size: 16px; cursor: pointer; background-color: #00FF00; border: none; font-weight: bold; border-radius: 8px;}
         .loading { font-size: 24px; }
+        .error-box { max-width: 600px; margin: auto; background: #2a2a2a; padding: 20px; border-radius: 8px; border: 1px solid #ff4444; }
+        .error-box p { font-size: 16px; }
+        .error-message { color: #ff4444; font-family: monospace; word-break: break-all; }
     </style>
 </head>
 <body>
@@ -69,8 +72,18 @@
                 }
 
             } catch (error) {
+                // MODIFICA PER IL DEBUG: Mostra l'errore esatto sulla pagina
                 console.error("Errore nel recupero del profilo:", error);
-                document.getElementById('loadingState').innerHTML = `<h1>Errore nel caricamento del profilo.</h1><p>${error.message}</p>`;
+                const loadingDiv = document.getElementById('loadingState');
+                loadingDiv.innerHTML = `
+                    <div class="error-box">
+                        <h1>Errore nel Caricamento</h1>
+                        <p>Il database ha restituito un errore. Questo è quasi sempre causato da una regola di sicurezza (Policy) mancante.</p>
+                        <hr style="margin: 15px 0; border-color: #444;">
+                        <p><strong>Messaggio di Errore:</strong></p>
+                        <p class="error-message">${error.message}</p>
+                    </div>
+                `;
             }
         });
     </script>
