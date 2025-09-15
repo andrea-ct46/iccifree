@@ -10,7 +10,8 @@
     <nav>
         <div class="logo">ICCI FREE</div>
         <div class="nav-links">
-            <a href="#" class="login-btn">Login</a>
+            <!-- MODIFICA 1: Aggiunto un ID per poterlo controllare con JS -->
+            <a href="/auth.html" class="login-btn" id="navLoginBtn">Login</a>
         </div>
     </nav>
 
@@ -20,8 +21,9 @@
             <p>Niente censure stupide. Niente shadow ban. Solo libertà di parola.</p>
             
             <div class="cta-buttons">
-                <button class="primary-btn">Inizia a Streammare</button>
-                <button class="secondary-btn">Guarda Live</button>
+                <!-- MODIFICA 2: Trasformato il bottone in un link con ID -->
+                <a href="/auth.html" class="primary-btn" id="heroCtaBtn">Inizia a Streammare</a>
+                <a href="/dashboard.html" class="secondary-btn">Guarda Live</a>
             </div>
 
             <div class="stats">
@@ -45,6 +47,10 @@
         <p>ICCI FREE © 2025 - Speak Your Mind</p>
     </footer>
 
-    <script src="script.js"></script>
+    <!-- MODIFICA 3: Cambiati gli script per caricare Supabase e la nostra logica -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase.js"></script>
+    <script src="js/app.js"></script>
 </body>
 </html>
+
