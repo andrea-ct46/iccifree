@@ -1,2 +1,1 @@
-# iccifree
-.com
+# iccifree.com
