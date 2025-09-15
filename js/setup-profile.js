@@ -1,4 +1,18 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    // Controlla subito se l'utente è loggato
+    const user = await checkUser();
+    if (!user) {
+        window.location.href = '/auth.html';
+        return;
+    }
+    
+    // Se ha già un profilo completo, vai alla dashboard
+    const profileComplete = await hasCompletedProfile(user.id);
+    if (profileComplete) {
+        window.location.href = '/dashboard.html';
+        return;
+    }
+    
     const setupProfileForm = document.getElementById('setupProfileForm');
     const errorMessageDiv = document.getElementById('errorMessage');
     const loadingOverlay = document.getElementById('loadingOverlay');
@@ -11,20 +25,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const showMessage = (message) => {
         errorMessageDiv.textContent = message;
         errorMessageDiv.classList.add('show');
-        window.scrollTo(0, 0); // Torna in cima per vedere l'errore
+        window.scrollTo(0, 0);
     };
 
     // Gestione anteprima avatar
-    avatarInput.addEventListener('change', (event) => {
-        const file = event.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                avatarPreview.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-    });
+    if (avatarInput) {
+        avatarInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    avatarPreview.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
 
     // Gestione invio form
     if (setupProfileForm) {
@@ -33,17 +49,17 @@ document.addEventListener('DOMContentLoaded', () => {
             showLoading();
 
             try {
-                const user = await checkUser();
-                if (!user) throw new Error("Utente non trovato. Effettua nuovamente il login.");
+                const currentUser = await checkUser();
+                if (!currentUser) throw new Error("Utente non trovato. Effettua nuovamente il login.");
 
                 let avatarUrl = null;
                 const file = avatarInput.files[0];
 
-                // 1. Se c'è un file, caricalo
+                // Se c'è un file, caricalo
                 if (file) {
                     const fileExt = file.name.split('.').pop();
                     const fileName = `${Date.now()}.${fileExt}`;
-                    const filePath = `${user.id}/${fileName}`; // Es: 'uuid-xyz/166...jpg'
+                    const filePath = `${currentUser.id}/${fileName}`;
 
                     const { error: uploadError } = await supabaseClient.storage
                         .from('avatars')
@@ -51,46 +67,54 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     if (uploadError) throw uploadError;
 
-                    // 2. Ottieni l'URL pubblico del file caricato
                     const { data } = supabaseClient.storage
                         .from('avatars')
                         .getPublicUrl(filePath);
                     
-                    if (!data.publicUrl) throw new Error("Impossibile ottenere l'URL pubblico dell'avatar.");
-                    
-                    avatarUrl = data.publicUrl;
+                    if (data.publicUrl) {
+                        avatarUrl = data.publicUrl;
+                    }
                 }
 
-                // 3. Prepara i dati da salvare
+                // Prepara i dati da salvare
                 const updates = {
-                    id: user.id,
+                    id: currentUser.id,
                     username: document.getElementById('username').value,
-                    date_of_birth: document.getElementById('dob').value,
                     bio: document.getElementById('bio').value,
-                    updated_at: new Date(),
-                    // Includi l'avatarUrl solo se è stato caricato
-                    ...(avatarUrl && { avatar_url: avatarUrl }), 
+                    updated_at: new Date().toISOString(),
                 };
 
-                // 4. Salva tutto nella tabella 'profiles'
-                const { error } = await supabaseClient.from('profiles').upsert(updates);
+                // Aggiungi avatar_url solo se esiste
+                if (avatarUrl) {
+                    updates.avatar_url = avatarUrl;
+                }
+
+                // Aggiungi data di nascita se presente
+                const dobElement = document.getElementById('dob');
+                if (dobElement && dobElement.value) {
+                    updates.date_of_birth = dobElement.value;
+                }
+
+                // Salva nella tabella 'profiles'
+                const { error } = await supabaseClient
+                    .from('profiles')
+                    .upsert(updates);
 
                 if (error) {
-                     if (error.message.includes('duplicate key')) {
+                    if (error.message.includes('duplicate key') || error.message.includes('unique')) {
                         throw new Error('Username già in uso. Scegline un altro.');
                     }
                     throw error;
                 }
                 
-                // 5. Reindirizza alla dashboard
+                // Reindirizza alla dashboard
                 window.location.href = '/dashboard.html';
 
             } catch (error) {
-                showMessage(error.message);
+                showMessage(error.message || 'Errore durante il salvataggio del profilo');
             } finally {
                 hideLoading();
             }
         });
     }
 });
-
