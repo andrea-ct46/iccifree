@@ -1,39 +1,33 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // ... (tutto il codice precedente rimane invariato)
+    // Selezioniamo tutti gli elementi importanti dalla pagina HTML
     const loginForm = document.getElementById('loginForm');
     const signupForm = document.getElementById('signupForm');
     const errorMessageDiv = document.getElementById('errorMessage');
     const successMessageDiv = document.getElementById('successMessage');
     const loadingOverlay = document.getElementById('loadingOverlay');
 
-    // ... (funzioni di utilità come showMessage, showLoading, etc. rimangono invariate)
     // --- FUNZIONI DI UTILITÀ PER L'INTERFACCIA ---
-
-    // Mostra un messaggio (errore o successo)
     function showMessage(message, type = 'error') {
-        hideMessage(); // Nasconde eventuali messaggi precedenti
+        hideMessage();
         const div = type === 'error' ? errorMessageDiv : successMessageDiv;
         div.textContent = message;
         div.classList.add('show');
     }
 
-    // Nasconde tutti i messaggi
     function hideMessage() {
         errorMessageDiv.classList.remove('show');
         successMessageDiv.classList.remove('show');
     }
 
-    // Mostra l'indicatore di caricamento
     function showLoading() {
         loadingOverlay.classList.add('show');
     }
 
-    // Nasconde l'indicatore di caricamento
     function hideLoading() {
         loadingOverlay.classList.remove('show');
     }
 
-    // Gestione del form di LOGIN (invariato)
+    // Gestione del form di LOGIN
     if (loginForm) {
         loginForm.addEventListener('submit', async (event) => {
             event.preventDefault();
@@ -53,7 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Gestione del form di SIGN UP (invariato)
+    // Gestione del form di SIGN UP
     if (signupForm) {
         signupForm.addEventListener('submit', async (event) => {
             event.preventDefault();
@@ -76,7 +70,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // --- FUNZIONI GLOBALI ---
-
 function switchTab(tabName) {
     const loginForm = document.getElementById('loginForm');
     const signupForm = document.getElementById('signupForm');
@@ -108,9 +101,6 @@ async function signInWithProvider(providerName) {
     const { error } = await supabaseClient.auth.signInWithOAuth({
         provider: providerName,
         options: {
-            // MODIFICA CRUCIALE:
-            // Ora reindirizziamo SEMPRE alla dashboard dopo il login social.
-            // La dashboard gestirà poi il reindirizzamento a 'setup-profile' se necessario.
             redirectTo: window.location.origin + '/dashboard.html'
         }
     });
