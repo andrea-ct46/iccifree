@@ -9,8 +9,37 @@ async function initializeProfilePage() {
         const params = new URLSearchParams(window.location.search);
         const username = params.get('user');
 
+        // FIX 3: Gestione migliore quando manca il parametro user
         if (!username) {
-            throw new Error("Nessun utente specificato nell'URL.");
+            // Se non c'è username nell'URL, controlla se l'utente è loggato
+            const currentUser = await checkUser();
+            if (currentUser) {
+                // Se è loggato, vai al suo profilo
+                const { data: profile } = await supabaseClient
+                    .from('profiles')
+                    .select('username')
+                    .eq('id', currentUser.id)
+                    .single();
+                
+                if (profile && profile.username) {
+                    // Redirect al proprio profilo
+                    window.location.replace(`/profile.html?user=${profile.username}`);
+                    return;
+                }
+            }
+            
+            // Se non è loggato o non ha un profilo, mostra messaggio di errore
+            messageText.innerHTML = `
+                <div style="text-align: center;">
+                    <h2 style="color: #FFD700; margin-bottom: 20px;">Nessun profilo specificato</h2>
+                    <p style="margin-bottom: 20px;">Per vedere un profilo, usa un link del tipo:<br>
+                    <code style="background: #282828; padding: 5px; border-radius: 4px;">
+                        /profile.html?user=username
+                    </code></p>
+                    <a href="/dashboard.html" style="color: #FFD700;">Torna alla Dashboard</a>
+                </div>
+            `;
+            return;
         }
 
         // 2. Cerca il profilo nel database usando lo username
@@ -18,10 +47,18 @@ async function initializeProfilePage() {
             .from('profiles')
             .select('*')
             .eq('username', username)
-            .single(); // .single() ci dà un solo risultato
+            .single();
 
         if (error || !profile) {
-            throw new Error(`Utente "${username}" non trovato.`);
+            // FIX 3: Messaggio di errore più user-friendly
+            messageText.innerHTML = `
+                <div style="text-align: center;">
+                    <h2 style="color: #ff4444; margin-bottom: 20px;">Utente non trovato</h2>
+                    <p style="margin-bottom: 20px;">L'utente "<strong>${username}</strong>" non esiste o è stato eliminato.</p>
+                    <a href="/dashboard.html" style="color: #FFD700;">Torna alla Dashboard</a>
+                </div>
+            `;
+            return;
         }
 
         // 3. Popola la pagina con i dati trovati
@@ -35,21 +72,39 @@ async function initializeProfilePage() {
         messageContainer.style.display = 'none';
 
     } catch (error) {
-        // In caso di errore, mostra un messaggio chiaro
-        messageText.textContent = error.message;
+        // In caso di errore generico, mostra un messaggio chiaro
         console.error("Errore nel caricamento del profilo:", error);
+        messageText.innerHTML = `
+            <div style="text-align: center;">
+                <h2 style="color: #ff4444; margin-bottom: 20px;">Errore</h2>
+                <p style="margin-bottom: 20px;">Si è verificato un errore nel caricamento del profilo.</p>
+                <p style="color: #888; font-size: 14px; margin-bottom: 20px;">${error.message}</p>
+                <a href="/dashboard.html" style="color: #FFD700;">Torna alla Dashboard</a>
+            </div>
+        `;
     }
 }
 
 // Funzione per inserire i dati del profilo nell'HTML
 function populateProfileData(profile) {
-    document.title = `${profile.username} - ICCI FREE`; // Aggiorna il titolo della scheda del browser
+    document.title = `${profile.username} - ICCI FREE`;
     document.getElementById('profileUsername').textContent = profile.username;
     document.getElementById('profileBio').textContent = profile.bio || 'Nessuna biografia impostata.';
     document.getElementById('followersCount').textContent = profile.followers_count || 0;
     document.getElementById('followingCount').textContent = profile.following_count || 0;
-    if (profile.avatar_url) {
-        document.getElementById('profileAvatar').src = profile.avatar_url;
+    
+    const profileAvatar = document.getElementById('profileAvatar');
+    if (profileAvatar) {
+        if (profile.avatar_url) {
+            profileAvatar.src = profile.avatar_url;
+        } else {
+            // FIX 5: Avatar placeholder unico per ogni utente
+            const initials = profile.username.substring(0, 2).toUpperCase();
+            // Genera un colore basato sull'username per rendere unico ogni placeholder
+            const colors = ['FF5733', '33FF57', '3357FF', 'FF33F5', 'F5FF33', '33FFF5'];
+            const colorIndex = profile.username.charCodeAt(0) % colors.length;
+            profileAvatar.src = `https://placehold.co/150x150/${colors[colorIndex]}/FFFFFF?text=${initials}`;
+        }
     }
 }
 
@@ -59,28 +114,41 @@ async function setupActionButtons(profile) {
     const profileActionsDiv = document.getElementById('profileActions');
     const headerActionBtn = document.getElementById('headerActionBtn');
 
-    // Se un utente è loggato...
     if (currentUser) {
         if (currentUser.id === profile.id) {
-            // ...e sta guardando il suo stesso profilo
-            profileActionsDiv.innerHTML = `<a href="/setup-profile.html" class="action-btn edit">Modifica Profilo</a>`;
-            headerActionBtn.style.display = 'none'; // Nasconde il pulsante nell'header
+            // L'utente sta guardando il suo stesso profilo
+            profileActionsDiv.innerHTML = `
+                <a href="/setup-profile.html" class="action-btn edit">
+                    ✏️ Modifica Profilo
+                </a>`;
+            headerActionBtn.style.display = 'none';
         } else {
-            // ...e sta guardando il profilo di qualcun altro
-            profileActionsDiv.innerHTML = `<a href="#" class="action-btn follow">Segui</a>`;
+            // L'utente sta guardando il profilo di qualcun altro
+            profileActionsDiv.innerHTML = `
+                <button class="action-btn follow" onclick="followUser('${profile.id}')">
+                    ➕ Segui
+                </button>`;
             headerActionBtn.href = '/dashboard.html';
-            headerActionBtn.textContent = 'Vai alla Dashboard';
+            headerActionBtn.textContent = '← Dashboard';
             headerActionBtn.style.display = 'block';
         }
     } else {
-        // Se l'utente non è loggato, mostra solo "Segui"
-        profileActionsDiv.innerHTML = `<a href="/auth.html" class="action-btn follow">Segui</a>`;
+        // Se l'utente non è loggato
+        profileActionsDiv.innerHTML = `
+            <a href="/auth.html" class="action-btn follow">
+                🔒 Accedi per seguire
+            </a>`;
         headerActionBtn.href = '/auth.html';
         headerActionBtn.textContent = 'Accedi';
         headerActionBtn.style.display = 'block';
     }
 }
 
+// Funzione placeholder per il follow (da implementare)
+async function followUser(userId) {
+    alert('Sistema di following in arrivo presto!');
+    // TODO: Implementare la logica di follow
+}
+
 // Avvia tutto al caricamento della pagina
 document.addEventListener('DOMContentLoaded', initializeProfilePage);
-
