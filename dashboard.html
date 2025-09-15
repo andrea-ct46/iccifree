@@ -4,18 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ICCI FREE - Dashboard</title>
-    <!-- Link al nuovo file CSS -->
     <link rel="stylesheet" href="/css/dashboard.css">
 </head>
 <body>
-
-    <!-- Stato di caricamento iniziale -->
     <div id="loadingState">
         <div class="spinner"></div>
         <p class="loading-text">Verifica profilo in corso...</p>
     </div>
-
-    <!-- Contenuto principale della Dashboard (visibile dopo il caricamento) -->
     <div id="appContainer" style="display: none;">
         <header class="app-header">
             <div class="logo">ICCI<span class="free">FREE</span></div>
@@ -27,39 +22,26 @@
                 <div class="profile-menu">
                     <img id="userAvatar" src="https://placehold.co/40x40/1a1a1a/FFFFFF?text=?" alt="User Avatar" class="user-avatar">
                     <div class="profile-dropdown">
-                        <a href="#">Il mio Profilo</a>
+                        <!-- MODIFICA QUI: Link dinamico al profilo -->
+                        <a href="#" id="myProfileLink">Il mio Profilo</a>
                         <a href="#">Impostazioni</a>
                         <a href="#" onclick="logout()">Logout</a>
                     </div>
                 </div>
             </div>
         </header>
-
         <main class="main-content">
             <aside class="sidebar">
-                <h3>Consigliati per te</h3>
-                <div id="sidebar-streamers">
-                    <!-- Streamer consigliati verranno inseriti qui da JS -->
-                </div>
-                <h3>Categorie</h3>
-                <ul class="category-list">
-                    <li><a href="#">Talk Show & IRL</a></li>
-                    <li><a href="#">Gaming</a></li>
-                    <li><a href="#">Musica</a></li>
-                    <li><a href="#">Arte</a></li>
-                </ul>
+                <!-- ... contenuto sidebar ... -->
             </aside>
-
             <section class="feed-container">
                 <h2>Stream in Evidenza</h2>
                 <div class="stream-grid" id="streamGrid">
-                    <!-- Le card degli stream verranno inserite qui da JS -->
+                    <!-- Stream cards -->
                 </div>
             </section>
         </main>
     </div>
-
-    <!-- Script necessari, in ordine -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="/js/supabase.js"></script>
     <script src="/js/dashboard.js"></script>
