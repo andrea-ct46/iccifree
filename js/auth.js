@@ -1,33 +1,23 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Selezioniamo tutti gli elementi importanti dalla pagina HTML
+    // Seleziona gli elementi del form
     const loginForm = document.getElementById('loginForm');
     const signupForm = document.getElementById('signupForm');
     const errorMessageDiv = document.getElementById('errorMessage');
     const successMessageDiv = document.getElementById('successMessage');
     const loadingOverlay = document.getElementById('loadingOverlay');
 
-    // --- FUNZIONI DI UTILITÀ PER L'INTERFACCIA ---
-    function showMessage(message, type = 'error') {
-        hideMessage();
+    // Funzioni di utilità per l'interfaccia
+    const showMessage = (message, type = 'error') => {
         const div = type === 'error' ? errorMessageDiv : successMessageDiv;
-        if (div) {
-            div.textContent = message;
-            div.classList.add('show');
-        }
-    }
-
-    function hideMessage() {
-        if (errorMessageDiv) errorMessageDiv.classList.remove('show');
-        if (successMessageDiv) successMessageDiv.classList.remove('show');
-    }
-
-    function showLoading() {
-        if (loadingOverlay) loadingOverlay.classList.add('show');
-    }
-
-    function hideLoading() {
-        if (loadingOverlay) loadingOverlay.classList.remove('show');
-    }
+        div.textContent = message;
+        div.classList.add('show');
+    };
+    const hideMessage = () => {
+        errorMessageDiv.classList.remove('show');
+        successMessageDiv.classList.remove('show');
+    };
+    const showLoading = () => loadingOverlay.classList.add('show');
+    const hideLoading = () => loadingOverlay.classList.remove('show');
 
     // Gestione del form di LOGIN
     if (loginForm) {
@@ -37,40 +27,15 @@ document.addEventListener('DOMContentLoaded', () => {
             showLoading();
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
-            
             try {
-                // Fai il login
-                const { data, error } = await supabaseClient.auth.signInWithPassword({ 
-                    email, 
-                    password 
-                });
-                
+                const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
                 if (error) throw error;
-                
-                // Login riuscito!
-                console.log('Login riuscito per:', data.user.email);
-                
-                // Controlla se il profilo esiste
-                const { data: profile, error: profileError } = await supabaseClient
-                    .from('profiles')
-                    .select('username')
-                    .eq('id', data.user.id)
-                    .single();
-                
-                console.log('Profilo trovato:', profile);
-                
-                // Se non c'è profilo O non ha username, vai al setup
-                if (!profile || !profile.username) {
-                    console.log('Profilo incompleto, redirect a setup-profile.html');
-                    window.location.href = '/setup-profile.html';
-                } else {
-                    console.log('Profilo completo, redirect a dashboard.html');
-                    window.location.href = '/dashboard.html';
-                }
-                
+                // Dopo il login con email, mandiamo direttamente alla dashboard
+                // perché il profilo dovrebbe essere già completo.
+                window.location.href = '/dashboard.html';
             } catch (error) {
-                console.error('Errore login:', error);
                 showMessage(error.message || 'Email o password non corretti.');
+            } finally {
                 hideLoading();
             }
         });
@@ -84,48 +49,14 @@ document.addEventListener('DOMContentLoaded', () => {
             showLoading();
             const email = document.getElementById('signupEmail').value;
             const password = document.getElementById('signupPassword').value;
-            
             try {
-                // Registra l'utente
-                const { data: signUpData, error: signUpError } = await supabaseClient.auth.signUp({ 
-                    email, 
-                    password
-                });
-                
-                if (signUpError) throw signUpError;
-                
-                console.log('Registrazione completata:', signUpData);
-                
-                // Mostra messaggio di successo
-                showMessage('Account creato! Effettua il login...', 'success');
-                
-                // Dopo 2 secondi, fai il login automatico
-                setTimeout(async () => {
-                    try {
-                        const { data: loginData, error: loginError } = await supabaseClient.auth.signInWithPassword({
-                            email: email,
-                            password: password
-                        });
-                        
-                        if (!loginError && loginData.user) {
-                            console.log('Login automatico riuscito, redirect a setup-profile');
-                            window.location.href = '/setup-profile.html';
-                        } else {
-                            // Se fallisce, passa al tab login
-                            switchTab('login');
-                            showMessage('Registrazione completata! Ora effettua il login.', 'success');
-                            hideLoading();
-                        }
-                    } catch (e) {
-                        console.error('Errore login automatico:', e);
-                        switchTab('login');
-                        hideLoading();
-                    }
-                }, 1500);
-                
+                const { data, error } = await supabaseClient.auth.signUp({ email, password });
+                if (error) throw error;
+                showMessage('Registrazione completata! Controlla la tua email per il link di conferma.', 'success');
+                signupForm.reset();
             } catch (error) {
-                console.error('Errore registrazione:', error);
-                showMessage(error.message || 'Errore durante la registrazione.');
+                showMessage(error.message || 'Si è verificato un errore durante la registrazione.');
+            } finally {
                 hideLoading();
             }
         });
@@ -133,6 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // --- FUNZIONI GLOBALI ---
+
 function switchTab(tabName) {
     const loginForm = document.getElementById('loginForm');
     const signupForm = document.getElementById('signupForm');
@@ -161,25 +93,17 @@ async function signInWithProvider(providerName) {
     const loadingOverlay = document.getElementById('loadingOverlay');
     if(loadingOverlay) loadingOverlay.classList.add('show');
 
-    try {
-        const { error } = await supabaseClient.auth.signInWithOAuth({
-            provider: providerName,
-            options: {
-                redirectTo: window.location.origin + '/setup-profile.html'
-            }
-        });
-        
-        if (error) {
-            console.error('Errore OAuth:', error);
-            const errorMessageDiv = document.getElementById('errorMessage');
-            if (errorMessageDiv) {
-                errorMessageDiv.textContent = `Errore con ${providerName}: ${error.message}`;
-                errorMessageDiv.classList.add('show');
-            }
-            if(loadingOverlay) loadingOverlay.classList.remove('show');
+    const { error } = await supabaseClient.auth.signInWithOAuth({
+        provider: providerName,
+        options: {
+            // --- MODIFICA ARCHITETTURALE ---
+            // Reindirizziamo SEMPRE al nostro gatekeeper 'callback.html'.
+            redirectTo: window.location.origin + '/callback.html'
         }
-    } catch (e) {
-        console.error('Errore provider:', e);
+    });
+    if (error) {
+        document.getElementById('errorMessage').textContent = `Errore con ${providerName}: ${error.message}`;
+        document.getElementById('errorMessage').classList.add('show');
         if(loadingOverlay) loadingOverlay.classList.remove('show');
     }
 }
@@ -187,32 +111,13 @@ async function signInWithProvider(providerName) {
 // Funzioni specifiche per ogni provider
 function signInWithGoogle() { signInWithProvider('google'); }
 function signInWithDiscord() { signInWithProvider('discord'); }
-function signInWithGitHub() { signInWithProvider('github'); }
-function signInWithTikTok() { signInWithProvider('tiktok'); }
 function showForgotPassword() { alert("Funzionalità di recupero password in arrivo!"); }
 
-// Controllo iniziale quando la pagina si carica
+// Controllo per utenti già loggati
 (async function() {
-    // Solo se siamo nella pagina auth.html
-    if (window.location.pathname.includes('auth.html')) {
-        const user = await checkUser();
-        if (user) {
-            console.log('Utente già loggato:', user.email);
-            
-            // Controlla se ha il profilo completo
-            const { data: profile } = await supabaseClient
-                .from('profiles')
-                .select('username')
-                .eq('id', user.id)
-                .single();
-            
-            if (!profile || !profile.username) {
-                console.log('Redirect a setup-profile (da check iniziale)');
-                window.location.href = '/setup-profile.html';
-            } else {
-                console.log('Redirect a dashboard (da check iniziale)');
-                window.location.href = '/dashboard.html';
-            }
-        }
+    const user = await checkUser();
+    if (user) {
+        window.location.href = '/dashboard.html';
     }
 })();
+
