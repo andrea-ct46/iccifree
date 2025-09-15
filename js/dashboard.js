@@ -31,6 +31,9 @@ async function initializeDashboard() {
         // Usiamo i dati recuperati per popolare l'interfaccia.
         populateUserData(profile);
         populateStreamFeed();
+        
+        // FIX 1: Imposta il link al profilo dell'utente
+        setupProfileLink(profile.username);
 
     } catch (error) {
         console.error("Errore nel caricare i dati della dashboard:", error);
@@ -46,10 +49,26 @@ async function initializeDashboard() {
  */
 function populateUserData(profile) {
     const userAvatar = document.getElementById('userAvatar');
-    if (userAvatar && profile.avatar_url) {
-        userAvatar.src = profile.avatar_url;
+    if (userAvatar) {
+        if (profile.avatar_url) {
+            userAvatar.src = profile.avatar_url;
+        } else {
+            // FIX 5: Avatar placeholder unico basato sull'username
+            const initials = profile.username ? profile.username.substring(0, 2).toUpperCase() : '??';
+            userAvatar.src = `https://placehold.co/40x40/FFD700/000000?text=${initials}`;
+        }
     }
-    // Qui potresti aggiungere altro codice per popolare nome utente, etc.
+}
+
+/**
+ * FIX 1: Configura il link al profilo dell'utente
+ * @param {string} username - Username dell'utente loggato
+ */
+function setupProfileLink(username) {
+    const profileLink = document.getElementById('myProfileLink');
+    if (profileLink && username) {
+        profileLink.href = `/profile.html?user=${username}`;
+    }
 }
 
 /**
@@ -61,16 +80,35 @@ function populateStreamFeed() {
 
     // Dati di esempio (verranno sostituiti con dati reali)
     const streams = [
-        { title: "Discussione Libera sulla Politica", streamer: "LiberoPensatore", category: "Talk Show & IRL", viewers: 1200, avatar: "https://placehold.co/40x40/7DF9FF/000000?text=LP" },
-        { title: "Gaming Senza Censure", streamer: "GamerOnFire", category: "Gaming", viewers: 854, avatar: "https://placehold.co/40x40/FF5733/FFFFFF?text=GF" },
+        { 
+            title: "Discussione Libera sulla Politica", 
+            streamer: "LiberoPensatore", 
+            category: "Talk Show & IRL", 
+            viewers: 1200, 
+            avatar: "https://placehold.co/40x40/7DF9FF/000000?text=LP" 
+        },
+        { 
+            title: "Gaming Senza Censure", 
+            streamer: "GamerOnFire", 
+            category: "Gaming", 
+            viewers: 854, 
+            avatar: "https://placehold.co/40x40/FF5733/FFFFFF?text=GF" 
+        },
+        {
+            title: "Crypto & Finanza Decentralizzata",
+            streamer: "CryptoRebel",
+            category: "Crypto",
+            viewers: 432,
+            avatar: "https://placehold.co/40x40/00FF00/000000?text=CR"
+        }
     ];
 
     let streamHTML = '';
     streams.forEach(stream => {
         streamHTML += `
-            <div class="stream-card">
+            <div class="stream-card" onclick="alert('Stream di ${stream.streamer} - Coming soon!')">
                 <div class="stream-thumbnail">
-                    <img src="https://placehold.co/300x180/1a1a1a/00FF00?text=${stream.category}" alt="Stream Thumbnail">
+                    <img src="https://placehold.co/300x180/1a1a1a/FFD700?text=${encodeURIComponent(stream.category)}" alt="Stream Thumbnail">
                     <div class="live-indicator">LIVE</div>
                 </div>
                 <div class="stream-info">
@@ -80,7 +118,7 @@ function populateStreamFeed() {
                     <div class="stream-details">
                         <div class="title">${stream.title}</div>
                         <div class="streamer-name">${stream.streamer}</div>
-                        <div class="category">${stream.category}</div>
+                        <div class="category">${stream.category} • ${stream.viewers} spettatori</div>
                     </div>
                 </div>
             </div>
@@ -89,6 +127,22 @@ function populateStreamFeed() {
     streamGrid.innerHTML = streamHTML;
 }
 
+/**
+ * Funzione di logout migliorata
+ */
+window.logout = async function() {
+    if (confirm('Sei sicuro di voler uscire?')) {
+        try {
+            const { error } = await supabaseClient.auth.signOut();
+            if (error) throw error;
+            window.location.href = '/';
+        } catch (error) {
+            console.error('Errore durante il logout:', error);
+            // Forza il redirect anche in caso di errore
+            window.location.href = '/';
+        }
+    }
+}
+
 // Avvia l'inizializzazione della dashboard non appena il DOM è pronto.
 document.addEventListener('DOMContentLoaded', initializeDashboard);
-
