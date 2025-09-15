@@ -1,1 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ICCI FREE - Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: sans-serif; background: #121212; color: white; text-align: center; padding-top: 50px; }
+        h1 { color: #00FF00; }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <h1>Benvenuto su ICCI FREE!</h1>
+    <p>Sei loggato con l'email: <strong id="userEmail"></strong></p>
+    <br>
+    <button onclick="logout()">Logout</button>
+
+    <script src="js/supabase.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = await checkUser();
+
+            if (!user) {
+                // Se non c'è nessun utente loggato, lo rimandiamo alla pagina di login
+                window.location.href = '/auth.html';
+            } else {
+                // Altrimenti, mostriamo la sua email
+                document.getElementById('userEmail').textContent = user.email;
+            }
+        });
+    </script>
+</body>
+</html>
+
 
