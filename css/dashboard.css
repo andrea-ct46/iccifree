@@ -1,0 +1,245 @@
+/* Stili generali e variabili */
+:root {
+    --green: #00FF00;
+    --black: #0d0d0d;
+    --gray-dark: #1a1a1a;
+    --gray-medium: #2a2a2a;
+    --gray-light: #888;
+    --white: #FFFFFF;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--black);
+    color: var(--white);
+    overflow-x: hidden;
+}
+
+/* Spinner di caricamento */
+#loadingState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+}
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 3px solid var(--gray-medium);
+    border-top-color: var(--green);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text {
+    margin-top: 15px;
+    font-size: 16px;
+    color: var(--gray-light);
+}
+
+
+/* Struttura principale dell'app */
+#appContainer {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+/* Header */
+.app-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    height: 60px;
+    background-color: var(--gray-dark);
+    border-bottom: 1px solid var(--gray-medium);
+    flex-shrink: 0;
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: 900;
+}
+.logo .free {
+    color: var(--green);
+}
+
+.search-bar {
+    flex-grow: 1;
+    margin: 0 40px;
+    max-width: 500px;
+}
+.search-bar input {
+    width: 100%;
+    padding: 8px 16px;
+    background-color: var(--gray-medium);
+    border: 1px solid transparent;
+    border-radius: 8px;
+    color: var(--white);
+    font-size: 14px;
+}
+.search-bar input:focus {
+    outline: none;
+    border-color: var(--green);
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.go-live-btn {
+    padding: 8px 16px;
+    background-color: var(--green);
+    color: var(--black);
+    font-weight: bold;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: transform 0.2s;
+}
+.go-live-btn:hover {
+    transform: scale(1.05);
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid var(--gray-medium);
+}
+.profile-menu {
+    position: relative;
+}
+.profile-dropdown {
+    display: none;
+    position: absolute;
+    top: 50px;
+    right: 0;
+    background-color: var(--gray-dark);
+    border: 1px solid var(--gray-medium);
+    border-radius: 8px;
+    width: 180px;
+    overflow: hidden;
+    z-index: 10;
+}
+.profile-menu:hover .profile-dropdown {
+    display: block;
+}
+.profile-dropdown a {
+    display: block;
+    padding: 12px 16px;
+    color: var(--white);
+    text-decoration: none;
+}
+.profile-dropdown a:hover {
+    background-color: var(--gray-medium);
+}
+
+/* Contenuto principale (sidebar + feed) */
+.main-content {
+    display: flex;
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+.sidebar {
+    width: 240px;
+    background-color: var(--gray-dark);
+    padding: 20px;
+    flex-shrink: 0;
+    overflow-y: auto;
+}
+.sidebar h3 {
+    font-size: 14px;
+    color: var(--gray-light);
+    text-transform: uppercase;
+    margin-bottom: 15px;
+}
+.category-list {
+    list-style: none;
+}
+.category-list a {
+    display: block;
+    padding: 8px 0;
+    color: var(--white);
+    text-decoration: none;
+}
+.category-list a:hover {
+    color: var(--green);
+}
+
+.feed-container {
+    flex-grow: 1;
+    padding: 24px;
+    overflow-y: auto;
+}
+.feed-container h2 {
+    margin-bottom: 20px;
+}
+
+.stream-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.stream-card {
+    background-color: var(--gray-dark);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: transform 0.2s;
+}
+.stream-card:hover {
+    transform: translateY(-5px);
+}
+.stream-thumbnail {
+    position: relative;
+}
+.stream-thumbnail img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    display: block;
+}
+.live-indicator {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background-color: red;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+}
+.stream-info {
+    padding: 15px;
+    display: flex;
+    gap: 12px;
+}
+.streamer-avatar img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+.stream-details .title {
+    font-weight: bold;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.stream-details .streamer-name,
+.stream-details .category {
+    font-size: 14px;
+    color: var(--gray-light);
+}
