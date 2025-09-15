@@ -10,21 +10,23 @@ document.addEventListener('DOMContentLoaded', () => {
     function showMessage(message, type = 'error') {
         hideMessage();
         const div = type === 'error' ? errorMessageDiv : successMessageDiv;
-        div.textContent = message;
-        div.classList.add('show');
+        if (div) {
+            div.textContent = message;
+            div.classList.add('show');
+        }
     }
 
     function hideMessage() {
-        errorMessageDiv.classList.remove('show');
-        successMessageDiv.classList.remove('show');
+        if (errorMessageDiv) errorMessageDiv.classList.remove('show');
+        if (successMessageDiv) successMessageDiv.classList.remove('show');
     }
 
     function showLoading() {
-        loadingOverlay.classList.add('show');
+        if (loadingOverlay) loadingOverlay.classList.add('show');
     }
 
     function hideLoading() {
-        loadingOverlay.classList.remove('show');
+        if (loadingOverlay) loadingOverlay.classList.remove('show');
     }
 
     // Gestione del form di LOGIN
@@ -37,6 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const password = document.getElementById('loginPassword').value;
             
             try {
+                // Fai il login
                 const { data, error } = await supabaseClient.auth.signInWithPassword({ 
                     email, 
                     password 
@@ -44,19 +47,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 if (error) throw error;
                 
-                // Controlla se il profilo è completo
-                const user = data.user;
-                const profileComplete = await hasCompletedProfile(user.id);
+                // Login riuscito!
+                console.log('Login riuscito per:', data.user.email);
                 
-                if (!profileComplete) {
+                // Controlla se il profilo esiste
+                const { data: profile, error: profileError } = await supabaseClient
+                    .from('profiles')
+                    .select('username')
+                    .eq('id', data.user.id)
+                    .single();
+                
+                console.log('Profilo trovato:', profile);
+                
+                // Se non c'è profilo O non ha username, vai al setup
+                if (!profile || !profile.username) {
+                    console.log('Profilo incompleto, redirect a setup-profile.html');
                     window.location.href = '/setup-profile.html';
                 } else {
+                    console.log('Profilo completo, redirect a dashboard.html');
                     window.location.href = '/dashboard.html';
                 }
                 
             } catch (error) {
+                console.error('Errore login:', error);
                 showMessage(error.message || 'Email o password non corretti.');
-            } finally {
                 hideLoading();
             }
         });
@@ -72,33 +86,46 @@ document.addEventListener('DOMContentLoaded', () => {
             const password = document.getElementById('signupPassword').value;
             
             try {
-                const { data, error } = await supabaseClient.auth.signUp({ 
+                // Registra l'utente
+                const { data: signUpData, error: signUpError } = await supabaseClient.auth.signUp({ 
                     email, 
-                    password 
+                    password
                 });
                 
-                if (error) throw error;
+                if (signUpError) throw signUpError;
                 
-                showMessage('Registrazione completata! Ti stiamo reindirizzando...', 'success');
+                console.log('Registrazione completata:', signUpData);
                 
-                // Aspetta 2 secondi poi vai al setup profilo
+                // Mostra messaggio di successo
+                showMessage('Account creato! Effettua il login...', 'success');
+                
+                // Dopo 2 secondi, fai il login automatico
                 setTimeout(async () => {
-                    // Prova a fare il login automatico
-                    const { data: loginData, error: loginError } = await supabaseClient.auth.signInWithPassword({
-                        email,
-                        password
-                    });
-                    
-                    if (!loginError) {
-                        window.location.href = '/setup-profile.html';
-                    } else {
-                        window.location.href = '/auth.html';
+                    try {
+                        const { data: loginData, error: loginError } = await supabaseClient.auth.signInWithPassword({
+                            email: email,
+                            password: password
+                        });
+                        
+                        if (!loginError && loginData.user) {
+                            console.log('Login automatico riuscito, redirect a setup-profile');
+                            window.location.href = '/setup-profile.html';
+                        } else {
+                            // Se fallisce, passa al tab login
+                            switchTab('login');
+                            showMessage('Registrazione completata! Ora effettua il login.', 'success');
+                            hideLoading();
+                        }
+                    } catch (e) {
+                        console.error('Errore login automatico:', e);
+                        switchTab('login');
+                        hideLoading();
                     }
-                }, 2000);
+                }, 1500);
                 
             } catch (error) {
-                showMessage(error.message || 'Si è verificato un errore durante la registrazione.');
-            } finally {
+                console.error('Errore registrazione:', error);
+                showMessage(error.message || 'Errore durante la registrazione.');
                 hideLoading();
             }
         });
@@ -134,17 +161,25 @@ async function signInWithProvider(providerName) {
     const loadingOverlay = document.getElementById('loadingOverlay');
     if(loadingOverlay) loadingOverlay.classList.add('show');
 
-    const { error } = await supabaseClient.auth.signInWithOAuth({
-        provider: providerName,
-        options: {
-            redirectTo: window.location.origin + '/setup-profile.html'
+    try {
+        const { error } = await supabaseClient.auth.signInWithOAuth({
+            provider: providerName,
+            options: {
+                redirectTo: window.location.origin + '/setup-profile.html'
+            }
+        });
+        
+        if (error) {
+            console.error('Errore OAuth:', error);
+            const errorMessageDiv = document.getElementById('errorMessage');
+            if (errorMessageDiv) {
+                errorMessageDiv.textContent = `Errore con ${providerName}: ${error.message}`;
+                errorMessageDiv.classList.add('show');
+            }
+            if(loadingOverlay) loadingOverlay.classList.remove('show');
         }
-    });
-    
-    if (error) {
-        const errorMessageDiv = document.getElementById('errorMessage');
-        errorMessageDiv.textContent = `Errore con ${providerName}: ${error.message}`;
-        errorMessageDiv.classList.add('show');
+    } catch (e) {
+        console.error('Errore provider:', e);
         if(loadingOverlay) loadingOverlay.classList.remove('show');
     }
 }
@@ -156,15 +191,28 @@ function signInWithGitHub() { signInWithProvider('github'); }
 function signInWithTikTok() { signInWithProvider('tiktok'); }
 function showForgotPassword() { alert("Funzionalità di recupero password in arrivo!"); }
 
-// Controllo utente all'avvio della pagina
+// Controllo iniziale quando la pagina si carica
 (async function() {
-    const user = await checkUser();
-    if (user && window.location.pathname.includes('auth.html')) {
-        const profileComplete = await hasCompletedProfile(user.id);
-        if (!profileComplete) {
-            window.location.href = '/setup-profile.html';
-        } else {
-            window.location.href = '/dashboard.html';
+    // Solo se siamo nella pagina auth.html
+    if (window.location.pathname.includes('auth.html')) {
+        const user = await checkUser();
+        if (user) {
+            console.log('Utente già loggato:', user.email);
+            
+            // Controlla se ha il profilo completo
+            const { data: profile } = await supabaseClient
+                .from('profiles')
+                .select('username')
+                .eq('id', user.id)
+                .single();
+            
+            if (!profile || !profile.username) {
+                console.log('Redirect a setup-profile (da check iniziale)');
+                window.location.href = '/setup-profile.html';
+            } else {
+                console.log('Redirect a dashboard (da check iniziale)');
+                window.location.href = '/dashboard.html';
+            }
         }
     }
 })();
