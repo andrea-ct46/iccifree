@@ -12,7 +12,7 @@
         p { font-size: 18px; }
         button { padding: 10px 20px; font-size: 16px; cursor: pointer; background-color: #00FF00; border: none; font-weight: bold; border-radius: 8px;}
         .loading { font-size: 24px; }
-        .error-box { max-width: 600px; margin: auto; background: #2a2a2a; padding: 20px; border-radius: 8px; border: 1px solid #ff4444; }
+        .error-box { max-width: 600px; margin: auto; background: #2a2a2a; padding: 20px; border-radius: 8px; border: 1px solid #ff4444; text-align: left; }
         .error-box p { font-size: 16px; }
         .error-message { color: #ff4444; font-family: monospace; word-break: break-all; }
     </style>
@@ -20,7 +20,7 @@
 <body>
 
     <div id="loadingState">
-        <h1 class="loading">Verifica profilo in corso...</h1>
+        <h1 class="loading">Verifica profilo in corso... (Attendere)</h1>
     </div>
 
     <div id="dashboardContent" style="display: none;">
@@ -32,61 +32,88 @@
         <button onclick="logout()">Logout</button>
     </div>
 
-    <!-- MODIFICA: Corretto il percorso dello script da relativo ad assoluto -->
     <script src="/js/supabase.js"></script>
     <script>
-        // Questo script è il "guardiano" dell'app. Si attiva ogni volta che lo stato di autenticazione cambia.
-        supabaseClient.auth.onAuthStateChange(async (event, session) => {
-            const user = session?.user;
+        console.log("--- CHECKPOINT 1: Pagina caricata, script avviato. ---");
 
-            if (!user) {
-                // Se non c'è un utente (o ha fatto logout), rimanda sempre alla pagina di login.
-                window.location.href = '/auth.html';
-                return;
-            }
+        // Timeout di sicurezza: se dopo 7 secondi non è successo nulla, mostra un errore.
+        const safetyTimeout = setTimeout(() => {
+            console.error("TIMEOUT: La risposta da Supabase sta impiegando troppo tempo.");
+            const loadingDiv = document.getElementById('loadingState');
+            loadingDiv.innerHTML = `
+                <div class="error-box">
+                    <h1>Timeout della Connessione</h1>
+                    <p>Non è arrivata nessuna risposta dal server. Controlla la tua connessione a internet e verifica che l'URL del tuo progetto Supabase in <code>/js/supabase.js</code> sia corretto.</p>
+                </div>
+            `;
+        }, 7000); // 7 secondi
 
-            try {
-                // Chiediamo al database il profilo completo dell'utente.
-                const { data: profile, error } = await supabaseClient
-                    .from('profiles')
-                    .select('username, date_of_birth, avatar_url')
-                    .eq('id', user.id)
-                    .single(); // .single() ci dà un solo risultato o un errore.
+        try {
+            supabaseClient.auth.onAuthStateChange(async (event, session) => {
+                clearTimeout(safetyTimeout); // Annulla il timeout, abbiamo ricevuto una risposta!
+                console.log("--- CHECKPOINT 2: onAuthStateChange si è attivato. Evento:", event);
+                
+                const user = session?.user;
 
-                // Ignoriamo l'errore specifico che dice "nessuna riga trovata", perché è normale per un nuovo utente.
-                if (error && error.code !== 'PGRST116') throw error; 
-
-                // CONDIZIONE DI CONTROLLO: se il profilo non esiste, O non ha uno username, O non ha una data di nascita...
-                if (!profile || !profile.username || !profile.date_of_birth) {
-                    // ...allora reindirizziamo l'utente alla pagina di setup per fargli completare i dati.
-                    window.location.href = '/setup-profile.html';
-                } else {
-                    // ALTRIMENTI, se il profilo è completo, nascondiamo il messaggio di caricamento e mostriamo la dashboard.
-                    document.getElementById('loadingState').style.display = 'none';
-                    document.getElementById('dashboardContent').style.display = 'block';
-                    
-                    // Popoliamo la pagina con i dati dell'utente.
-                    document.getElementById('usernameDisplay').textContent = profile.username;
-                    document.getElementById('userEmail').textContent = user.email;
-                    // Mostriamo l'avatar o un placeholder se non è stato caricato.
-                    document.getElementById('avatarDisplay').src = profile.avatar_url || 'https://placehold.co/100x100/121212/FFFFFF?text=??';
+                if (!user) {
+                    console.log("CHECKPOINT 3a: Nessun utente trovato. Reindirizzo a /auth.html");
+                    window.location.href = '/auth.html';
+                    return;
                 }
 
-            } catch (error) {
-                // MODIFICA PER IL DEBUG: Mostra l'errore esatto sulla pagina
-                console.error("Errore nel recupero del profilo:", error);
-                const loadingDiv = document.getElementById('loadingState');
-                loadingDiv.innerHTML = `
-                    <div class="error-box">
-                        <h1>Errore nel Caricamento</h1>
-                        <p>Il database ha restituito un errore. Questo è quasi sempre causato da una regola di sicurezza (Policy) mancante.</p>
-                        <hr style="margin: 15px 0; border-color: #444;">
-                        <p><strong>Messaggio di Errore:</strong></p>
-                        <p class="error-message"> $ {error.message}</p>
-                    </div>
-                `;
-            }
-        });
+                console.log("--- CHECKPOINT 3b: Utente trovato:", user.id);
+                console.log("--- CHECKPOINT 4: Inizio richiesta al database per il profilo... ---");
+
+                try {
+                    const { data: profile, error } = await supabaseClient
+                        .from('profiles')
+                        .select('username, date_of_birth, avatar_url')
+                        .eq('id', user.id)
+                        .single();
+
+                    console.log("--- CHECKPOINT 5: Risposta dal database ricevuta. ---", { profile, error });
+
+                    if (error && error.code !== 'PGRST116') {
+                        throw error; // Lancia l'errore al blocco catch qui sotto
+                    }
+
+                    if (!profile || !profile.username || !profile.date_of_birth) {
+                        console.log("CHECKPOINT 6a: Profilo incompleto. Reindirizzo a /setup-profile.html");
+                        window.location.href = '/setup-profile.html';
+                    } else {
+                        console.log("CHECKPOINT 6b: Profilo completo. Mostro la dashboard.");
+                        document.getElementById('loadingState').style.display = 'none';
+                        document.getElementById('dashboardContent').style.display = 'block';
+                        document.getElementById('usernameDisplay').textContent = profile.username;
+                        document.getElementById('userEmail').textContent = user.email;
+                        document.getElementById('avatarDisplay').src = profile.avatar_url || 'https://placehold.co/100x100/121212/FFFFFF?text=??';
+                    }
+
+                } catch (dbError) {
+                    console.error("--- ERRORE DATABASE nel CHECKPOINT 5 ---", dbError);
+                    const loadingDiv = document.getElementById('loadingState');
+                    loadingDiv.innerHTML = `
+                        <div class="error-box">
+                            <h1>Errore nel Caricamento del Profilo</h1>
+                            <p>Il database ha restituito un errore. Questo è quasi sempre causato da una regola di sicurezza (Policy) mancante o errata sulla tabella <code>profiles</code>.</p>
+                            <hr style="margin: 15px 0; border-color: #444;">
+                            <p><strong>Messaggio di Errore:</strong></p>
+                            <p class="error-message">${dbError.message}</p>
+                        </div>
+                    `;
+                }
+            });
+        } catch (initError) {
+             console.error("--- ERRORE GRAVE: Impossibile avviare onAuthStateChange ---", initError);
+             clearTimeout(safetyTimeout);
+             const loadingDiv = document.getElementById('loadingState');
+             loadingDiv.innerHTML = `
+                <div class="error-box">
+                    <h1>Errore Critico</h1>
+                    <p>Non è stato possibile inizializzare il client di Supabase. Controlla che il file <code>/js/supabase.js</code> sia caricato correttamente e non contenga errori.</p>
+                </div>
+             `;
+        }
     </script>
 </body>
 </html>
