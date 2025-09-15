@@ -6,261 +6,271 @@
     <title>ICCI FREE - Completa il tuo profilo</title>
     <link rel="stylesheet" href="css/auth.css">
     <style>
+        /* Setup Profile Specific Styles */
         .auth-container {
-    max-width: 550px;
-    animation: slideDown 0.5s ease-out;
-}
+            max-width: 550px;
+            animation: slideDown 0.5s ease-out;
+        }
 
-@keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
-/* Info Text */
-.info-text {
-    color: var(--text-secondary);
-    text-align: center;
-    margin-bottom: 32px;
-    font-size: 15px;
-    padding: 16px;
-    background: linear-gradient(135deg, rgba(255,215,0,0.1) 0%, transparent 100%);
-    border-radius: 12px;
-    border: 1px solid rgba(255,215,0,0.2);
-}
+        .info-text {
+            color: var(--text-secondary);
+            text-align: center;
+            margin-bottom: 32px;
+            font-size: 15px;
+            padding: 16px;
+            background: linear-gradient(135deg, rgba(255,215,0,0.1) 0%, transparent 100%);
+            border-radius: 12px;
+            border: 1px solid rgba(255,215,0,0.2);
+        }
 
-/* Avatar Upload Section */
-.avatar-upload {
-    text-align: center;
-    margin-bottom: 32px;
-    animation: fadeIn 0.6s ease-out backwards;
-    animation-delay: 0.2s;
-}
+        .avatar-upload {
+            text-align: center;
+            margin-bottom: 32px;
+            animation: fadeIn 0.6s ease-out backwards;
+            animation-delay: 0.2s;
+        }
 
-.avatar-preview {
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    object-fit: cover;
-    background: linear-gradient(135deg, var(--surface-dark) 0%, var(--surface-medium) 100%);
-    border: 3px solid var(--border-color);
-    margin: 0 auto 16px;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    overflow: hidden;
-}
+        .avatar-preview {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: linear-gradient(135deg, #181818 0%, #282828 100%);
+            border: 3px solid #303030;
+            margin: 0 auto 16px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
 
-.avatar-preview::after {
-    content: "📷";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 24px;
-    opacity: 0;
-    transition: opacity 0.3s;
-}
+        .avatar-preview::after {
+            content: "📷";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
 
-.avatar-preview:hover {
-    transform: scale(1.05);
-    border-color: var(--primary-yellow);
-    box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
-}
+        .avatar-preview:hover {
+            transform: scale(1.05);
+            border-color: #FFD700;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+        }
 
-.avatar-preview:hover::after {
-    opacity: 0.8;
-}
+        .avatar-preview:hover::after {
+            opacity: 0.8;
+        }
 
-#avatarInput {
-    display: none;
-}
+        #avatarInput { display: none; }
 
-.avatar-upload label {
-    font-size: 13px;
-    color: var(--text-secondary);
-    text-transform: none;
-    letter-spacing: normal;
-}
+        .form-group { animation: fadeInUp 0.6s ease-out backwards; }
+        .form-group:nth-child(3) { animation-delay: 0.3s; }
+        .form-group:nth-child(4) { animation-delay: 0.4s; }
+        .form-group:nth-child(5) { animation-delay: 0.5s; }
 
-/* Form Groups con animazione */
-.form-group {
-    animation: fadeInUp 0.6s ease-out backwards;
-}
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
-.form-group:nth-child(3) { animation-delay: 0.3s; }
-.form-group:nth-child(4) { animation-delay: 0.4s; }
-.form-group:nth-child(5) { animation-delay: 0.5s; }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
 
-/* Username Input con validazione visuale */
-#username {
-    transition: all 0.3s ease;
-}
+        .username-hint {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
 
-#username:valid {
-    border-color: #00ff00;
-    background: rgba(0, 255, 0, 0.05);
-}
+        .username-available { color: #00ff00; }
+        .username-taken { color: #ff4444; }
 
-#username:invalid:not(:placeholder-shown) {
-    border-color: #ff4444;
-    background: rgba(255, 68, 68, 0.05);
-}
+        textarea.form-input {
+            resize: vertical;
+            min-height: 80px;
+            max-height: 200px;
+        }
 
-/* Date Input styling */
-input[type="date"] {
-    cursor: pointer;
-}
+        .char-counter {
+            text-align: right;
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
 
-input[type="date"]::-webkit-calendar-picker-indicator {
-    filter: invert(0.8);
-    cursor: pointer;
-}
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #1a1a1a;
+            border-radius: 2px;
+            margin-bottom: 32px;
+            overflow: hidden;
+        }
 
-/* Bio Textarea */
-textarea.form-input {
-    resize: vertical;
-    min-height: 80px;
-    max-height: 200px;
-    font-family: inherit;
-}
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #FFD700 0%, #FFB700 100%);
+            width: 33%;
+            transition: width 0.3s ease;
+        }
 
-/* Submit Button Enhanced */
-.submit-btn {
-    position: relative;
-    overflow: hidden;
-    animation: fadeInUp 0.6s ease-out backwards;
-    animation-delay: 0.6s;
-}
-
-.submit-btn::before {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.2);
-    transform: translate(-50%, -50%);
-    transition: width 0.6s, height 0.6s;
-}
-
-.submit-btn:active::before {
-    width: 300px;
-    height: 300px;
-}
-
-/* Loading State Enhancement */
-.loading-overlay.show {
-    backdrop-filter: blur(5px);
-}
-
-/* Error Message Enhanced */
-.error-message.show {
-    animation: shake 0.5s ease-out;
-}
-
-@keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-10px); }
-    75% { transform: translateX(10px); }
-}
-
-/* Success State */
-.success-indicator {
-    position: absolute;
-    right: 16px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #00ff00;
-    font-size: 20px;
-    opacity: 0;
-    transition: opacity 0.3s;
-}
-
-.form-input:valid:not(:placeholder-shown) + .success-indicator {
-    opacity: 1;
-}
-
-/* Mobile Responsiveness */
-@media (max-width: 600px) {
-    .auth-container {
-        max-width: 100%;
-        margin: 0;
-        border-radius: 0;
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-    }
-    
-    .avatar-preview {
-        width: 100px;
-        height: 100px;
-    }
-}
-
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
+        @media (max-width: 600px) {
+            .auth-container {
+                max-width: 100%;
+                margin: 0;
+                border-radius: 0;
+                min-height: 100vh;
+            }
+            
+            .avatar-preview {
+                width: 100px;
+                height: 100px;
+            }
+        }
     </style>
 </head>
 <body>
+    <!-- Loading Overlay -->
     <div class="loading-overlay" id="loadingOverlay">
         <div class="spinner"></div>
     </div>
 
     <div class="auth-container">
+        <!-- Logo -->
         <div class="logo">
             <h1><span class="icci">ICCI</span><span class="free">FREE</span></h1>
         </div>
         
-        <p class="info-text">Ultimo passo! Completa il tuo profilo per entrare nella community.</p>
+        <!-- Progress Bar -->
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressBar"></div>
+        </div>
+        
+        <!-- Info Text -->
+        <p class="info-text">
+            ✨ Ultimo passo! Personalizza il tuo profilo per entrare nella community.
+        </p>
+        
+        <!-- Error Message -->
         <div class="message error-message" id="errorMessage"></div>
 
+        <!-- Setup Form -->
         <form id="setupProfileForm">
-            
+            <!-- Avatar Upload -->
             <div class="avatar-upload">
-                <img src="https://placehold.co/120x120/000000/888888?text=Avatar" alt="Avatar Preview" class="avatar-preview" id="avatarPreview" onclick="document.getElementById('avatarInput').click()">
-                <input type="file" id="avatarInput" accept="image/png, image/jpeg, image/gif">
-                <label class="form-label">Tocca l'immagine per caricarne una (Opzionale)</label>
+                <img src="https://placehold.co/120x120/181818/666666?text=%3F" 
+                     alt="Avatar Preview" 
+                     class="avatar-preview" 
+                     id="avatarPreview" 
+                     onclick="document.getElementById('avatarInput').click()">
+                <input type="file" id="avatarInput" accept="image/png, image/jpeg, image/gif, image/webp">
+                <label class="form-label">Clicca per caricare un'immagine (Opzionale)</label>
             </div>
 
+            <!-- Username -->
             <div class="form-group">
                 <label class="form-label">Username *</label>
-                <input type="text" class="form-input" id="username" placeholder="Il tuo username unico" required minlength="3" maxlength="20" pattern="[a-zA-Z0-9_]+">
+                <input type="text" 
+                       class="form-input" 
+                       id="username" 
+                       placeholder="Scegli un nome unico" 
+                       required 
+                       minlength="3" 
+                       maxlength="20" 
+                       pattern="[a-zA-Z0-9_]+"
+                       autocomplete="off">
+                <div class="username-hint" id="usernameHint"></div>
             </div>
             
+            <!-- Date of Birth -->
             <div class="form-group">
                 <label class="form-label">Data di Nascita *</label>
-                <input type="date" class="form-input" id="dob" required>
+                <input type="date" 
+                       class="form-input" 
+                       id="dob" 
+                       required
+                       max="2012-01-01">
             </div>
 
+            <!-- Bio -->
             <div class="form-group">
                 <label class="form-label">Bio (Opzionale)</label>
-                <textarea class="form-input" id="bio" placeholder="Raccontaci qualcosa di te..." maxlength="150" rows="3" style="resize: vertical;"></textarea>
+                <textarea class="form-input" 
+                          id="bio" 
+                          placeholder="Racconta qualcosa di te... Chi sei? Cosa ti piace streammare?" 
+                          maxlength="150" 
+                          rows="3"></textarea>
+                <div class="char-counter">
+                    <span id="charCount">0</span>/150
+                </div>
             </div>
             
-            <button type="submit" class="submit-btn">Salva e Entra in ICCI FREE</button>
+            <!-- Submit Button -->
+            <button type="submit" class="submit-btn" id="submitBtn">
+                🚀 Entra in ICCI FREE
+            </button>
         </form>
     </div>
 
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase.js"></script>
     <script src="js/setup-profile.js"></script>
+    
+    <!-- Extra Interactivity -->
+    <script>
+        // Progress bar animation
+        const inputs = document.querySelectorAll('.form-input');
+        const progressBar = document.getElementById('progressBar');
+        
+        function updateProgress() {
+            let filled = 0;
+            const required = 2; // username e data nascita
+            
+            if (document.getElementById('username').value.length >= 3) filled++;
+            if (document.getElementById('dob').value) filled++;
+            
+            const progress = (filled / required) * 100;
+            progressBar.style.width = progress + '%';
+            
+            // Cambia colore quando completo
+            if (progress === 100) {
+                progressBar.style.background = 'linear-gradient(90deg, #00ff00 0%, #00cc00 100%)';
+            }
+        }
+        
+        inputs.forEach(input => {
+            input.addEventListener('input', updateProgress);
+        });
+        
+        // Character counter per bio
+        const bioInput = document.getElementById('bio');
+        const charCount = document.getElementById('charCount');
+        
+        bioInput.addEventListener('input', () => {
+            charCount.textContent = bioInput.value.length;
+            if (bioInput.value.length > 140) {
+                charCount.style.color = '#ff4444';
+            } else {
+                charCount.style.color = '#666';
+            }
+        });
+        
+        // Set max date to today minus 13 years
+        const today = new Date();
+        const maxDate = new Date(today.getFullYear() - 13, today.getMonth(), today.getDate());
+        document.getElementById('dob').max = maxDate.toISOString().split('T')[0];
+    </script>
 </body>
 </html>
-
