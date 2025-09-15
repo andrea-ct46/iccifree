@@ -8,7 +8,6 @@ async function initializeDashboard() {
     const user = await checkUser();
 
     // Se per qualche motivo un utente non loggato arriva qui, lo reindirizziamo al login.
-    // Questa è una misura di sicurezza aggiuntiva.
     if (!user) {
         window.location.replace('/auth.html');
         return;
@@ -46,10 +45,16 @@ async function initializeDashboard() {
  */
 function populateUserData(profile) {
     const userAvatar = document.getElementById('userAvatar');
+    const myProfileLink = document.getElementById('myProfileLink');
+
     if (userAvatar && profile.avatar_url) {
         userAvatar.src = profile.avatar_url;
     }
-    // Qui potresti aggiungere altro codice per popolare nome utente, etc.
+
+    // MODIFICA QUI: Imposta il link per puntare a /profile.html?user=NOMEUTENTE
+    if (myProfileLink && profile.username) {
+        myProfileLink.href = `/profile.html?user=${profile.username}`;
+    }
 }
 
 /**
