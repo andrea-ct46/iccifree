@@ -6,17 +6,49 @@
     <title>ICCI FREE - Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: sans-serif; background: #121212; color: white; text-align: center; padding-top: 50px; }
+        body { 
+            font-family: sans-serif; 
+            background: #121212; 
+            color: white; 
+            text-align: center; 
+            padding-top: 50px; 
+        }
         h1 { color: #00FF00; }
-        button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
+        button { 
+            padding: 10px 20px; 
+            font-size: 16px; 
+            cursor: pointer;
+            background: #00FF00;
+            color: black;
+            border: none;
+            border-radius: 8px;
+            margin: 10px;
+        }
+        button:hover {
+            background: #00CC00;
+        }
+        .user-info {
+            background: rgba(255,255,255,0.05);
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 500px;
+            margin: 20px auto;
+        }
+        .loading {
+            color: #00FF00;
+        }
     </style>
 </head>
 <body>
-
     <h1>Benvenuto su ICCI FREE!</h1>
-    <p>Sei loggato con l'email: <strong id="userEmail"></strong></p>
-    <br>
+    
+    <div class="user-info">
+        <p>Email: <strong id="userEmail">Caricamento...</strong></p>
+        <p>Username: <strong id="username">Caricamento...</strong></p>
+    </div>
+    
     <button onclick="logout()">Logout</button>
+    <button onclick="window.location.href='/'">Torna alla Home</button>
 
     <script src="js/supabase.js"></script>
     <script>
@@ -24,15 +56,31 @@
             const user = await checkUser();
 
             if (!user) {
-                // Se non c'è nessun utente loggato, lo rimandiamo alla pagina di login
                 window.location.href = '/auth.html';
-            } else {
-                // Altrimenti, mostriamo la sua email
-                document.getElementById('userEmail').textContent = user.email;
+                return;
+            }
+            
+            // Controlla se ha completato il profilo
+            const profileComplete = await hasCompletedProfile(user.id);
+            if (!profileComplete) {
+                window.location.href = '/setup-profile.html';
+                return;
+            }
+            
+            // Mostra i dati dell'utente
+            document.getElementById('userEmail').textContent = user.email;
+            
+            // Carica anche il profilo completo
+            const { data: profile } = await supabaseClient
+                .from('profiles')
+                .select('username')
+                .eq('id', user.id)
+                .single();
+                
+            if (profile) {
+                document.getElementById('username').textContent = profile.username;
             }
         });
     </script>
 </body>
 </html>
-
-
