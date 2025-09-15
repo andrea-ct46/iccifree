@@ -66,23 +66,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     ...(avatarUrl && { avatar_url: avatarUrl }),
                 };
 
+                // Salva i dati del profilo
                 const { error } = await supabaseClient.from('profiles').upsert(updates);
                 if (error) throw error;
                 
-                // --- MODIFICA CRUCIALE PER RISOLVERE IL BUG DEL REFRESH ---
-                // Aggiungiamo un piccolo ritardo prima di reindirizzare.
-                // Questo dà a Supabase il tempo di processare l'aggiornamento prima
-                // che la dashboard faccia il suo controllo.
-                setTimeout(() => {
-                    window.location.href = '/dashboard.html';
-                }, 500); // 500 millisecondi (mezzo secondo)
+                // --- MODIFICA DEFINITIVA PER RISOLVERE IL BUG DEL REFRESH ---
+                // Invece di un ritardo, forziamo l'aggiornamento della sessione.
+                // Questo garantisce che quando la dashboard si carica, avrà i dati più recenti.
+                await supabaseClient.auth.refreshSession();
+                
+                // Ora possiamo reindirizzare immediatamente e in sicurezza.
+                window.location.href = '/dashboard.html';
 
             } catch (error) {
                 console.error("Errore durante il salvataggio del profilo:", error);
                 showMessage(`Errore: ${error.message}`);
                 hideLoading(); // Nasconde il caricamento in caso di errore
             }
-            // Non nascondiamo il caricamento qui, così l'utente lo vede fino al redirect.
         });
     }
 });
