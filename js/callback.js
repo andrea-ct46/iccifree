@@ -1,10 +1,10 @@
 // Questo script si attiva sulla pagina callback.html e gestisce il post-login.
 
 async function handleLoginCallback() {
-    // 1. Attende che Supabase processi la sessione dall'URL.
-    // onAuthStateChange è perfetto qui perché si attiva non appena la sessione è pronta.
+    // onAuthStateChange è l'unico metodo affidabile perché si attiva
+    // non appena Supabase ha finito di processare la sessione dall'URL.
     const { data: { subscription } } = supabaseClient.auth.onAuthStateChange(async (event, session) => {
-        // Ci interessa solo il primo evento 'SIGNED_IN' dopo il redirect.
+        // Ci interessa solo il primo evento 'SIGNED_IN'.
         if (event === 'SIGNED_IN' && session) {
             // Annulla l'ascolto per non eseguire il codice più volte.
             subscription.unsubscribe();
@@ -12,16 +12,17 @@ async function handleLoginCallback() {
             const user = session.user;
 
             try {
-                // 2. Controlla il profilo dell'utente nel database.
+                // Controlla il profilo dell'utente nel database.
                 const { data: profile, error } = await supabaseClient
                     .from('profiles')
                     .select('username, date_of_birth')
                     .eq('id', user.id)
                     .single();
 
+                // Ignoriamo l'errore se il profilo non esiste ancora, è normale.
                 if (error && error.code !== 'PGRST116') throw error;
 
-                // 3. Prende la decisione finale.
+                // Prende la decisione finale.
                 if (!profile || !profile.username || !profile.date_of_birth) {
                     // Profilo incompleto -> vai al setup.
                     window.location.replace('/setup-profile.html');
@@ -38,5 +39,5 @@ async function handleLoginCallback() {
     });
 }
 
-// Avvia il processo non appena la pagina è pronta.
 document.addEventListener('DOMContentLoaded', handleLoginCallback);
+
