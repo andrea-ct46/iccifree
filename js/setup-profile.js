@@ -25,14 +25,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (setupProfileForm) {
         setupProfileForm.addEventListener('submit', async (event) => {
             event.preventDefault();
-            hideLoading(); // Assicurati che il loading sia nascosto all'inizio
-            showMessage(""); // Pulisce i vecchi messaggi
-
             const usernameInput = document.getElementById('username');
             const newUsername = usernameInput.value;
             const dobInput = document.getElementById('dob');
 
-            // --- VALIDAZIONE LATO CLIENT (PRIMA DI INVIARE) ---
             if (!/^[a-zA-Z0-9_]{3,20}$/.test(newUsername)) {
                 showMessage("L'username non è valido. Deve contenere solo lettere, numeri e underscore (_), e essere lungo tra 3 e 20 caratteri.");
                 return;
@@ -70,28 +66,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     ...(avatarUrl && { avatar_url: avatarUrl }),
                 };
 
-                console.log("--- DIAGNOSTICA: TENTATIVO DI SALVATAGGIO ---");
-                console.log("Dati inviati:", updates);
-
                 const { error } = await supabaseClient.from('profiles').upsert(updates);
-
-                // Se c'è un errore, lo catturiamo e lo mostriamo in dettaglio
-                if (error) {
-                    throw error;
-                }
+                if (error) throw error;
                 
-                console.log("--- DIAGNOSTICA: SALVATAGGIO RIUSCITO! ---");
-                window.location.href = '/dashboard.html';
+                // --- MODIFICA CRUCIALE PER RISOLVERE IL BUG DEL REFRESH ---
+                // Aggiungiamo un piccolo ritardo prima di reindirizzare.
+                // Questo dà a Supabase il tempo di processare l'aggiornamento prima
+                // che la dashboard faccia il suo controllo.
+                setTimeout(() => {
+                    window.location.href = '/dashboard.html';
+                }, 500); // 500 millisecondi (mezzo secondo)
 
             } catch (error) {
-                console.error("--- ERRORE FINALE CATTURATO ---");
-                // Mostriamo l'intero oggetto di errore nella console per un'analisi completa
-                console.error("Oggetto di errore completo:", error);
-                // E mostriamo un messaggio chiaro all'utente
-                showMessage(`Errore del database: ${error.message}. Controlla la console (F12) per i dettagli.`);
-            } finally {
-                hideLoading();
+                console.error("Errore durante il salvataggio del profilo:", error);
+                showMessage(`Errore: ${error.message}`);
+                hideLoading(); // Nasconde il caricamento in caso di errore
             }
+            // Non nascondiamo il caricamento qui, così l'utente lo vede fino al redirect.
         });
     }
 });
