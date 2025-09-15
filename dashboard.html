@@ -59,7 +59,7 @@
                 // CONDIZIONE DI CONTROLLO: se il profilo non esiste, O non ha uno username, O non ha una data di nascita...
                 if (!profile || !profile.username || !profile.date_of_birth) {
                     // ...allora reindirizziamo l'utente alla pagina di setup per fargli completare i dati.
-                    window.location.href = 'setup-profile.html';
+                    window.location.href = '/setup-profile.html';
                 } else {
                     // ALTRIMENTI, se il profilo è completo, nascondiamo il messaggio di caricamento e mostriamo la dashboard.
                     document.getElementById('loadingState').style.display = 'none';
