@@ -32,7 +32,8 @@
         <button onclick="logout()">Logout</button>
     </div>
 
-    <script src="js/supabase.js"></script>
+    <!-- MODIFICA: Corretto il percorso dello script da relativo ad assoluto -->
+    <script src="/js/supabase.js"></script>
     <script>
         // Questo script è il "guardiano" dell'app. Si attiva ogni volta che lo stato di autenticazione cambia.
         supabaseClient.auth.onAuthStateChange(async (event, session) => {
