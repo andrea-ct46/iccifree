@@ -1,57 +1,68 @@
-// Logica "Guardiano" + Popolamento Dati
-supabaseClient.auth.onAuthStateChange(async (event, session) => {
-    const user = session?.user;
+// La logica della dashboard ora è più semplice e diretta.
 
+/**
+ * Funzione principale che inizializza la dashboard.
+ */
+async function initializeDashboard() {
+    // Controlla chi è l'utente loggato.
+    const user = await checkUser();
+
+    // Se per qualche motivo un utente non loggato arriva qui, lo reindirizziamo al login.
+    // Questa è una misura di sicurezza aggiuntiva.
     if (!user) {
-        window.location.href = '/auth.html';
+        window.location.replace('/auth.html');
         return;
     }
 
     try {
+        // Recuperiamo tutti i dati del profilo dal database.
         const { data: profile, error } = await supabaseClient
             .from('profiles')
-            .select('username, date_of_birth, avatar_url, bio, followers_count, following_count')
+            .select('*') // Seleziona tutte le colonne
             .eq('id', user.id)
             .single();
 
-        if (error && error.code !== 'PGRST116') throw error;
-
-        if (!profile || !profile.username || !profile.date_of_birth) {
-            window.location.href = '/setup-profile.html';
-        } else {
-            // Se il profilo è completo, nascondi il caricamento e mostra l'app
-            document.getElementById('loadingState').style.display = 'none';
-            document.getElementById('appContainer').style.display = 'flex';
-            
-            // Popola i dati dell'utente
-            populateUserData(profile);
-            // Popola il feed con stream di esempio
-            populateStreamFeed();
-        }
+        if (error) throw error;
+        
+        // Se il profilo esiste, nascondiamo il caricamento e mostriamo l'app.
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('appContainer').style.display = 'flex';
+        
+        // Usiamo i dati recuperati per popolare l'interfaccia.
+        populateUserData(profile);
+        populateStreamFeed();
 
     } catch (error) {
-        console.error("Errore nel recupero del profilo:", error);
-        document.getElementById('loadingState').innerHTML = `<h1>Errore nel caricamento.</h1><p>${error.message}</p>`;
-    }
-});
-
-function populateUserData(profile) {
-    // Aggiorna l'avatar nell'header
-    const userAvatar = document.getElementById('userAvatar');
-    if (profile.avatar_url) {
-        userAvatar.src = profile.avatar_url;
+        console.error("Errore nel caricare i dati della dashboard:", error);
+        // Se c'è un errore qui (es. il profilo è stato cancellato),
+        // l'utente viene mandato alla pagina di setup per sicurezza.
+        window.location.replace('/setup-profile.html');
     }
 }
 
+/**
+ * Popola gli elementi dell'interfaccia con i dati dell'utente.
+ * @param {object} profile - L'oggetto del profilo recuperato da Supabase.
+ */
+function populateUserData(profile) {
+    const userAvatar = document.getElementById('userAvatar');
+    if (userAvatar && profile.avatar_url) {
+        userAvatar.src = profile.avatar_url;
+    }
+    // Qui potresti aggiungere altro codice per popolare nome utente, etc.
+}
+
+/**
+ * Popola il feed con stream di esempio.
+ */
 function populateStreamFeed() {
     const streamGrid = document.getElementById('streamGrid');
-    
-    // Dati di esempio per gli stream
+    if (!streamGrid) return;
+
+    // Dati di esempio (verranno sostituiti con dati reali)
     const streams = [
         { title: "Discussione Libera sulla Politica", streamer: "LiberoPensatore", category: "Talk Show & IRL", viewers: 1200, avatar: "https://placehold.co/40x40/7DF9FF/000000?text=LP" },
         { title: "Gaming Senza Censure", streamer: "GamerOnFire", category: "Gaming", viewers: 854, avatar: "https://placehold.co/40x40/FF5733/FFFFFF?text=GF" },
-        { title: "Musica e Chiacchiere", streamer: "DJMelody", category: "Musica", viewers: 450, avatar: "https://placehold.co/40x40/C70039/FFFFFF?text=DJ" },
-        { title: "Dipingiamo la Notte", streamer: "ArteNotturna", category: "Arte", viewers: 150, avatar: "https://placehold.co/40x40/900C3F/FFFFFF?text=AN" },
     ];
 
     let streamHTML = '';
@@ -75,6 +86,9 @@ function populateStreamFeed() {
             </div>
         `;
     });
-
     streamGrid.innerHTML = streamHTML;
 }
+
+// Avvia l'inizializzazione della dashboard non appena il DOM è pronto.
+document.addEventListener('DOMContentLoaded', initializeDashboard);
+
