@@ -12,78 +12,58 @@
         p { font-size: 18px; }
         button { padding: 10px 20px; font-size: 16px; cursor: pointer; background-color: #00FF00; border: none; font-weight: bold; border-radius: 8px;}
         .loading { font-size: 24px; }
-        .error-box { max-width: 600px; margin: auto; background: #2a2a2a; padding: 20px; border-radius: 8px; border: 1px solid #ff4444; text-align: left; }
-        .error-box p { font-size: 16px; }
-        .error-message { color: #ff4444; font-family: monospace; word-break: break-all; }
     </style>
 </head>
 <body>
 
     <div id="loadingState">
-        <h1 class="loading">Verifica profilo in corso... (Test Semplificato)</h1>
+        <h1 class="loading">Verifica profilo in corso...</h1>
     </div>
 
     <div id="dashboardContent" style="display: none;">
-        <!-- Contenuto dashboard... -->
+        <img id="avatarDisplay" src="https://placehold.co/100x100/121212/FFFFFF?text=PIC" alt="Foto Profilo" class="profile-pic">
+        <h1>Benvenuto su ICCI FREE!</h1>
+        <p>Ciao, <strong id="usernameDisplay"></strong>!</p>
+        <p>Sei loggato con l'email: <strong id="userEmail"></strong></p>
+        <br>
+        <button onclick="logout()">Logout</button>
     </div>
 
     <script src="/js/supabase.js"></script>
     <script>
-        console.log("--- CHECKPOINT 1: Pagina caricata, script avviato. ---");
-        
-        const safetyTimeout = setTimeout(() => {
-            console.error("TIMEOUT: La risposta da Supabase sta impiegando troppo tempo.");
-            // ... (codice timeout invariato)
-        }, 7000);
-
         supabaseClient.auth.onAuthStateChange(async (event, session) => {
-            clearTimeout(safetyTimeout);
-            console.log("--- CHECKPOINT 2: onAuthStateChange si è attivato. Evento:", event);
-            
             const user = session?.user;
 
             if (!user) {
-                console.log("CHECKPOINT 3a: Nessun utente trovato. Reindirizzo a /auth.html");
                 window.location.href = '/auth.html';
                 return;
             }
 
-            console.log("--- CHECKPOINT 3b: Utente trovato:", user.id);
-            console.log("--- CHECKPOINT 4: Inizio richiesta SEMPLIFICATA (solo 'id') al database... ---");
-
             try {
-                // MODIFICA CRUCIALE: Chiediamo solo l'ID per testare la connessione
+                // Riportato allo standard 'profiles'
                 const { data: profile, error } = await supabaseClient
-                    .from('profiles')
-                    .select('id') // <<<--- MODIFICA QUI
+                    .from('profiles') // <<<--- CORRETTO E STANDARDIZZATO
+                    .select('username, date_of_birth, avatar_url')
                     .eq('id', user.id)
                     .single();
 
-                console.log("--- CHECKPOINT 5: Risposta dal database ricevuta. ---", { profile, error });
+                if (error && error.code !== 'PGRST116') throw error;
 
-                if (error && error.code !== 'PGRST116') {
-                    throw error;
+                if (!profile || !profile.username || !profile.date_of_birth) {
+                    window.location.href = '/setup-profile.html';
+                } else {
+                    document.getElementById('loadingState').style.display = 'none';
+                    document.getElementById('dashboardContent').style.display = 'block';
+                    document.getElementById('usernameDisplay').textContent = profile.username;
+                    document.getElementById('userEmail').textContent = user.email;
+                    document.getElementById('avatarDisplay').src = profile.avatar_url || 'https://placehold.co/100x100/121212/FFFFFF?text=??';
                 }
 
-                // Per ora, se il test funziona, mandiamo direttamente al setup del profilo
-                console.log("CHECKPOINT 6: Test di connessione riuscito! Reindirizzo a /setup-profile.html per completare i dati.");
-                window.location.href = '/setup-profile.html';
-
-            } catch (dbError) {
-                console.error("--- ERRORE DATABASE nel CHECKPOINT 5 ---", dbError);
-                const loadingDiv = document.getElementById('loadingState');
-                loadingDiv.innerHTML = `
-                    <div class="error-box">
-                        <h1>Errore nel Caricamento del Profilo (Test Semplificato)</h1>
-                        <p>Anche la richiesta più semplice è fallita. La causa più probabile è che la <strong>Row Level Security (RLS)</strong> sulla tabella 'profiles' non sia attiva.</p>
-                        <hr style="margin: 15px 0; border-color: #444;">
-                        <p><strong>Messaggio di Errore:</strong></p>
-                        <p class="error-message">${dbError.message}</p>
-                    </div>
-                `;
+            } catch (error) {
+                console.error("Errore nel recupero del profilo:", error);
+                document.getElementById('loadingState').innerHTML = `<h1>Errore nel caricamento del profilo.</h1><p>${error.message}</p>`;
             }
         });
     </script>
 </body>
 </html>
-
