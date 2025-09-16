@@ -1,16 +1,17 @@
 // =================================================================================
-// ICCI FREE - LOGICA "GO LIVE" CON DIAGNOSTICA
+// ICCI FREE - LOGICA "GO LIVE" CON WEBRTC
 // =================================================================================
 
+// Variabile globale per mantenere lo stream della fotocamera
+let localStream = null;
+
 document.addEventListener('DOMContentLoaded', async () => {
-    // Seleziona tutti gli elementi interattivi dalla pagina
     const videoElement = document.getElementById('cameraPreview');
     const goLiveBtn = document.getElementById('goLiveBtn');
     const streamTitleInput = document.getElementById('streamTitle');
     const permissionMessage = document.getElementById('permissionMessage');
     const permissionText = document.getElementById('permissionText');
     
-    // --- PASSO 1: Controllo di Sicurezza ---
     const user = await checkUser();
     if (!user) {
         alert("Devi effettuare l'accesso per poter andare in diretta.");
@@ -18,11 +19,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    // --- PASSO 2: Avvio della Fotocamera ---
     async function startCamera() {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: { width: 1280, height: 720 }, // Richiede una qualità HD
+                audio: true
+            });
             videoElement.srcObject = stream;
+            localStream = stream; // Salva lo stream per usarlo dopo
             permissionMessage.style.display = 'none';
         } catch (error) {
             console.error("Errore nell'accesso alla fotocamera:", error);
@@ -33,59 +37,60 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     startCamera();
 
-    // --- PASSO 3: Gestione del Pulsante "GO LIVE" ---
     goLiveBtn.addEventListener('click', async () => {
-        console.log("--- TEST GO LIVE: Pulsante cliccato. ---");
         const title = streamTitleInput.value.trim();
-
         if (!title) {
             alert("Per favore, inserisci un titolo per la tua diretta.");
-            console.warn("Test fallito: Titolo mancante.");
+            return;
+        }
+        if (!localStream) {
+            alert("Fotocamera non ancora pronta o permessi negati.");
             return;
         }
 
         goLiveBtn.disabled = true;
-        goLiveBtn.textContent = 'CREAZIONE IN CORSO...';
+        goLiveBtn.textContent = 'NEGOZIAZIONE IN CORSO...';
 
         try {
-            console.log("CHECKPOINT 1: Controllo utente passato. ID Utente:", user.id);
+            // --- INIZIO LOGICA WEBRTC ---
             
-            const streamData = {
-                user_id: user.id,
-                title: title,
-                category: 'Talk Show' // Categoria di default, puoi cambiarla
-            };
+            // 1. Crea una nuova RTCPeerConnection.
+            // In un'app reale, qui si aggiungerebbero i server STUN/TURN.
+            const peerConnection = new RTCPeerConnection();
 
-            console.log("CHECKPOINT 2: Sto per inviare questi dati al database:", streamData);
+            // 2. Aggiungi le tracce audio e video dalla fotocamera alla connessione.
+            localStream.getTracks().forEach(track => {
+                peerConnection.addTrack(track, localStream);
+            });
 
+            // 3. Crea l' "offerta" SDP (Session Description Protocol).
+            // Questo è un messaggio che descrive il tuo stream.
+            const offer = await peerConnection.createOffer();
+            await peerConnection.setLocalDescription(offer);
+            
+            // --- FINE LOGICA WEBRTC ---
+
+            console.log("Offerta WebRTC creata:", offer.sdp);
+
+            // 4. Salva la diretta e l'offerta SDP nel database.
             const { data, error } = await supabaseClient
                 .from('streams')
-                .insert(streamData)
+                .insert({
+                    user_id: user.id,
+                    title: title,
+                    offer_sdp: offer.sdp // Salva l'offerta
+                })
                 .select()
                 .single();
 
-            console.log("CHECKPOINT 3: Risposta ricevuta da Supabase.");
-
-            if (error) {
-                // Se c'è un errore, lo lanciamo per essere catturato dal blocco 'catch'
-                throw error;
-            }
-
-            if (!data) {
-                // Questo è un caso anomalo: nessun errore ma nessun dato.
-                throw new Error("Supabase non ha restituito i dati della diretta creata.");
-            }
-
-            console.log("CHECKPOINT 4: Diretta creata con successo! Dati:", data);
+            if (error) throw error;
             
-            console.log(`CHECKPOINT 5: Reindirizzamento a /stream.html?id=${data.id}`);
+            // 5. Reindirizza alla pagina dello streaming.
             window.location.href = `/stream.html?id=${data.id}`;
 
         } catch (error) {
-            console.error("--- ERRORE FINALE CATTURATO ---");
-            console.error("Oggetto di errore completo restituito da Supabase:", error);
-            alert(`Si è verificato un errore. Impossibile avviare la diretta: ${error.message}. Controlla la console (F12) per i dettagli.`);
-            
+            console.error("Errore nella creazione della diretta WebRTC:", error.message);
+            alert("Si è verificato un errore. Impossibile avviare la diretta.");
             goLiveBtn.disabled = false;
             goLiveBtn.textContent = 'GO LIVE';
         }
