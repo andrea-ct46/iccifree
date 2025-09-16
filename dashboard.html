@@ -5,338 +5,61 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ICCI FREE - Dashboard</title>
     <link rel="stylesheet" href="/css/dashboard.css">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
-    <style>
-        /* Mobile Search Styles */
-        .mobile-search-toggle {
-            display: none;
-            background: none;
-            border: none;
-            color: var(--text-primary);
-            font-size: 20px;
-            cursor: pointer;
-            padding: 8px;
-            margin-right: 8px;
-        }
-        
-        .mobile-search-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.95);
-            z-index: 1000;
-            padding: 20px;
-        }
-        
-        .mobile-search-overlay.active {
-            display: flex;
-            flex-direction: column;
-            animation: fadeIn 0.3s ease;
-        }
-        
-        .mobile-search-header {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            margin-bottom: 20px;
-        }
-        
-        .mobile-search-input {
-            flex: 1;
-            padding: 14px 16px;
-            background: var(--surface-dark);
-            border: 2px solid var(--primary-yellow);
-            border-radius: 12px;
-            color: var(--text-primary);
-            font-size: 16px;
-            outline: none;
-        }
-        
-        .close-search {
-            background: var(--surface-medium);
-            border: none;
-            color: var(--text-primary);
-            padding: 14px;
-            border-radius: 12px;
-            cursor: pointer;
-            font-size: 18px;
-        }
-        
-        .search-results-mobile {
-            flex: 1;
-            overflow-y: auto;
-            margin-top: 20px;
-        }
-        
-        .search-suggestion {
-            padding: 12px;
-            background: var(--surface-dark);
-            margin-bottom: 8px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .search-suggestion:hover {
-            background: var(--surface-medium);
-            padding-left: 20px;
-        }
-        
-        @media (max-width: 768px) {
-            .mobile-search-toggle {
-                display: block;
-            }
-            
-            .search-bar {
-                display: none !important;
-            }
-            
-            /* Aggiusta layout header mobile */
-            .app-header {
-                padding: 0 12px;
-            }
-            
-            .logo {
-                font-size: 20px;
-            }
-            
-            .header-actions {
-                gap: 8px;
-            }
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-    </style>
 </head>
 <body>
-    <!-- Loading State -->
+
     <div id="loadingState">
         <div class="spinner"></div>
-        <p class="loading-text">Caricamento dashboard...</p>
+        <p class="loading-text">Verifica profilo in corso...</p>
     </div>
-    
-    <!-- Mobile Search Overlay -->
-    <div class="mobile-search-overlay" id="mobileSearchOverlay">
-        <div class="mobile-search-header">
-            <input 
-                type="text" 
-                class="mobile-search-input" 
-                id="mobileSearchInput" 
-                placeholder="Cerca streamer, categorie, giochi..."
-                autocomplete="off"
-                autofocus
-            >
-            <button class="close-search" onclick="closeMobileSearch()">✕</button>
-        </div>
-        
-        <div class="search-results-mobile">
-            <div class="search-suggestion" onclick="searchFor('Gaming')">🎮 Gaming</div>
-            <div class="search-suggestion" onclick="searchFor('IRL')">🌍 IRL & Talk</div>
-            <div class="search-suggestion" onclick="searchFor('Musica')">🎵 Musica</div>
-            <div class="search-suggestion" onclick="searchFor('Arte')">🎨 Arte & Creatività</div>
-            <div class="search-suggestion" onclick="searchFor('Tech')">💻 Tech & Coding</div>
-            <div class="search-suggestion" onclick="searchFor('Crypto')">₿ Crypto</div>
-        </div>
-    </div>
-    
-    <!-- App Container -->
+
     <div id="appContainer" style="display: none;">
-        <!-- Header -->
         <header class="app-header">
-            <!-- Mobile Menu Toggle -->
-            <button class="mobile-menu-toggle" onclick="toggleMobileSidebar()">☰</button>
-            
-            <!-- Logo -->
-            <div class="logo" onclick="window.location.href='/'">
-                ICCI<span class="free">FREE</span>
-            </div>
-            
-            <!-- Search Bar Desktop -->
+            <div class="logo">ICCI<span class="free">FREE</span></div>
             <div class="search-bar">
-                <input type="text" placeholder="Cerca streamer o categorie..." id="searchInput">
+                <input type="text" placeholder="Cerca streamer o categorie...">
             </div>
-            
-            <!-- Header Actions -->
             <div class="header-actions">
-                <!-- Mobile Search Button -->
-                <button class="mobile-search-toggle" onclick="openMobileSearch()">🔍</button>
-                
-                <a href="#" class="go-live-btn">
-                    <span>GO LIVE</span>
-                </a>
+                <!-- MODIFICA CRUCIALE: Il pulsante ora è un link funzionante -->
+                <a href="/golive.html" class="go-live-btn">GO LIVE</a>
                 <div class="profile-menu">
                     <img id="userAvatar" src="https://placehold.co/40x40/1a1a1a/FFFFFF?text=?" alt="User Avatar" class="user-avatar">
                     <div class="profile-dropdown">
-                        <a href="#" id="myProfileLink">👤 Il mio Profilo</a>
-                        <a href="/setup-profile.html">⚙️ Impostazioni</a>
-                        <a href="#" onclick="showStats()">📊 Statistiche</a>
-                        <a href="#" onclick="logout()">🚪 Logout</a>
+                        <a href="#" id="myProfileLink">Il mio Profilo</a>
+                        <a href="#">Impostazioni</a>
+                        <a href="#" onclick="logout()">Logout</a>
                     </div>
                 </div>
             </div>
         </header>
-        
-        <!-- Main Content -->
+
         <main class="main-content">
-            <!-- Sidebar -->
-            <aside class="sidebar" id="sidebar">
-                <h3>Categorie Popolari</h3>
+            <aside class="sidebar">
+                <h3>Consigliati per te</h3>
+                <div id="sidebar-streamers">
+                    <!-- Streamer consigliati verranno inseriti qui da JS -->
+                </div>
+                <h3>Categorie</h3>
                 <ul class="category-list">
-                    <li><a href="#" onclick="filterByCategory('all')">🔥 Tutti gli Stream</a></li>
-                    <li><a href="#" onclick="filterByCategory('gaming')">🎮 Gaming</a></li>
-                    <li><a href="#" onclick="filterByCategory('irl')">🌍 IRL & Talk</a></li>
-                    <li><a href="#" onclick="filterByCategory('music')">🎵 Musica</a></li>
-                    <li><a href="#" onclick="filterByCategory('art')">🎨 Arte & Creatività</a></li>
-                    <li><a href="#" onclick="filterByCategory('tech')">💻 Tech & Coding</a></li>
-                    <li><a href="#" onclick="filterByCategory('crypto')">₿ Crypto & Finance</a></li>
-                </ul>
-                
-                <h3>Following</h3>
-                <ul class="category-list" id="followingList">
-                    <li><a href="#" style="opacity: 0.5;">Nessuno seguito</a></li>
-                </ul>
-                
-                <h3>Canali Consigliati</h3>
-                <ul class="category-list">
-                    <li><a href="/profile.html?user=LiberoPensatore">💭 LiberoPensatore</a></li>
-                    <li><a href="/profile.html?user=GamerOnFire">🔥 GamerOnFire</a></li>
-                    <li><a href="/profile.html?user=CryptoRebel">💎 CryptoRebel</a></li>
+                    <li><a href="#">Talk Show & IRL</a></li>
+                    <li><a href="#">Gaming</a></li>
+                    <li><a href="#">Musica</a></li>
+                    <li><a href="#">Arte</a></li>
                 </ul>
             </aside>
-            
-            <!-- Feed Container -->
+
             <section class="feed-container">
-                <!-- Category Title -->
-                <h2 id="categoryTitle">🔥 Stream in Evidenza</h2>
-                
-                <!-- Stream Grid -->
+                <h2>Stream in Evidenza</h2>
                 <div class="stream-grid" id="streamGrid">
-                    <!-- Le card verranno popolate da JavaScript -->
-                </div>
-                
-                <!-- Empty State -->
-                <div id="emptyState" style="display: none; text-align: center; padding: 60px 20px;">
-                    <div style="font-size: 72px; margin-bottom: 20px;">📺</div>
-                    <h3 style="color: var(--text-secondary); margin-bottom: 10px;">Nessuno stream live</h3>
-                    <p style="color: var(--text-secondary); margin-bottom: 30px;">Sii il primo a iniziare uno stream in questa categoria!</p>
-                    <a href="#" class="go-live-btn" style="display: inline-block;">Inizia a Streammare</a>
+                    <!-- Le card degli stream verranno inserite qui da JS -->
                 </div>
             </section>
         </main>
     </div>
-    
-    <!-- Scripts -->
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="/js/supabase.js"></script>
     <script src="/js/dashboard.js"></script>
-    
-    <!-- Mobile Search & Sidebar Scripts -->
-    <script>
-        // Mobile Search Functions
-        function openMobileSearch() {
-            const overlay = document.getElementById('mobileSearchOverlay');
-            const input = document.getElementById('mobileSearchInput');
-            overlay.classList.add('active');
-            
-            // Focus sull'input dopo un breve delay per l'animazione
-            setTimeout(() => {
-                input.focus();
-            }, 100);
-        }
-        
-        function closeMobileSearch() {
-            const overlay = document.getElementById('mobileSearchOverlay');
-            overlay.classList.remove('active');
-            
-            // Se c'era una ricerca, mantienila
-            const mobileInput = document.getElementById('mobileSearchInput');
-            const desktopInput = document.getElementById('searchInput');
-            if (mobileInput.value && desktopInput) {
-                desktopInput.value = mobileInput.value;
-                filterStreams(mobileInput.value);
-            }
-        }
-        
-        function searchFor(term) {
-            const input = document.getElementById('mobileSearchInput');
-            input.value = term;
-            filterStreams(term.toLowerCase());
-            closeMobileSearch();
-        }
-        
-        // Mobile search input handler
-        document.getElementById('mobileSearchInput').addEventListener('input', (e) => {
-            const query = e.target.value.toLowerCase().trim();
-            // Usa la stessa funzione filterStreams del desktop
-            if (window.filterStreams) {
-                filterStreams(query);
-            }
-        });
-        
-        // Enter key on mobile search
-        document.getElementById('mobileSearchInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                closeMobileSearch();
-            }
-        });
-        
-        // Mobile Sidebar Toggle
-        function toggleMobileSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('mobile-open');
-        }
-        
-        // Close sidebar when clicking outside
-        document.addEventListener('click', (e) => {
-            const sidebar = document.getElementById('sidebar');
-            const toggle = document.querySelector('.mobile-menu-toggle');
-            if (window.innerWidth <= 768 && 
-                !sidebar.contains(e.target) && 
-                !toggle.contains(e.target) &&
-                sidebar.classList.contains('mobile-open')) {
-                sidebar.classList.remove('mobile-open');
-            }
-        });
-        
-        // Category filter
-        function filterByCategory(category) {
-            const title = document.getElementById('categoryTitle');
-            const titles = {
-                'all': '🔥 Stream in Evidenza',
-                'gaming': '🎮 Gaming',
-                'irl': '🌍 IRL & Talk Shows',
-                'music': '🎵 Musica Live',
-                'art': '🎨 Arte & Creatività',
-                'tech': '💻 Tech & Coding',
-                'crypto': '₿ Crypto & Finance'
-            };
-            title.textContent = titles[category] || '🔥 Stream in Evidenza';
-            
-            // Chiudi sidebar su mobile dopo selezione
-            if (window.innerWidth <= 768) {
-                document.getElementById('sidebar').classList.remove('mobile-open');
-            }
-            
-            console.log('Filtrando per categoria:', category);
-        }
-        
-        function showStats() {
-            alert('📊 Statistiche coming soon!\n\n• Tempo di streaming: 0h\n• Spettatori totali: 0\n• Followers: 0');
-        }
-        
-        // Sync desktop and mobile search
-        const desktopSearch = document.getElementById('searchInput');
-        if (desktopSearch) {
-            desktopSearch.addEventListener('input', (e) => {
-                document.getElementById('mobileSearchInput').value = e.target.value;
-            });
-        }
-    </script>
 </body>
 </html>
+
