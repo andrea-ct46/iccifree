@@ -154,4 +154,101 @@ async function loadFollowData(profile) {
 
 // Tabs
 async function showTab(tabName) {
-    const content
+    const contentGrid = document.querySelector('.content-grid');
+    const tabs = document.querySelectorAll('.content-tabs .tab');
+
+    tabs.forEach(tab => {
+        tab.classList.remove('active');
+        if (tab.textContent.toLowerCase().includes(tabName)) tab.classList.add('active');
+    });
+
+    const params = new URLSearchParams(window.location.search);
+    const username = params.get('user');
+    const { data: profile } = await supabaseClient
+        .from('profiles')
+        .select('id')
+        .eq('username', username)
+        .single();
+
+    if (!profile) {
+        contentGrid.innerHTML = '<p>Utente non trovato.</p>';
+        return;
+    }
+
+    switch(tabName) {
+        case 'followers':
+            const followers = await window.followingSystem?.getFollowers(profile.id) || [];
+            displayFollowers(followers);
+            break;
+        case 'following':
+            const following = await window.followingSystem?.getFollowing(profile.id) || [];
+            displayFollowing(following);
+            break;
+        case 'clips':
+            contentGrid.innerHTML = '<p id="noContentMessage">Nessun clip disponibile.</p>';
+            break;
+        default:
+            contentGrid.innerHTML = '<p id="noContentMessage">Nessun contenuto da mostrare.</p>';
+    }
+}
+
+// Display followers
+function displayFollowers(followers) {
+    const contentGrid = document.querySelector('.content-grid');
+    if (!followers || followers.length === 0) {
+        contentGrid.innerHTML = '<p id="noContentMessage">Nessun follower ancora.</p>';
+        return;
+    }
+
+    let html = '<div style="display:grid;gap:16px;padding:20px;">';
+    followers.forEach(f => {
+        const avatar = f.follower_avatar || `https://placehold.co/50x50/FFD700/000000?text=${f.follower_username?.substring(0,2).toUpperCase()}`;
+        html += `<div style="display:flex;align-items:center;gap:16px;padding:16px;background:var(--surface-dark);border-radius:12px;">
+            <a href="/profile.html?user=${f.follower_username}">
+                <img src="${avatar}" alt="${f.follower_username}" style="width:50px;height:50px;border-radius:50%;border:2px solid var(--border-color);">
+            </a>
+            <div style="flex:1;">
+                <a href="/profile.html?user=${f.follower_username}" style="color:var(--text-primary);text-decoration:none;font-weight:600;">
+                    ${f.follower_username}
+                </a>
+                <p style="color:var(--text-secondary);font-size:14px;margin:4px 0;">
+                    ${f.follower_bio || 'Nessuna bio'}
+                </p>
+            </div>
+        </div>`;
+    });
+    html += '</div>';
+    contentGrid.innerHTML = html;
+}
+
+// Display following
+function displayFollowing(following) {
+    const contentGrid = document.querySelector('.content-grid');
+    if (!following || following.length === 0) {
+        contentGrid.innerHTML = '<p id="noContentMessage">Non segui nessuno ancora.</p>';
+        return;
+    }
+
+    let html = '<div style="display:grid;gap:16px;padding:20px;">';
+    following.forEach(f => {
+        const avatar = f.following_avatar || `https://placehold.co/50x50/FFD700/000000?text=${f.following_username?.substring(0,2).toUpperCase()}`;
+        html += `<div style="display:flex;align-items:center;gap:16px;padding:16px;background:var(--surface-dark);border-radius:12px;">
+            <a href="/profile.html?user=${f.following_username}">
+                <img src="${avatar}" alt="${f.following_username}" style="width:50px;height:50px;border-radius:50%;border:2px solid var(--border-color);">
+            </a>
+            <div style="flex:1;">
+                <a href="/profile.html?user=${f.following_username}" style="color:var(--text-primary);text-decoration:none;font-weight:600;">
+                    ${f.following_username}
+                </a>
+                <p style="color:var(--text-secondary);font-size:14px;margin:4px 0;">
+                    ${f.following_bio || 'Nessuna bio'}
+                </p>
+            </div>
+        </div>`;
+    });
+    html += '</div>';
+    contentGrid.innerHTML = html;
+}
+
+// Avvia la pagina
+initializeProfilePage();
