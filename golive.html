@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GO LIVE - ICCI FREE</title>
+    <link rel="stylesheet" href="/css/golive.css">
+</head>
+<body>
+
+    <video id="cameraPreview" autoplay playsinline muted></video>
+
+    <div class="overlay-container">
+        <div class="controls-header">
+            <a href="/dashboard.html" class="close-btn">&times;</a>
+        </div>
+
+        <div class="controls-main">
+            <input type="text" id="streamTitle" class="stream-title-input" placeholder="Dai un titolo alla tua diretta...">
+            <button id="goLiveBtn" class="go-live-button">GO LIVE</button>
+        </div>
+
+        <div class="controls-footer">
+            <button id="flipCameraBtn" class="icon-button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 19H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5"/><path d="M13 5h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-5"/><path d="m17 12-4-4 4-4"/><path d="m7 12 4 4-4 4"/></svg>
+            </button>
+            <button id="toggleMicBtn" class="icon-button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
+            </button>
+        </div>
+    </div>
+    
+    <div id="permissionMessage" class="permission-message" style="display: none;">
+        <p id="permissionText">Richiesta permessi per fotocamera e microfono...</p>
+        <button id="requestPermissionBtn" style="display: none;">Abilita Fotocamera</button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="/js/supabase.js"></script>
+    <script src="/js/golive.js"></script>
+
+</body>
+</html>
