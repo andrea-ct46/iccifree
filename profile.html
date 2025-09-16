@@ -4,28 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profilo Utente - ICCI FREE</title>
+    <!-- Link al file CSS del profilo, che importa a sua volta quello della dashboard -->
     <link rel="stylesheet" href="/css/profile.css">
 </head>
 <body>
-    <!-- Header condiviso (potrebbe diventare un componente in futuro) -->
+    <!-- Header condiviso -->
     <header class="app-header">
         <a href="/dashboard.html" class="logo-link">
             <div class="logo">ICCI<span class="free">FREE</span></div>
         </a>
         <div class="header-actions">
-            <!-- Questo si popolerà dinamicamente -->
-            <a href="#" id="headerActionBtn" style="display: none;"></a>
+            <!-- Questo spazio può essere usato in futuro per altri pulsanti -->
         </div>
     </header>
 
-    <!-- Contenitore principale -->
+    <!-- Contenitore principale del profilo, nascosto di default -->
     <main id="profileContainer" style="display: none;">
         <div class="profile-header">
             <div class="profile-avatar">
-                <img id="profileAvatar" src="https://placehold.co/150x150/1a1a1a/FFFFFF?text=?" alt="Avatar utente">
+                <img id="profileAvatar" src="https://placehold.co/150x150/181818/A0A0A0?text=?" alt="Avatar utente">
             </div>
             <div class="profile-info">
-                <h1 id="profileUsername"></h1>
+                <h1 id="profileUsername">Caricamento...</h1>
                 <div class="profile-stats">
                     <div class="stat"><strong>0</strong> Streams</div>
                     <div class="stat"><strong id="followersCount">0</strong> Followers</div>
@@ -33,7 +33,7 @@
                 </div>
                 <p id="profileBio"></p>
                 <div class="profile-actions" id="profileActions">
-                    <!-- Pulsanti Follow/Edit verranno inseriti qui -->
+                    <!-- Il pulsante Follow/Edit verrà inserito qui da JavaScript -->
                 </div>
             </div>
         </div>
@@ -44,20 +44,22 @@
                 <button class="tab">Clips</button>
             </div>
             <div class="content-grid">
-                <p id="noContentMessage">Nessun contenuto da mostrare.</p>
+                <p id="noContentMessage">Questo utente non ha ancora pubblicato contenuti.</p>
             </div>
         </div>
     </main>
 
-    <!-- Stato di caricamento o errore -->
+    <!-- Contenitore per i messaggi di stato (caricamento o errore) -->
     <div id="messageState" class="message-container">
         <div class="spinner"></div>
         <p id="messageText">Caricamento profilo...</p>
     </div>
 
+    <!-- Script necessari, in ordine di dipendenza -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="/js/supabase.js"></script>
-    <script src="/js/profile.js"></script>
+    <script src="/js/following.js"></script> <!-- Prima il motore social -->
+    <script src="/js/profile.js"></script>   <!-- Poi la logica della pagina -->
 </body>
 </html>
 
