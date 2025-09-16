@@ -552,30 +552,3 @@
         display: block;
     }
 }
-/* Stile per la barra di ricerca su mobile */
-@media (max-width: 768px) {
-  .search-bar {
-    width: 100%;
-    margin: 10px 0;
-    display: flex;
-    order: 2; /* va sotto al menu hamburger */
-  }
-
-  .search-bar input {
-    flex: 1;
-    padding: 8px 12px;
-    border-radius: 8px;
-    border: none;
-    outline: none;
-  }
-
-  .search-bar button {
-    margin-left: 8px;
-    padding: 8px 12px;
-    border-radius: 8px;
-    border: none;
-    background: var(--primary-yellow);
-    color: #000;
-    font-weight: bold;
-  }
-}
