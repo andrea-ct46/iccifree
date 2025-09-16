@@ -6,12 +6,143 @@
     <title>ICCI FREE - Dashboard</title>
     <link rel="stylesheet" href="/css/dashboard.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
+    <style>
+        /* Mobile Search Styles */
+        .mobile-search-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 20px;
+            cursor: pointer;
+            padding: 8px;
+            margin-right: 8px;
+        }
+        
+        .mobile-search-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.95);
+            z-index: 1000;
+            padding: 20px;
+        }
+        
+        .mobile-search-overlay.active {
+            display: flex;
+            flex-direction: column;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .mobile-search-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .mobile-search-input {
+            flex: 1;
+            padding: 14px 16px;
+            background: var(--surface-dark);
+            border: 2px solid var(--primary-yellow);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 16px;
+            outline: none;
+        }
+        
+        .close-search {
+            background: var(--surface-medium);
+            border: none;
+            color: var(--text-primary);
+            padding: 14px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 18px;
+        }
+        
+        .search-results-mobile {
+            flex: 1;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+        
+        .search-suggestion {
+            padding: 12px;
+            background: var(--surface-dark);
+            margin-bottom: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .search-suggestion:hover {
+            background: var(--surface-medium);
+            padding-left: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .mobile-search-toggle {
+                display: block;
+            }
+            
+            .search-bar {
+                display: none !important;
+            }
+            
+            /* Aggiusta layout header mobile */
+            .app-header {
+                padding: 0 12px;
+            }
+            
+            .logo {
+                font-size: 20px;
+            }
+            
+            .header-actions {
+                gap: 8px;
+            }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
 </head>
 <body>
     <!-- Loading State -->
     <div id="loadingState">
         <div class="spinner"></div>
         <p class="loading-text">Caricamento dashboard...</p>
+    </div>
+    
+    <!-- Mobile Search Overlay -->
+    <div class="mobile-search-overlay" id="mobileSearchOverlay">
+        <div class="mobile-search-header">
+            <input 
+                type="text" 
+                class="mobile-search-input" 
+                id="mobileSearchInput" 
+                placeholder="Cerca streamer, categorie, giochi..."
+                autocomplete="off"
+                autofocus
+            >
+            <button class="close-search" onclick="closeMobileSearch()">✕</button>
+        </div>
+        
+        <div class="search-results-mobile">
+            <div class="search-suggestion" onclick="searchFor('Gaming')">🎮 Gaming</div>
+            <div class="search-suggestion" onclick="searchFor('IRL')">🌍 IRL & Talk</div>
+            <div class="search-suggestion" onclick="searchFor('Musica')">🎵 Musica</div>
+            <div class="search-suggestion" onclick="searchFor('Arte')">🎨 Arte & Creatività</div>
+            <div class="search-suggestion" onclick="searchFor('Tech')">💻 Tech & Coding</div>
+            <div class="search-suggestion" onclick="searchFor('Crypto')">₿ Crypto</div>
+        </div>
     </div>
     
     <!-- App Container -->
@@ -26,13 +157,16 @@
                 ICCI<span class="free">FREE</span>
             </div>
             
-            <!-- Search Bar -->
+            <!-- Search Bar Desktop -->
             <div class="search-bar">
                 <input type="text" placeholder="Cerca streamer o categorie..." id="searchInput">
             </div>
             
             <!-- Header Actions -->
             <div class="header-actions">
+                <!-- Mobile Search Button -->
+                <button class="mobile-search-toggle" onclick="openMobileSearch()">🔍</button>
+                
                 <a href="#" class="go-live-btn">
                     <span>GO LIVE</span>
                 </a>
@@ -102,14 +236,63 @@
     <script src="/js/supabase.js"></script>
     <script src="/js/dashboard.js"></script>
     
-    <!-- Mobile Sidebar Toggle Script -->
+    <!-- Mobile Search & Sidebar Scripts -->
     <script>
+        // Mobile Search Functions
+        function openMobileSearch() {
+            const overlay = document.getElementById('mobileSearchOverlay');
+            const input = document.getElementById('mobileSearchInput');
+            overlay.classList.add('active');
+            
+            // Focus sull'input dopo un breve delay per l'animazione
+            setTimeout(() => {
+                input.focus();
+            }, 100);
+        }
+        
+        function closeMobileSearch() {
+            const overlay = document.getElementById('mobileSearchOverlay');
+            overlay.classList.remove('active');
+            
+            // Se c'era una ricerca, mantienila
+            const mobileInput = document.getElementById('mobileSearchInput');
+            const desktopInput = document.getElementById('searchInput');
+            if (mobileInput.value && desktopInput) {
+                desktopInput.value = mobileInput.value;
+                filterStreams(mobileInput.value);
+            }
+        }
+        
+        function searchFor(term) {
+            const input = document.getElementById('mobileSearchInput');
+            input.value = term;
+            filterStreams(term.toLowerCase());
+            closeMobileSearch();
+        }
+        
+        // Mobile search input handler
+        document.getElementById('mobileSearchInput').addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            // Usa la stessa funzione filterStreams del desktop
+            if (window.filterStreams) {
+                filterStreams(query);
+            }
+        });
+        
+        // Enter key on mobile search
+        document.getElementById('mobileSearchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                closeMobileSearch();
+            }
+        });
+        
+        // Mobile Sidebar Toggle
         function toggleMobileSidebar() {
             const sidebar = document.getElementById('sidebar');
             sidebar.classList.toggle('mobile-open');
         }
         
-        // Chiudi sidebar quando clicchi fuori su mobile
+        // Close sidebar when clicking outside
         document.addEventListener('click', (e) => {
             const sidebar = document.getElementById('sidebar');
             const toggle = document.querySelector('.mobile-menu-toggle');
@@ -121,7 +304,7 @@
             }
         });
         
-        // Funzioni placeholder per le azioni
+        // Category filter
         function filterByCategory(category) {
             const title = document.getElementById('categoryTitle');
             const titles = {
@@ -135,12 +318,24 @@
             };
             title.textContent = titles[category] || '🔥 Stream in Evidenza';
             
-            // TODO: Implementare filtro reale
+            // Chiudi sidebar su mobile dopo selezione
+            if (window.innerWidth <= 768) {
+                document.getElementById('sidebar').classList.remove('mobile-open');
+            }
+            
             console.log('Filtrando per categoria:', category);
         }
         
         function showStats() {
             alert('📊 Statistiche coming soon!\n\n• Tempo di streaming: 0h\n• Spettatori totali: 0\n• Followers: 0');
+        }
+        
+        // Sync desktop and mobile search
+        const desktopSearch = document.getElementById('searchInput');
+        if (desktopSearch) {
+            desktopSearch.addEventListener('input', (e) => {
+                document.getElementById('mobileSearchInput').value = e.target.value;
+            });
         }
     </script>
 </body>
