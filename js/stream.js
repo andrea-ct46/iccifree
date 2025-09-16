@@ -7,6 +7,15 @@ let peerConnection;
 let localStream;
 let streamId;
 
+// --- NUOVA CONFIGURAZIONE WEBRTC ---
+// Aggiungiamo dei server STUN pubblici per permettere ai peer di trovarsi su internet.
+const rtcConfig = {
+    iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' }
+    ]
+};
+
 /**
  * Funzione principale che si avvia al caricamento della pagina
  */
@@ -66,8 +75,8 @@ async function startStreamAsStreamer(stream) {
     localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
     videoElement.srcObject = localStream;
 
-    // 2. Prepara la connessione WebRTC
-    peerConnection = new RTCPeerConnection();
+    // 2. Prepara la connessione WebRTC usando la nuova configurazione STUN
+    peerConnection = new RTCPeerConnection(rtcConfig);
     localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
 
     // 3. Ascolta in tempo reale le "risposte" (answer) degli spettatori
@@ -105,8 +114,8 @@ async function startStreamAsViewer(stream) {
     document.getElementById('backToDashboardBtn').style.display = 'block';
     const videoElement = document.getElementById('streamVideo');
 
-    // 1. Prepara la connessione WebRTC
-    peerConnection = new RTCPeerConnection();
+    // 1. Prepara la connessione WebRTC usando la nuova configurazione STUN
+    peerConnection = new RTCPeerConnection(rtcConfig);
 
     // 2. Quando riceve il video dallo streamer, lo mostra nell'elemento <video>
     peerConnection.ontrack = event => {
@@ -134,7 +143,16 @@ async function startStreamAsViewer(stream) {
 
 
 // --- Funzioni di supporto (invariate) ---
-function populateStreamInfo(stream) { /* ... codice invariato ... */ }
+function populateStreamInfo(stream) { 
+    document.title = `${stream.title} - ICCI FREE`;
+    document.getElementById('streamTitle').textContent = stream.title;
+    
+    const streamerProfile = stream.profiles;
+    if (streamerProfile) {
+        document.getElementById('streamerName').textContent = streamerProfile.username;
+        document.getElementById('streamerAvatar').src = streamerProfile.avatar_url || `https://placehold.co/50x50/181818/A0A0A0?text=${streamerProfile.username.charAt(0).toUpperCase()}`;
+    }
+ }
 async function setupFollowButton(streamerProfile) { /* ... codice invariato ... */ }
 function updateFollowButtonUI(button, isFollowing) { /* ... codice invariato ... */ }
 async function setupChat(streamId) { /* ... codice invariato ... */ }
