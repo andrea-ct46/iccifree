@@ -118,7 +118,7 @@ async function setupActionButtons(profile) {
         if (currentUser.id === profile.id) {
             // L'utente sta guardando il suo stesso profilo
             profileActionsDiv.innerHTML = `
-                <a href="/setup-profile.html" class="action-btn edit">
+                <a href="/edit-profile.html" class="action-btn edit">
                     ✏️ Modifica Profilo
                 </a>`;
             headerActionBtn.style.display = 'none';
