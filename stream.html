@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LIVE - ICCI FREE</title>
+    <!-- Link al file CSS che creeremo nel prossimo passo -->
+    <link rel="stylesheet" href="/css/stream.css">
+</head>
+<body>
+
+    <!-- Stato di caricamento iniziale -->
+    <div id="loadingState">
+        <div class="spinner"></div>
+        <p class="loading-text">Caricamento della diretta...</p>
+    </div>
+
+    <!-- Contenitore principale dell'app (visibile dopo il caricamento) -->
+    <div id="streamPageContainer" style="display: none;">
+        <!-- Area video principale -->
+        <div class="video-container">
+            <div class="video-player">
+                <!-- In questa fase, useremo un'immagine placeholder.
+                     In futuro, qui verrà renderizzato il video in diretta (WebRTC). -->
+                <img src="https://placehold.co/1280x720/101010/A0A0A0?text=STREAM+OFFLINE" alt="Stream Video" id="streamVideoPlaceholder">
+            </div>
+            <div class="stream-info-bar">
+                <div class="streamer-info">
+                    <img id="streamerAvatar" src="https://placehold.co/50x50/181818/A0A0A0?text=?" alt="Streamer Avatar" class="streamer-avatar">
+                    <div>
+                        <h1 id="streamTitle">Titolo della diretta...</h1>
+                        <p id="streamerName">Nome streamer...</p>
+                    </div>
+                </div>
+                <div class="stream-actions">
+                    <button id="followBtn" class="follow-button">Segui</button>
+                    <!-- Qui aggiungeremo altri pulsanti come "Dona", "Condividi", etc. -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Colonna della chat laterale -->
+        <div class="chat-container">
+            <header class="chat-header">
+                <h3>CHAT DELLA DIRETTA</h3>
+            </header>
+            <div class="chat-messages" id="chatMessages">
+                <!-- I messaggi della chat verranno inseriti qui da JS -->
+            </div>
+            <footer class="chat-input-area">
+                <input type="text" id="chatInput" class="chat-input" placeholder="Invia un messaggio...">
+                <button id="sendMessageBtn" class="send-message-btn">Invia</button>
+            </footer>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="/js/supabase.js"></script>
+    <!-- Link ai file JS che creeremo dopo il CSS -->
+    <script src="/js/following.js"></script>
+    <script src="/js/stream.js"></script>
+</body>
+</html>
+
