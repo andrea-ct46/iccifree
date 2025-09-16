@@ -11,18 +11,15 @@ async function followUser(userIdToFollow) {
     try {
         const currentUser = await checkUser();
         if (!currentUser) {
-            // Utente non loggato, redirect al login
             window.location.href = '/auth.html';
             return false;
         }
 
-        // Non puoi seguire te stesso
         if (currentUser.id === userIdToFollow) {
             showNotification('Non puoi seguire te stesso! 😅', 'warning');
             return false;
         }
 
-        // Inserisci nella tabella follows
         const { error } = await supabaseClient
             .from('follows')
             .insert({
@@ -40,13 +37,6 @@ async function followUser(userIdToFollow) {
         }
 
         showNotification('Ora segui questo utente! 🎉', 'success');
-        
-        // Aggiorna UI
-        updateFollowButton(userIdToFollow, true);
-        
-        // Opzionale: Crea notifica per l'utente seguito
-        await createNotification(userIdToFollow, 'new_follower', currentUser.id);
-        
         return true;
     } catch (error) {
         console.error('Errore nel follow:', error);
@@ -68,7 +58,6 @@ async function unfollowUser(userIdToUnfollow) {
             return false;
         }
 
-        // Elimina dalla tabella follows
         const { error } = await supabaseClient
             .from('follows')
             .delete()
@@ -78,11 +67,7 @@ async function unfollowUser(userIdToUnfollow) {
         if (error) throw error;
 
         showNotification('Hai smesso di seguire questo utente', 'info');
-        
-        // Aggiorna UI
-        updateFollowButton(userIdToUnfollow, false);
-        
-        return true;
+        return false;
     } catch (error) {
         console.error('Errore nell\'unfollow:', error);
         showNotification('Errore nel smettere di seguire', 'error');
@@ -92,8 +77,6 @@ async function unfollowUser(userIdToUnfollow) {
 
 /**
  * Verifica se l'utente corrente segue un altro utente
- * @param {string} targetUserId - UUID dell'utente da verificare
- * @returns {Promise<boolean>} - true se lo segue
  */
 async function checkIfFollowing(targetUserId) {
     try {
@@ -116,8 +99,6 @@ async function checkIfFollowing(targetUserId) {
 
 /**
  * Ottieni la lista dei follower di un utente
- * @param {string} userId - UUID dell'utente
- * @returns {Promise<Array>} - Array di follower
  */
 async function getFollowers(userId) {
     try {
@@ -136,9 +117,7 @@ async function getFollowers(userId) {
 }
 
 /**
- * Ottieni la lista di chi segue un utente
- * @param {string} userId - UUID dell'utente
- * @returns {Promise<Array>} - Array di following
+ * Ottieni la lista dei following di un utente
  */
 async function getFollowing(userId) {
     try {
@@ -157,23 +136,22 @@ async function getFollowing(userId) {
 }
 
 /**
- * Toggle follow/unfollow
- * @param {string} userId - UUID dell'utente
+ * Toggle follow/unfollow e ritorna nuovo stato
  */
 async function toggleFollow(userId) {
     const isFollowing = await checkIfFollowing(userId);
     
     if (isFollowing) {
         await unfollowUser(userId);
+        return false;
     } else {
         await followUser(userId);
+        return true;
     }
 }
 
 /**
  * Aggiorna il bottone follow nell'UI
- * @param {string} userId - UUID dell'utente
- * @param {boolean} isFollowing - Stato following
  */
 function updateFollowButton(userId, isFollowing) {
     const buttons = document.querySelectorAll(`[data-follow-user="${userId}"]`);
@@ -196,40 +174,26 @@ function updateFollowButton(userId, isFollowing) {
 }
 
 /**
- * Crea una notifica (opzionale)
- * @param {string} userId - Utente che riceve la notifica
- * @param {string} type - Tipo di notifica
- * @param {string} fromUserId - Utente che genera la notifica
+ * Aggiorna il contatore dei follower in tempo reale
  */
-async function createNotification(userId, type, fromUserId) {
+async function updateFollowersCount(userId) {
     try {
-        const messages = {
-            'new_follower': 'ha iniziato a seguirti!',
-            'stream_live': 'è andato live!',
-        };
-        
-        const { error } = await supabaseClient
-            .from('notifications')
-            .insert({
-                user_id: userId,
-                type: type,
-                from_user_id: fromUserId,
-                message: messages[type] || 'Nuova notifica'
-            });
-            
-        if (error) console.error('Errore creazione notifica:', error);
+        const followers = await getFollowers(userId);
+        const followersCountElem = document.getElementById('followersCount');
+        if (followersCountElem) followersCountElem.textContent = followers.length;
+
+        // Aggiorna tab
+        const followersTab = document.querySelector('.content-tabs button.tab:nth-child(2)');
+        if (followersTab) followersTab.textContent = `Followers (${followers.length})`;
     } catch (error) {
-        console.error('Errore notifica:', error);
+        console.error('Errore nell\'aggiornamento followers count:', error);
     }
 }
 
 /**
  * Mostra notifiche toast nell'UI
- * @param {string} message - Messaggio da mostrare
- * @param {string} type - success/error/warning/info
  */
 function showNotification(message, type = 'info') {
-    // Crea toast notification
     const toast = document.createElement('div');
     toast.className = `toast-notification toast-${type}`;
     toast.innerHTML = `
@@ -242,8 +206,6 @@ function showNotification(message, type = 'info') {
             <span class="toast-message">${message}</span>
         </div>
     `;
-    
-    // Stili inline per il toast
     toast.style.cssText = `
         position: fixed;
         bottom: 20px;
@@ -263,114 +225,14 @@ function showNotification(message, type = 'info') {
         animation: slideInRight 0.3s ease;
         box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     `;
-    
     document.body.appendChild(toast);
-    
-    // Rimuovi dopo 3 secondi
     setTimeout(() => {
         toast.style.animation = 'slideOutRight 0.3s ease';
         setTimeout(() => toast.remove(), 300);
     }, 3000);
 }
 
-/**
- * Ottieni feed personalizzato (stream delle persone che segui)
- * @returns {Promise<Array>} - Array di stream
- */
-async function getFollowingFeed() {
-    try {
-        const currentUser = await checkUser();
-        if (!currentUser) return [];
-        
-        // Ottieni gli ID delle persone che segui
-        const { data: following, error: followError } = await supabaseClient
-            .from('follows')
-            .select('following_id')
-            .eq('follower_id', currentUser.id);
-        
-        if (followError) throw followError;
-        
-        if (!following || following.length === 0) {
-            return []; // Non segui nessuno
-        }
-        
-        const followingIds = following.map(f => f.following_id);
-        
-        // Per ora restituiamo mock data, 
-        // quando avremo la tabella streams useremo questa query:
-        /*
-        const { data: streams, error } = await supabaseClient
-            .from('streams')
-            .select('*, profiles!user_id(*)')
-            .in('user_id', followingIds)
-            .eq('is_live', true)
-            .order('started_at', { ascending: false });
-        */
-        
-        // Mock data per testing
-        return followingIds.map(id => ({
-            user_id: id,
-            title: 'Stream Live',
-            viewers: Math.floor(Math.random() * 1000),
-            category: 'Gaming'
-        }));
-        
-    } catch (error) {
-        console.error('Errore nel feed:', error);
-        return [];
-    }
-}
-
-// Aggiungi CSS per le animazioni toast
-if (!document.getElementById('toast-styles')) {
-    const style = document.createElement('style');
-    style.id = 'toast-styles';
-    style.textContent = `
-        @keyframes slideInRight {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-        
-        @keyframes slideOutRight {
-            from {
-                transform: translateX(0);
-                opacity: 1;
-            }
-            to {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-        }
-        
-        .toast-notification {
-            font-family: var(--font-sans);
-        }
-        
-        .toast-content {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        
-        .toast-icon {
-            font-size: 20px;
-        }
-        
-        .toast-message {
-            color: var(--text-primary);
-            font-weight: 500;
-        }
-    `;
-    document.head.appendChild(style);
-}
-
-// Export per uso globale
+// Export
 window.followingSystem = {
     followUser,
     unfollowUser,
@@ -378,6 +240,7 @@ window.followingSystem = {
     checkIfFollowing,
     getFollowers,
     getFollowing,
-    getFollowingFeed,
+    updateFollowButton,
+    updateFollowersCount,
     showNotification
 };
