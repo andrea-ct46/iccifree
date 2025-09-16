@@ -1,237 +1,115 @@
-// =====================================================
-// SISTEMA FOLLOWING/FOLLOWERS - ICCI FREE
-// =====================================================
+// =================================================================================
+// ICCI FREE - LOGICA DEL SISTEMA DI FOLLOW
+// Gestisce le azioni di follow, unfollow e la creazione di notifiche.
+// =================================================================================
 
-async function followUser(userIdToFollow) {
+/**
+ * Controlla se un utente ne sta già seguendo un altro.
+ * @param {string} followerId - L'ID dell'utente che compie l'azione.
+ * @param {string} followingId - L'ID dell'utente che viene seguito.
+ * @returns {Promise<boolean>} Ritorna true se l'utente sta già seguendo, altrimenti false.
+ */
+async function checkIfFollowing(followerId, followingId) {
+    if (!followerId || !followingId) return false;
     try {
-        const currentUser = await checkUser();
-        if (!currentUser) {
-            window.location.href = '/auth.html';
-            return false;
-        }
-
-        if (currentUser.id === userIdToFollow) {
-            showNotification('Non puoi seguire te stesso! 😅', 'warning');
-            return false;
-        }
-
-        // Inserimento con select('*') per evitare 406
-        const { data, error } = await supabaseClient
+        // RISOLUZIONE ERRORE 406:
+        // Invece di un SELECT * che può essere ambiguo, contiamo le righe.
+        // Se il conteggio è maggiore di 0, significa che l'utente sta già seguendo.
+        const { count, error } = await supabaseClient
             .from('follows')
-            .insert({
-                follower_id: currentUser.id,
-                following_id: userIdToFollow
-            })
-            .select('*');
+            .select('*', { count: 'exact', head: true }) // Metodo efficiente per contare
+            .eq('follower_id', followerId)
+            .eq('following_id', followingId);
 
-        if (error) {
-            if (error.code === '23505') {
-                showNotification('Già segui questo utente!', 'info');
-            } else {
-                throw error;
-            }
-            return false;
-        }
-
-        showNotification('Ora segui questo utente! 🎉', 'success');
-
-        // Aggiorna UI
-        updateFollowButton(userIdToFollow, true);
-        incrementFollowerCounter(userIdToFollow, 1);
-
-        // Notifica opzionale
-        await createNotification(userIdToFollow, 'new_follower', currentUser.id);
-
-        return true;
-    } catch (err) {
-        console.error('Errore nel follow:', err);
-        showNotification('Errore nel seguire l\'utente', 'error');
+        if (error) throw error;
+        
+        return count > 0;
+    } catch (error) {
+        console.error("Errore nel controllo del follow:", error.message);
         return false;
     }
 }
 
-async function unfollowUser(userIdToUnfollow) {
-    try {
-        const currentUser = await checkUser();
-        if (!currentUser) {
-            window.location.href = '/auth.html';
-            return false;
-        }
 
-        const { data, error } = await supabaseClient
+/**
+ * Fa sì che un utente ne segua un altro e aggiorna i contatori.
+ * @param {string} followerId - L'ID dell'utente che compie l'azione.
+ * @param {string} followingId - L'ID dell'utente che viene seguito.
+ */
+async function followUser(followerId, followingId) {
+    try {
+        // 1. Crea la relazione di follow
+        const { error: followError } = await supabaseClient
+            .from('follows')
+            .insert({ follower_id: followerId, following_id: followingId });
+        if (followError) throw followError;
+
+        // 2. Aggiorna i contatori usando una funzione del database (RPC)
+        // Questo è il modo più sicuro e performante per evitare race conditions.
+        // Assicurati di aver creato la funzione 'update_follow_counts' in SQL (vedi passo extra sotto).
+        await supabaseClient.rpc('update_follow_counts', {
+            user_to_follow_id: followingId,
+            current_user_id: followerId,
+            increment_followers: true
+        });
+
+        console.log("Utente seguito con successo");
+        // 3. Crea una notifica per l'utente seguito
+        await createNotification(followingId, followerId, 'new_follower');
+
+    } catch (error) {
+        console.error("Errore durante il follow:", error.message);
+    }
+}
+
+
+/**
+ * Fa sì che un utente smetta di seguire un altro e aggiorna i contatori.
+ * @param {string} followerId - L'ID dell'utente che compie l'azione.
+ * @param {string} followingId - L'ID dell'utente che viene seguito.
+ */
+async function unfollowUser(followerId, followingId) {
+    try {
+        // 1. Rimuove la relazione di follow
+        const { error: unfollowError } = await supabaseClient
             .from('follows')
             .delete()
-            .eq('follower_id', currentUser.id)
-            .eq('following_id', userIdToUnfollow)
-            .select('*'); // <- select per evitare problemi
+            .eq('follower_id', followerId)
+            .eq('following_id', followingId);
+        if (unfollowError) throw unfollowError;
+        
+        // 2. Aggiorna i contatori usando la stessa funzione RPC
+        await supabaseClient.rpc('update_follow_counts', {
+            user_to_follow_id: followingId,
+            current_user_id: followerId,
+            increment_followers: false // Questa volta decrementiamo
+        });
 
-        if (error) throw error;
-
-        showNotification('Hai smesso di seguire questo utente', 'info');
-
-        // Aggiorna UI
-        updateFollowButton(userIdToUnfollow, false);
-        incrementFollowerCounter(userIdToUnfollow, -1);
-
-        return true;
-    } catch (err) {
-        console.error('Errore nell\'unfollow:', err);
-        showNotification('Errore nel smettere di seguire', 'error');
-        return false;
+        console.log("Unfollow eseguito con successo");
+    } catch (error) {
+        console.error("Errore durante l'unfollow:", error.message);
     }
 }
 
-async function checkIfFollowing(targetUserId) {
+
+/**
+ * Crea una notifica nel database.
+ * @param {string} recipientId - L'ID di chi riceve la notifica.
+ * @param {string} actorId - L'ID di chi compie l'azione.
+ * @param {string} type - Il tipo di notifica (es. 'new_follower').
+ */
+async function createNotification(recipientId, actorId, type) {
     try {
-        const currentUser = await checkUser();
-        if (!currentUser) return false;
-
-        const { data, error } = await supabaseClient
-            .from('follows')
-            .select('*')
-            .eq('follower_id', currentUser.id)
-            .eq('following_id', targetUserId)
-            .single();
-
-        return !error && data !== null;
-    } catch (err) {
-        console.error('Errore nel check following:', err);
-        return false;
-    }
-}
-
-async function getFollowers(userId) {
-    try {
-        const { data, error } = await supabaseClient
-            .from('followers_view')
-            .select('*')
-            .eq('user_id', userId)
-            .order('followed_at', { ascending: false });
-
-        if (error) throw error;
-        return data || [];
-    } catch (err) {
-        console.error('Errore nel recupero follower:', err);
-        return [];
-    }
-}
-
-async function getFollowing(userId) {
-    try {
-        const { data, error } = await supabaseClient
-            .from('following_view')
-            .select('*')
-            .eq('user_id', userId)
-            .order('followed_at', { ascending: false });
-
-        if (error) throw error;
-        return data || [];
-    } catch (err) {
-        console.error('Errore nel recupero following:', err);
-        return [];
-    }
-}
-
-async function toggleFollow(userId) {
-    const isFollowing = await checkIfFollowing(userId);
-    if (isFollowing) {
-        await unfollowUser(userId);
-    } else {
-        await followUser(userId);
-    }
-}
-
-function updateFollowButton(userId, isFollowing) {
-    const buttons = document.querySelectorAll(`[data-follow-user="${userId}"]`);
-    buttons.forEach(btn => {
-        if (isFollowing) {
-            btn.classList.remove('follow');
-            btn.classList.add('following');
-            btn.innerHTML = '✓ Following';
-            btn.style.background = 'var(--surface-medium)';
-            btn.style.borderColor = 'var(--primary-yellow)';
-        } else {
-            btn.classList.remove('following');
-            btn.classList.add('follow');
-            btn.innerHTML = '+ Follow';
-            btn.style.background = 'var(--primary-yellow)';
-            btn.style.borderColor = 'var(--primary-yellow)';
-        }
-    });
-}
-
-function incrementFollowerCounter(userId, delta) {
-    const counter = document.getElementById('followersCount');
-    if (!counter) return;
-    const current = parseInt(counter.textContent) || 0;
-    counter.textContent = Math.max(0, current + delta);
-}
-
-// Notifiche
-async function createNotification(userId, type, fromUserId) {
-    try {
-        const messages = {
-            'new_follower': 'ha iniziato a seguirti!',
-            'stream_live': 'è andato live!',
-        };
+        // RISOLUZIONE ERRORE 403 / RLS:
+        // La policy SQL che abbiamo creato permette questa operazione
+        // perché stiamo inserendo una riga dove actor_id è l'utente loggato.
         const { error } = await supabaseClient
             .from('notifications')
-            .insert({
-                user_id: userId,
-                type,
-                from_user_id: fromUserId,
-                message: messages[type] || 'Nuova notifica'
-            })
-            .select('*');
-
-        if (error) console.error('Errore creazione notifica:', error);
-    } catch (err) {
-        console.error('Errore notifica:', err);
+            .insert({ recipient_id: recipientId, actor_id: actorId, type: type });
+        if (error) throw error;
+        console.log("Notifica creata con successo");
+    } catch (error) {
+        // L'errore "new row violates row-level security policy" apparirà qui se la policy è sbagliata.
+        console.error("Errore creazione notifica:", error.message);
     }
 }
-
-function showNotification(message, type='info') {
-    const toast = document.createElement('div');
-    toast.className = `toast-notification toast-${type}`;
-    toast.innerHTML = `<div class="toast-content">
-        <span class="toast-icon">${
-            type==='success'?'✅':type==='error'?'❌':type==='warning'?'⚠️':'ℹ️'
-        }</span>
-        <span class="toast-message">${message}</span>
-    </div>`;
-    toast.style.cssText = `
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        background: var(--surface-dark);
-        border: 1px solid ${
-            type==='success'?'#00ff00':type==='error'?'#ff4444':type==='warning'?'#ffaa00':'var(--primary-yellow)'
-        };
-        border-radius: 12px;
-        padding: 16px 20px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        z-index: 9999;
-        animation: slideInRight 0.3s ease;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    `;
-    document.body.appendChild(toast);
-    setTimeout(() => {
-        toast.style.animation = 'slideOutRight 0.3s ease';
-        setTimeout(() => toast.remove(), 300);
-    }, 3000);
-}
-
-// Export
-window.followingSystem = {
-    followUser,
-    unfollowUser,
-    toggleFollow,
-    checkIfFollowing,
-    getFollowers,
-    getFollowing,
-    updateFollowButton,
-    incrementFollowerCounter,
-    showNotification
-};
