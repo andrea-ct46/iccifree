@@ -132,11 +132,10 @@ async function setupActionButtons(profile) {
 // Toggle follow
 async function handleFollowClick(userId) {
     if (!window.followingSystem) return console.error('Sistema following non caricato');
-
     const isNowFollowing = await window.followingSystem.toggleFollow(userId);
     window.followingSystem.updateFollowButton(userId, isNowFollowing);
-    await window.followingSystem.updateFollowersCount(userId);
 }
+
 
 // Load followers/following
 async function loadFollowData(profile) {
