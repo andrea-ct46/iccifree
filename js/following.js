@@ -1,29 +1,84 @@
 // =====================================================
 // SISTEMA FOLLOWING/FOLLOWERS - ICCI FREE
 // =====================================================
+
+/**
+ * Mostra notifiche toast nell'UI
+ * @param {string} message - Messaggio da mostrare
+ * @param {string} type - success/error/warning/info
+ */
+function showNotification(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast-notification toast-${type}`;
+    toast.innerHTML = `
+        <div class="toast-content">
+            <span class="toast-icon">${
+                type === 'success' ? '✅' :
+                type === 'error' ? '❌' :
+                type === 'warning' ? '⚠️' : 'ℹ️'
+            }</span>
+            <span class="toast-message">${message}</span>
+        </div>
+    `;
+    toast.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: var(--surface-dark);
+        border: 1px solid ${
+            type === 'success' ? '#00ff00' :
+            type === 'error' ? '#ff4444' :
+            type === 'warning' ? '#ffaa00' : 'var(--primary-yellow)'
+        };
+        border-radius: 12px;
+        padding: 16px 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        z-index: 9999;
+        animation: slideInRight 0.3s ease;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+        toast.style.animation = 'slideOutRight 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
 // =====================================================
-// SISTEMA FOLLOWING/FOLLOWERS - ICCI FREE
+// FUNZIONI PRINCIPALI FOLLOWING
 // =====================================================
 
 async function followUser(userIdToFollow) {
     try {
         const currentUser = await checkUser();
-        if (!currentUser) return window.location.href = '/auth.html';
-        if (currentUser.id === userIdToFollow) {
-            showNotification('Non puoi seguire te stesso! 😅', 'warning');
-            return false;
-        }
+        if (!currentUser) { window.location.href = '/auth.html'; return false; }
+        if (currentUser.id === userIdToFollow) { showNotification('Non puoi seguire te stesso! 😅','warning'); return false; }
 
-        const { error } = await supabaseClient
+        const { data: existing, error: selectError } = await supabaseClient
+            .from('follows')
+            .select('id')
+            .eq('follower_id', currentUser.id)
+            .eq('following_id', userIdToFollow);
+
+        if (selectError) throw selectError;
+        if (existing && existing.length > 0) { showNotification('Già segui questo utente!', 'info'); return false; }
+
+        const { error: insertError } = await supabaseClient
             .from('follows')
             .insert({ follower_id: currentUser.id, following_id: userIdToFollow });
 
-        if (error && error.code !== '23505') throw error;
-        if (!error) showNotification('Ora segui questo utente! 🎉', 'success');
-        return true;
+        if (insertError) throw insertError;
 
-    } catch (error) {
-        console.error('Errore nel follow:', error);
+        showNotification('Ora segui questo utente! 🎉', 'success');
+        updateFollowButton(userIdToFollow, true);
+        incrementFollowersCount(userIdToFollow, 1);
+        await createNotification(userIdToFollow, 'new_follower', currentUser.id);
+
+        return true;
+    } catch (err) {
+        console.error('Errore nel follow:', err);
         showNotification('Errore nel seguire l\'utente', 'error');
         return false;
     }
@@ -32,7 +87,7 @@ async function followUser(userIdToFollow) {
 async function unfollowUser(userIdToUnfollow) {
     try {
         const currentUser = await checkUser();
-        if (!currentUser) return window.location.href = '/auth.html';
+        if (!currentUser) { window.location.href = '/auth.html'; return false; }
 
         const { error } = await supabaseClient
             .from('follows')
@@ -43,72 +98,40 @@ async function unfollowUser(userIdToUnfollow) {
         if (error) throw error;
 
         showNotification('Hai smesso di seguire questo utente', 'info');
-        return true;
+        updateFollowButton(userIdToUnfollow, false);
+        incrementFollowersCount(userIdToUnfollow, -1);
 
-    } catch (error) {
-        console.error('Errore nell\'unfollow:', error);
+        return true;
+    } catch (err) {
+        console.error('Errore nell\'unfollow:', err);
         showNotification('Errore nel smettere di seguire', 'error');
         return false;
     }
 }
 
-async function checkIfFollowing(userId) {
-    try {
-        const currentUser = await checkUser();
-        if (!currentUser) return false;
-
-        const { data, error } = await supabaseClient
-            .from('follows')
-            .select('id')
-            .eq('follower_id', currentUser.id)
-            .eq('following_id', userId)
-            .single();
-
-        return !error && data !== null;
-
-    } catch (error) {
-        console.error('Errore nel check following:', error);
-        return false;
-    }
-}
-
 async function toggleFollow(userId) {
-    const isFollowing = await checkIfFollowing(userId);
-    let success = false;
+    const currentUser = await checkUser();
+    if (!currentUser) { window.location.href = '/auth.html'; return; }
 
-    if (isFollowing) success = await unfollowUser(userId);
-    else success = await followUser(userId);
+    const { data, error } = await supabaseClient
+        .from('follows')
+        .select('id')
+        .eq('follower_id', currentUser.id)
+        .eq('following_id', userId);
 
-    if (success) await updateFollowersCount(userId);
-    return !isFollowing;
-}
+    if (error) { console.error(error); return; }
 
-async function getFollowersCount(userId) {
-    try {
-        const { count, error } = await supabaseClient
-            .from('follows')
-            .select('id', { count: 'exact', head: true })
-            .eq('following_id', userId);
-
-        if (error) throw error;
-        return count || 0;
-    } catch (error) {
-        console.error('Errore getFollowersCount:', error);
-        return 0;
+    if (data && data.length > 0) {
+        await unfollowUser(userId);
+    } else {
+        await followUser(userId);
     }
 }
 
-async function updateFollowersCount(userId) {
-    const count = await getFollowersCount(userId);
-    const followersCountElem = document.getElementById('followersCount');
-    if (followersCountElem) followersCountElem.textContent = count;
+// =====================================================
+// AGGIORNAMENTO UI
+// =====================================================
 
-    // Aggiorna anche tab followers
-    const followersTab = document.querySelector('.content-tabs button.tab:nth-child(2)');
-    if (followersTab) followersTab.textContent = `Followers (${count})`;
-}
-
-// Aggiorna bottone follow
 function updateFollowButton(userId, isFollowing) {
     const buttons = document.querySelectorAll(`[data-follow-user="${userId}"]`);
     buttons.forEach(btn => {
@@ -128,12 +151,83 @@ function updateFollowButton(userId, isFollowing) {
     });
 }
 
+function incrementFollowersCount(userId, delta) {
+    const countElem = document.getElementById('followersCount');
+    if (countElem) {
+        let current = parseInt(countElem.textContent) || 0;
+        current += delta;
+        if (current < 0) current = 0;
+        countElem.textContent = current;
+    }
+}
+
+// =====================================================
+// FUNZIONI ACCESSORIE
+// =====================================================
+
+async function checkIfFollowing(userId) {
+    try {
+        const currentUser = await checkUser();
+        if (!currentUser) return false;
+
+        const { data, error } = await supabaseClient
+            .from('follows')
+            .select('id')
+            .eq('follower_id', currentUser.id)
+            .eq('following_id', userId);
+
+        if (error) throw error;
+        return data && data.length > 0;
+    } catch (err) {
+        console.error('Errore nel check following:', err);
+        return false;
+    }
+}
+
+async function getFollowers(userId) {
+    try {
+        const { data, error } = await supabaseClient
+            .from('followers_view')
+            .select('*')
+            .eq('user_id', userId)
+            .order('followed_at', { ascending: false });
+        if (error) throw error;
+        return data || [];
+    } catch (err) { console.error(err); return []; }
+}
+
+async function getFollowing(userId) {
+    try {
+        const { data, error } = await supabaseClient
+            .from('following_view')
+            .select('*')
+            .eq('user_id', userId)
+            .order('followed_at', { ascending: false });
+        if (error) throw error;
+        return data || [];
+    } catch (err) { console.error(err); return []; }
+}
+
+async function createNotification(userId, type, fromUserId) {
+    try {
+        const messages = { 'new_follower':'ha iniziato a seguirti!','stream_live':'è andato live!' };
+        const { error } = await supabaseClient
+            .from('notifications')
+            .insert({ user_id: userId, type, from_user_id: fromUserId, message: messages[type] || 'Nuova notifica' });
+        if (error) console.error(error);
+    } catch (err) { console.error(err); }
+}
+
+// =====================================================
+// EXPORT
+// =====================================================
+
 window.followingSystem = {
     followUser,
     unfollowUser,
     toggleFollow,
     checkIfFollowing,
-    getFollowersCount,
-    updateFollowersCount,
-    updateFollowButton
+    getFollowers,
+    getFollowing,
+    showNotification
 };
