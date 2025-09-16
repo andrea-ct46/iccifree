@@ -145,4 +145,89 @@ window.logout = async function() {
 }
 
 // Avvia l'inizializzazione della dashboard non appena il DOM è pronto.
-document.addEventListener('DOMContentLoaded', initializeDashboard);
+document.addEventListener('DOMContentLoaded', () => {
+    initializeDashboard();
+    setupSearchBar();
+});
+
+/**
+ * Setup della barra di ricerca
+ */
+function setupSearchBar() {
+    const searchInput = document.getElementById('searchInput');
+    if (!searchInput) return;
+    
+    let searchTimeout;
+    
+    searchInput.addEventListener('input', (e) => {
+        clearTimeout(searchTimeout);
+        const query = e.target.value.toLowerCase().trim();
+        
+        // Debounce di 300ms
+        searchTimeout = setTimeout(() => {
+            filterStreams(query);
+        }, 300);
+    });
+    
+    // Gestione tasto Enter
+    searchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const query = e.target.value.toLowerCase().trim();
+            filterStreams(query);
+        }
+    });
+}
+
+/**
+ * Filtra gli stream basandosi sulla query di ricerca
+ */
+function filterStreams(query) {
+    const streamCards = document.querySelectorAll('.stream-card');
+    const emptyState = document.getElementById('emptyState');
+    let visibleCount = 0;
+    
+    if (!query) {
+        // Se la query è vuota, mostra tutti
+        streamCards.forEach(card => {
+            card.style.display = '';
+            visibleCount++;
+        });
+    } else {
+        // Filtra basandosi su titolo, streamer e categoria
+        streamCards.forEach(card => {
+            const title = card.querySelector('.title')?.textContent.toLowerCase() || '';
+            const streamer = card.querySelector('.streamer-name')?.textContent.toLowerCase() || '';
+            const category = card.querySelector('.category')?.textContent.toLowerCase() || '';
+            
+            if (title.includes(query) || streamer.includes(query) || category.includes(query)) {
+                card.style.display = '';
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+    
+    // Mostra empty state se non ci sono risultati
+    if (emptyState) {
+        if (visibleCount === 0 && query) {
+            emptyState.style.display = 'block';
+            emptyState.innerHTML = `
+                <div style="font-size: 72px; margin-bottom: 20px;">🔍</div>
+                <h3 style="color: var(--text-secondary); margin-bottom: 10px;">
+                    Nessun risultato per "${query}"
+                </h3>
+                <p style="color: var(--text-secondary); margin-bottom: 30px;">
+                    Prova con una ricerca diversa o sfoglia le categorie
+                </p>
+                <button onclick="document.getElementById('searchInput').value=''; filterStreams('')" 
+                        class="go-live-btn" style="display: inline-block;">
+                    Mostra Tutti
+                </button>
+            `;
+        } else {
+            emptyState.style.display = 'none';
+        }
+    }
+}
