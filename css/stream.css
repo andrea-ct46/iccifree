@@ -1,0 +1,190 @@
+/* ======================================================
+   ICCI FREE - STILE PAGINA STREAMING
+   ====================================================== */
+
+/* --- Importa le variabili globali --- */
+@import url('/css/style.css');
+
+body {
+    overflow: hidden; /* Impedisce qualsiasi scroll della pagina */
+    display: flex;
+    height: 100vh;
+}
+
+/* --- Contenitore Principale --- */
+#streamPageContainer {
+    display: flex;
+    width: 100%;
+    height: 100%;
+}
+
+/* --- Area Video (sinistra) --- */
+.video-container {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--background-dark);
+}
+
+.video-player {
+    flex-grow: 1;
+    background-color: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.video-player img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+/* Barra informazioni sotto il video */
+.stream-info-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 20px;
+    background-color: var(--surface-dark);
+    border-top: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.streamer-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.streamer-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.stream-info-bar h1 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.stream-info-bar p {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.stream-actions .follow-button {
+    padding: 10px 20px;
+    background-color: var(--primary-yellow);
+    color: var(--background-dark);
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.stream-actions .follow-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+}
+.stream-actions .follow-button.unfollow-style {
+    background-color: var(--surface-medium);
+    color: var(--text-primary);
+}
+
+
+/* --- Colonna Chat (destra) --- */
+.chat-container {
+    width: 350px;
+    flex-shrink: 0;
+    background-color: var(--surface-dark);
+    border-left: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.chat-header {
+    padding: 15px;
+    text-align: center;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+/* Area messaggi */
+.chat-messages {
+    flex-grow: 1;
+    padding: 15px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column-reverse; /* I nuovi messaggi appaiono in basso */
+}
+
+.chat-message {
+    margin-bottom: 15px;
+    line-height: 1.5;
+}
+
+.chat-message .username {
+    font-weight: 700;
+    margin-right: 8px;
+    color: var(--primary-yellow);
+}
+
+.chat-message .message-text {
+    word-wrap: break-word;
+}
+
+/* Area input per la chat */
+.chat-input-area {
+    padding: 15px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.chat-input {
+    flex-grow: 1;
+    padding: 12px 15px;
+    background-color: var(--surface-medium);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 14px;
+}
+.chat-input:focus {
+    outline: none;
+    border-color: var(--primary-yellow);
+}
+
+.send-message-btn {
+    padding: 0 20px;
+    background-color: var(--primary-yellow);
+    color: var(--background-dark);
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+/* --- Responsive per mobile --- */
+@media (max-width: 900px) {
+    #streamPageContainer {
+        flex-direction: column;
+    }
+    .chat-container {
+        width: 100%;
+        height: 50vh; /* La chat occupa la metà inferiore dello schermo */
+    }
+    .video-container {
+        height: 50vh;
+    }
+}
+
