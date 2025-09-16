@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ICCI FREE - Modifica Profilo</title>
+    <link rel="stylesheet" href="css/auth.css">
+    <style>
+        /* Edit Profile Specific Styles */
+        .auth-container {
+            max-width: 600px;
+            margin-top: 80px;
+        }
+        
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 24px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .back-button:hover {
+            color: var(--primary-yellow);
+            transform: translateX(-3px);
+        }
+        
+        .current-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: linear-gradient(135deg, #181818 0%, #282828 100%);
+            border: 3px solid var(--primary-yellow);
+            margin: 0 auto 16px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .current-avatar:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+        }
+        
+        .current-avatar::after {
+            content: "📷 Cambia";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 14px;
+            background: rgba(0,0,0,0.8);
+            padding: 4px 8px;
+            border-radius: 4px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .current-avatar:hover::after {
+            opacity: 1;
+        }
+        
+        .form-section {
+            margin-bottom: 32px;
+        }
+        
+        .form-section h3 {
+            font-size: 14px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .danger-zone {
+            margin-top: 40px;
+            padding: 20px;
+            background: rgba(255, 68, 68, 0.05);
+            border: 1px solid rgba(255, 68, 68, 0.2);
+            border-radius: 12px;
+        }
+        
+        .danger-zone h3 {
+            color: #ff4444;
+            border-bottom-color: rgba(255, 68, 68, 0.2);
+        }
+        
+        .delete-btn {
+            background: #ff4444;
+            margin-top: 16px;
+        }
+        
+        .delete-btn:hover {
+            background: #cc0000;
+            box-shadow: 0 10px 25px rgba(255, 68, 68, 0.2);
+        }
+        
+        .info-message {
+            background: rgba(255, 215, 0, 0.1);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: var(--primary-yellow);
+            display: none;
+        }
+        
+        .info-message.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <div class="auth-container">
+        <!-- Back Button -->
+        <a href="#" onclick="history.back()" class="back-button">
+            ← Torna al profilo
+        </a>
+        
+        <!-- Logo -->
+        <div class="logo">
+            <h1><span class="icci">ICCI</span><span class="free">FREE</span></h1>
+            <p class="tagline">Modifica Profilo</p>
+        </div>
+        
+        <!-- Messages -->
+        <div class="message error-message" id="errorMessage"></div>
+        <div class="message success-message" id="successMessage"></div>
+        <div class="info-message" id="infoMessage">
+            ℹ️ Caricamento dati profilo...
+        </div>
+
+        <!-- Edit Profile Form -->
+        <form id="editProfileForm">
+            <!-- Avatar Section -->
+            <div class="form-section">
+                <h3>Foto Profilo</h3>
+                <div style="text-align: center;">
+                    <img id="currentAvatar" 
+                         src="https://placehold.co/120x120/181818/666666?text=%3F" 
+                         alt="Avatar attuale" 
+                         class="current-avatar" 
+                         onclick="document.getElementById('avatarInput').click()">
+                    <input type="file" id="avatarInput" accept="image/png, image/jpeg, image/gif, image/webp" style="display: none;">
+                    <p style="font-size: 12px; color: #666; margin-top: 8px;">
+                        Clicca sull'immagine per cambiarla
+                    </p>
+                </div>
+            </div>
+
+            <!-- Basic Info Section -->
+            <div class="form-section">
+                <h3>Informazioni Base</h3>
+                
+                <div class="form-group">
+                    <label class="form-label">Username</label>
+                    <input type="text" 
+                           class="form-input" 
+                           id="username" 
+                           placeholder="Il tuo username" 
+                           required 
+                           minlength="3" 
+                           maxlength="20" 
+                           pattern="[a-zA-Z0-9_]+"
+                           autocomplete="off">
+                    <div style="font-size: 12px; color: #666; margin-top: 4px;">
+                        Solo lettere, numeri e underscore (_)
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Bio</label>
+                    <textarea class="form-input" 
+                              id="bio" 
+                              placeholder="Racconta qualcosa di te..." 
+                              maxlength="150" 
+                              rows="3"
+                              style="resize: vertical;"></textarea>
+                    <div style="text-align: right; font-size: 12px; color: #666; margin-top: 4px;">
+                        <span id="charCount">0</span>/150
+                    </div>
+                </div>
+            </div>
+
+            <!-- Personal Info Section -->
+            <div class="form-section">
+                <h3>Informazioni Personali</h3>
+                
+                <div class="form-group">
+                    <label class="form-label">Data di Nascita</label>
+                    <input type="date" 
+                           class="form-input" 
+                           id="dob" 
+                           required>
+                    <div style="font-size: 12px; color: #666; margin-top: 4px;">
+                        Non può essere modificata dopo la verifica
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Buttons -->
+            <button type="submit" class="submit-btn" id="saveBtn">
+                💾 Salva Modifiche
+            </button>
+            
+            <button type="button" class="submit-btn" onclick="history.back()" style="background: var(--surface-medium); margin-top: 12px;">
+                Annulla
+            </button>
+
+            <!-- Danger Zone -->
+            <div class="danger-zone">
+                <h3>⚠️ Zona Pericolosa</h3>
+                <p style="color: #999; font-size: 14px; margin-bottom: 0;">
+                    L'eliminazione del profilo è permanente e non può essere annullata.
+                </p>
+                <button type="button" class="submit-btn delete-btn" onclick="deleteProfile()">
+                    🗑️ Elimina Profilo
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase.js"></script>
+    <script src="js/edit-profile.js"></script>
+</body>
+</html>
