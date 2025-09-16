@@ -1,4 +1,4 @@
-// Dashboard con Ricerca Reale nel Database
+// Dashboard con DEBUG per capire il problema
 
 // Carica il sistema following
 const followScript = document.createElement('script');
@@ -7,13 +7,16 @@ document.head.appendChild(followScript);
 
 // Variabili globali
 let currentFeedType = 'all';
-let allUsers = []; // Cache degli utenti per ricerca veloce
+let allUsers = []; // Cache degli utenti
 
 /**
- * Funzione principale che inizializza la dashboard.
+ * Funzione principale
  */
 async function initializeDashboard() {
+    console.log("🚀 Inizializzazione Dashboard...");
+    
     const user = await checkUser();
+    console.log("👤 Utente corrente:", user);
 
     if (!user) {
         window.location.replace('/auth.html');
@@ -29,53 +32,242 @@ async function initializeDashboard() {
 
         if (error) throw error;
         
+        console.log("✅ Profilo utente caricato:", profile);
+        
         document.getElementById('loadingState').style.display = 'none';
         document.getElementById('appContainer').style.display = 'flex';
         
         populateUserData(profile);
         setupProfileLink(profile.username);
         
+        // Carica TUTTI gli utenti
+        await loadAllUsers();
+        
+        // Setup search DOPO aver caricato gli utenti
+        setupSearchBar();
+        
         // Aggiungi toggle per feed
         addFeedToggle();
         
-        // Carica TUTTI gli utenti reali dal database
-        await loadAllUsers();
-        
-        // Carica il feed con utenti reali
+        // Carica il feed
         await loadFeed(currentFeedType);
         
-        // Carica la lista following nella sidebar
+        // Carica following list
         await loadFollowingList();
 
     } catch (error) {
-        console.error("Errore nel caricare i dati della dashboard:", error);
+        console.error("❌ Errore inizializzazione:", error);
         window.location.replace('/setup-profile.html');
     }
 }
 
 /**
- * Carica TUTTI gli utenti dal database per la ricerca
+ * Carica TUTTI gli utenti dal database
  */
 async function loadAllUsers() {
+    console.log("📥 Caricamento utenti dal database...");
+    
     try {
         const { data: users, error } = await supabaseClient
             .from('profiles')
             .select('*')
             .order('created_at', { ascending: false });
         
-        if (error) throw error;
+        if (error) {
+            console.error("❌ Errore query database:", error);
+            throw error;
+        }
         
         allUsers = users || [];
-        console.log(`Caricati ${allUsers.length} utenti dal database`);
+        console.log(`✅ Caricati ${allUsers.length} utenti:`, allUsers);
+        
+        // Mostra i primi 3 utenti per debug
+        if (allUsers.length > 0) {
+            console.log("Primi utenti:", allUsers.slice(0, 3).map(u => ({
+                username: u.username,
+                bio: u.bio,
+                id: u.id
+            })));
+        }
         
     } catch (error) {
-        console.error('Errore nel caricamento utenti:', error);
+        console.error('❌ Errore nel caricamento utenti:', error);
         allUsers = [];
     }
 }
 
 /**
- * Aggiunge il toggle per switchare tra "Per Te" e "Following"
+ * Setup della barra di ricerca
+ */
+function setupSearchBar() {
+    console.log("🔍 Setup barra di ricerca...");
+    
+    const searchInput = document.getElementById('searchInput');
+    const mobileSearchInput = document.getElementById('mobileSearchInput');
+    
+    if (searchInput) {
+        console.log("✅ Input desktop trovato");
+        
+        // Rimuovi vecchi listener
+        searchInput.replaceWith(searchInput.cloneNode(true));
+        const newSearchInput = document.getElementById('searchInput');
+        
+        newSearchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            console.log("🔤 Ricerca desktop:", query);
+            performSearch(query);
+        });
+        
+        newSearchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const query = e.target.value.toLowerCase().trim();
+                console.log("⏎ Enter premuto, ricerca:", query);
+                performSearch(query);
+            }
+        });
+    } else {
+        console.warn("⚠️ Input desktop non trovato!");
+    }
+    
+    if (mobileSearchInput) {
+        console.log("✅ Input mobile trovato");
+        
+        mobileSearchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            console.log("📱 Ricerca mobile:", query);
+            performSearch(query);
+        });
+    }
+}
+
+/**
+ * Esegue la ricerca
+ */
+function performSearch(query) {
+    console.log(`🔎 performSearch chiamata con: "${query}"`);
+    console.log(`📊 Utenti totali disponibili: ${allUsers.length}`);
+    
+    const streamGrid = document.getElementById('streamGrid');
+    const emptyState = document.getElementById('emptyState');
+    const categoryTitle = document.getElementById('categoryTitle');
+    
+    if (!streamGrid) {
+        console.error("❌ streamGrid non trovato!");
+        return;
+    }
+    
+    if (!query || query === '') {
+        console.log("🔄 Query vuota, reset alla vista normale");
+        loadFeed(currentFeedType);
+        return;
+    }
+    
+    // Cerca negli utenti
+    console.log("🔍 Cerco negli utenti...");
+    const results = allUsers.filter(user => {
+        const username = (user.username || '').toLowerCase();
+        const bio = (user.bio || '').toLowerCase();
+        
+        const matchUsername = username.includes(query);
+        const matchBio = bio.includes(query);
+        
+        if (matchUsername || matchBio) {
+            console.log(`✓ Match trovato: ${user.username}`);
+        }
+        
+        return matchUsername || matchBio;
+    });
+    
+    console.log(`📊 Risultati trovati: ${results.length}`);
+    if (results.length > 0) {
+        console.log("Risultati:", results.map(r => r.username));
+    }
+    
+    // Aggiorna il titolo
+    if (categoryTitle) {
+        categoryTitle.textContent = `Risultati per "${query}" (${results.length})`;
+    }
+    
+    if (results.length === 0) {
+        console.log("😔 Nessun risultato");
+        streamGrid.innerHTML = '';
+        emptyState.style.display = 'block';
+        emptyState.innerHTML = `
+            <div style="font-size: 72px; margin-bottom: 20px;">🔍</div>
+            <h3 style="color: var(--text-secondary); margin-bottom: 10px;">
+                Nessun utente trovato per "${query}"
+            </h3>
+            <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                Utenti nel database: ${allUsers.length}
+            </p>
+            <p style="color: var(--text-secondary); margin-bottom: 30px;">
+                Prova a cercare: ${allUsers.slice(0, 3).map(u => u.username).join(', ')}
+            </p>
+            <button onclick="document.getElementById('searchInput').value=''; performSearch('')" 
+                    class="go-live-btn" style="display: inline-block;">
+                Mostra Tutti
+            </button>
+        `;
+    } else {
+        console.log("🎉 Mostro risultati");
+        emptyState.style.display = 'none';
+        displayUsersAsCards(results);
+    }
+}
+
+/**
+ * Mostra gli utenti come card
+ */
+function displayUsersAsCards(users) {
+    console.log(`📇 Mostro ${users.length} utenti come card`);
+    
+    const streamGrid = document.getElementById('streamGrid');
+    if (!streamGrid) {
+        console.error("❌ streamGrid non trovato!");
+        return;
+    }
+    
+    let html = '';
+    
+    users.forEach((user, index) => {
+        console.log(`Card ${index + 1}: ${user.username}`);
+        
+        const avatar = user.avatar_url || 
+            `https://placehold.co/300x180/1a1a1a/FFD700?text=${(user.username || '??').substring(0, 2).toUpperCase()}`;
+        
+        const joinDate = new Date(user.created_at);
+        const daysAgo = Math.floor((Date.now() - joinDate) / (1000 * 60 * 60 * 24));
+        
+        html += `
+            <div class="stream-card" onclick="window.location.href='/profile.html?user=${user.username}'" style="cursor: pointer;">
+                <div class="stream-thumbnail">
+                    <img src="${avatar}" alt="${user.username}" style="object-fit: cover;">
+                    <div class="live-indicator" style="background: #00ff00;">PROFILO</div>
+                </div>
+                <div class="stream-info">
+                    <div class="streamer-avatar">
+                        <img src="${avatar}" alt="${user.username} avatar">
+                    </div>
+                    <div class="stream-details">
+                        <div class="title" style="font-size: 16px; font-weight: 700;">@${user.username}</div>
+                        <div class="streamer-name" style="font-size: 14px;">${user.bio || 'Nessuna bio'}</div>
+                        <div class="category" style="font-size: 12px;">
+                            👥 ${user.followers_count || 0} followers • 
+                            📅 ${daysAgo === 0 ? 'Oggi' : daysAgo === 1 ? 'Ieri' : daysAgo + ' giorni fa'}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    streamGrid.innerHTML = html;
+    console.log("✅ Card inserite nel DOM");
+}
+
+/**
+ * Toggle feed types
  */
 function addFeedToggle() {
     const categoryTitle = document.getElementById('categoryTitle');
@@ -87,6 +279,7 @@ function addFeedToggle() {
         gap: 16px;
         align-items: center;
         margin-bottom: 24px;
+        flex-wrap: wrap;
     `;
     
     toggleContainer.innerHTML = `
@@ -97,7 +290,7 @@ function addFeedToggle() {
             👥 Following
         </button>
         <button class="feed-toggle-btn" id="usersBtn" onclick="switchFeed('users')">
-            🌟 Tutti gli Utenti
+            🌟 Tutti (${allUsers.length})
         </button>
         <style>
             .feed-toggle-btn {
@@ -127,115 +320,99 @@ function addFeedToggle() {
 }
 
 /**
- * Switcha tra feed types
+ * Switch feed
  */
 async function switchFeed(type) {
+    console.log(`🔄 Switch feed to: ${type}`);
     currentFeedType = type;
     
-    // Aggiorna UI dei bottoni
     document.getElementById('allFeedBtn').classList.toggle('active', type === 'all');
     document.getElementById('followingFeedBtn').classList.toggle('active', type === 'following');
     document.getElementById('usersBtn').classList.toggle('active', type === 'users');
     
-    // Aggiorna titolo
     const categoryTitle = document.getElementById('categoryTitle');
     if (type === 'all') {
         categoryTitle.textContent = 'Stream in Evidenza';
     } else if (type === 'following') {
         categoryTitle.textContent = 'Stream dai tuoi Following';
     } else if (type === 'users') {
-        categoryTitle.textContent = `Utenti Registrati (${allUsers.length})`;
+        categoryTitle.textContent = `Tutti gli Utenti (${allUsers.length})`;
     }
     
     await loadFeed(type);
 }
 
 /**
- * Carica il feed basato sul tipo
+ * Load feed
  */
 async function loadFeed(type) {
+    console.log(`📊 Loading feed: ${type}`);
+    
     const streamGrid = document.getElementById('streamGrid');
     const emptyState = document.getElementById('emptyState');
     
     if (type === 'users') {
-        // Mostra tutti gli utenti registrati come card
         if (allUsers.length === 0) {
             streamGrid.innerHTML = '';
             emptyState.style.display = 'block';
             emptyState.innerHTML = `
                 <div style="font-size: 72px; margin-bottom: 20px;">👥</div>
-                <h3 style="color: var(--text-secondary); margin-bottom: 10px;">
-                    Nessun utente registrato
-                </h3>
+                <h3 style="color: var(--text-secondary);">Nessun utente registrato</h3>
             `;
         } else {
             emptyState.style.display = 'none';
             displayUsersAsCards(allUsers);
         }
-    } else if (type === 'following' && window.followingSystem) {
-        // Feed following
-        const feed = await window.followingSystem.getFollowingFeed();
-        
-        if (feed.length === 0) {
-            streamGrid.innerHTML = '';
-            emptyState.style.display = 'block';
-            emptyState.innerHTML = `
-                <div style="font-size: 72px; margin-bottom: 20px;">👥</div>
-                <h3 style="color: var(--text-secondary); margin-bottom: 10px;">
-                    Nessuno stream dai tuoi following
-                </h3>
-                <p style="color: var(--text-secondary); margin-bottom: 30px;">
-                    Segui qualcuno per vedere i loro stream qui!
-                </p>
-                <button onclick="switchFeed('users'); return false;" 
-                   class="go-live-btn" style="display: inline-block;">
-                    Scopri Utenti
-                </button>
-            `;
-        } else {
-            emptyState.style.display = 'none';
-            populateStreamFeed(feed);
-        }
     } else {
-        // Feed normale con utenti reali + mock streams
         emptyState.style.display = 'none';
         populateStreamFeed();
     }
 }
 
 /**
- * Mostra gli utenti come card (tipo stream ma per profili)
+ * Populate stream feed (mock data)
  */
-function displayUsersAsCards(users) {
+function populateStreamFeed() {
     const streamGrid = document.getElementById('streamGrid');
     if (!streamGrid) return;
     
-    let html = '';
+    const mockStreams = [
+        { 
+            title: "Discussione Libera", 
+            streamer: "TestUser", 
+            category: "Talk", 
+            viewers: 42,
+            avatar: "https://placehold.co/40x40/FFD700/000000?text=TU"
+        }
+    ];
     
-    users.forEach(user => {
-        const avatar = user.avatar_url || 
-            `https://placehold.co/300x180/1a1a1a/FFD700?text=${user.username?.substring(0, 2).toUpperCase()}`;
-        
-        const joinDate = new Date(user.created_at);
-        const daysAgo = Math.floor((Date.now() - joinDate) / (1000 * 60 * 60 * 24));
-        
+    // Aggiungi alcuni utenti reali
+    allUsers.slice(0, 3).forEach(user => {
+        mockStreams.push({
+            title: `@${user.username}`,
+            streamer: user.username,
+            category: "Profilo Utente",
+            viewers: user.followers_count || 0,
+            avatar: user.avatar_url || `https://placehold.co/40x40/FFD700/000000?text=${user.username?.substring(0,2)}`
+        });
+    });
+    
+    let html = '';
+    mockStreams.forEach(stream => {
         html += `
-            <div class="stream-card" onclick="window.location.href='/profile.html?user=${user.username}'">
+            <div class="stream-card" onclick="window.location.href='/profile.html?user=${stream.streamer}'">
                 <div class="stream-thumbnail">
-                    <img src="${avatar}" alt="${user.username}" style="object-fit: cover;">
-                    <div class="live-indicator" style="background: #00ff00;">USER</div>
+                    <img src="https://placehold.co/300x180/1a1a1a/FFD700?text=${stream.category}" alt="">
+                    <div class="live-indicator" style="background: #666;">OFFLINE</div>
                 </div>
                 <div class="stream-info">
                     <div class="streamer-avatar">
-                        <img src="${avatar}" alt="${user.username} avatar">
+                        <img src="${stream.avatar}" alt="">
                     </div>
                     <div class="stream-details">
-                        <div class="title">${user.username}</div>
-                        <div class="streamer-name">${user.bio || 'Nessuna bio'}</div>
-                        <div class="category">
-                            👥 ${user.followers_count || 0} followers • 
-                            📅 Iscritto ${daysAgo === 0 ? 'oggi' : daysAgo === 1 ? 'ieri' : daysAgo + ' giorni fa'}
-                        </div>
+                        <div class="title">${stream.title}</div>
+                        <div class="streamer-name">${stream.streamer}</div>
+                        <div class="category">${stream.category}</div>
                     </div>
                 </div>
             </div>
@@ -245,167 +422,14 @@ function displayUsersAsCards(users) {
     streamGrid.innerHTML = html;
 }
 
-/**
- * Popola il feed con stream (mock + utenti reali)
- */
-function populateStreamFeed(customStreams = null) {
-    const streamGrid = document.getElementById('streamGrid');
-    if (!streamGrid) return;
-
-    // Mix di stream mock e utenti reali
-    let streams = [];
-    
-    if (customStreams) {
-        streams = customStreams;
-    } else {
-        // Aggiungi alcuni stream mock
-        streams = [
-            { 
-                title: "Discussione Libera sulla Politica", 
-                streamer: "LiberoPensatore", 
-                category: "Talk Show & IRL", 
-                viewers: 1200, 
-                avatar: "https://placehold.co/40x40/7DF9FF/000000?text=LP",
-                isLive: true,
-                isMock: true
-            },
-            { 
-                title: "Gaming Senza Censure", 
-                streamer: "GamerOnFire", 
-                category: "Gaming", 
-                viewers: 854, 
-                avatar: "https://placehold.co/40x40/FF5733/FFFFFF?text=GF",
-                isLive: true,
-                isMock: true
-            }
-        ];
-        
-        // Aggiungi utenti reali come "stream offline"
-        allUsers.slice(0, 3).forEach(user => {
-            streams.push({
-                title: `Profilo di ${user.username}`,
-                streamer: user.username,
-                category: "Offline",
-                viewers: user.followers_count || 0,
-                avatar: user.avatar_url || `https://placehold.co/40x40/FFD700/000000?text=${user.username?.substring(0,2).toUpperCase()}`,
-                isLive: false,
-                userId: user.id,
-                isMock: false
-            });
-        });
-    }
-
-    let streamHTML = '';
-    streams.forEach(stream => {
-        const onclick = stream.isMock ? 
-            `alert('Stream di ${stream.streamer} - Coming soon!')` :
-            `window.location.href='/profile.html?user=${stream.streamer}'`;
-            
-        streamHTML += `
-            <div class="stream-card" onclick="${onclick}">
-                <div class="stream-thumbnail">
-                    <img src="https://placehold.co/300x180/1a1a1a/FFD700?text=${encodeURIComponent(stream.category)}" alt="Stream Thumbnail">
-                    ${stream.isLive ? '<div class="live-indicator">LIVE</div>' : '<div class="live-indicator" style="background: #666;">OFFLINE</div>'}
-                </div>
-                <div class="stream-info">
-                    <div class="streamer-avatar">
-                        <img src="${stream.avatar}" alt="${stream.streamer} avatar">
-                    </div>
-                    <div class="stream-details">
-                        <div class="title">${stream.title}</div>
-                        <div class="streamer-name">${stream.streamer}</div>
-                        <div class="category">${stream.category} • ${stream.viewers} ${stream.isLive ? 'spettatori' : 'followers'}</div>
-                    </div>
-                </div>
-            </div>
-        `;
-    });
-    streamGrid.innerHTML = streamHTML;
-}
-
-/**
- * Setup della barra di ricerca con RICERCA REALE
- */
-function setupSearchBar() {
-    const searchInput = document.getElementById('searchInput');
-    const mobileSearchInput = document.getElementById('mobileSearchInput');
-    
-    if (searchInput) {
-        searchInput.addEventListener('input', (e) => {
-            const query = e.target.value.toLowerCase().trim();
-            performSearch(query);
-        });
-    }
-    
-    if (mobileSearchInput) {
-        mobileSearchInput.addEventListener('input', (e) => {
-            const query = e.target.value.toLowerCase().trim();
-            performSearch(query);
-        });
-    }
-}
-
-/**
- * Esegue la ricerca su utenti REALI
- */
-function performSearch(query) {
-    const streamGrid = document.getElementById('streamGrid');
-    const emptyState = document.getElementById('emptyState');
-    const categoryTitle = document.getElementById('categoryTitle');
-    
-    if (!query) {
-        // Reset alla vista normale
-        loadFeed(currentFeedType);
-        return;
-    }
-    
-    // Cerca negli utenti reali
-    const results = allUsers.filter(user => {
-        const username = (user.username || '').toLowerCase();
-        const bio = (user.bio || '').toLowerCase();
-        return username.includes(query) || bio.includes(query);
-    });
-    
-    // Aggiorna il titolo
-    categoryTitle.textContent = `Risultati per "${query}" (${results.length})`;
-    
-    if (results.length === 0) {
-        streamGrid.innerHTML = '';
-        emptyState.style.display = 'block';
-        emptyState.innerHTML = `
-            <div style="font-size: 72px; margin-bottom: 20px;">🔍</div>
-            <h3 style="color: var(--text-secondary); margin-bottom: 10px;">
-                Nessun utente trovato per "${query}"
-            </h3>
-            <p style="color: var(--text-secondary); margin-bottom: 30px;">
-                Prova con un'altra ricerca
-            </p>
-            <button onclick="document.getElementById('searchInput').value=''; performSearch('')" 
-                    class="go-live-btn" style="display: inline-block;">
-                Mostra Tutti
-            </button>
-        `;
-    } else {
-        emptyState.style.display = 'none';
-        displayUsersAsCards(results);
-    }
-}
-
-// Rendi globali le funzioni necessarie
-window.switchFeed = switchFeed;
-window.performSearch = performSearch;
-
-/**
- * Altre funzioni helper
- */
+// Funzioni helper base
 function populateUserData(profile) {
     const userAvatar = document.getElementById('userAvatar');
     if (userAvatar) {
         if (profile.avatar_url) {
             userAvatar.src = profile.avatar_url;
         } else {
-            const initials = profile.username ? profile.username.substring(0, 2).toUpperCase() : '??';
-            userAvatar.src = `https://placehold.co/40x40/FFD700/000000?text=${initials}`;
+            userAvatar.src = `https://placehold.co/40x40/FFD700/000000?text=${profile.username?.substring(0,2).toUpperCase()}`;
         }
     }
 }
@@ -418,60 +442,25 @@ function setupProfileLink(username) {
 }
 
 async function loadFollowingList() {
-    if (!window.followingSystem) return;
-    
-    try {
-        const user = await checkUser();
-        const following = await window.followingSystem.getFollowing(user.id);
-        
-        const followingList = document.getElementById('followingList');
-        if (!followingList) return;
-        
-        if (following.length === 0) {
-            followingList.innerHTML = '<li><a href="#" style="opacity: 0.5;">Nessuno seguito</a></li>';
-            return;
-        }
-        
-        let html = '';
-        following.slice(0, 10).forEach(user => {
-            html += `
-                <li>
-                    <a href="/profile.html?user=${user.following_username}">
-                        <span style="display: inline-block; width: 8px; height: 8px; 
-                              background: #00ff00; border-radius: 50%; margin-right: 8px;">
-                        </span>
-                        ${user.following_username}
-                    </a>
-                </li>
-            `;
-        });
-        
-        if (following.length > 10) {
-            html += `<li><a href="#" style="opacity: 0.7;">Vedi tutti (${following.length})</a></li>`;
-        }
-        
-        followingList.innerHTML = html;
-        
-    } catch (error) {
-        console.error('Errore nel caricamento following:', error);
+    // Placeholder per ora
+    const followingList = document.getElementById('followingList');
+    if (followingList) {
+        followingList.innerHTML = '<li><a href="#" style="opacity: 0.5;">Caricamento...</a></li>';
     }
 }
 
+// Funzioni globali
+window.switchFeed = switchFeed;
+window.performSearch = performSearch;
 window.logout = async function() {
-    if (confirm('Sei sicuro di voler uscire?')) {
-        try {
-            const { error } = await supabaseClient.auth.signOut();
-            if (error) throw error;
-            window.location.href = '/';
-        } catch (error) {
-            console.error('Errore durante il logout:', error);
-            window.location.href = '/';
-        }
+    if (confirm('Vuoi uscire?')) {
+        await supabaseClient.auth.signOut();
+        window.location.href = '/';
     }
 }
 
-// Inizializzazione
+// INIT
 document.addEventListener('DOMContentLoaded', () => {
+    console.log("=== DASHBOARD CARICATA ===");
     initializeDashboard();
-    setupSearchBar();
 });
