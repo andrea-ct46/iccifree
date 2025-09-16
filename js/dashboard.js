@@ -131,3 +131,4 @@ document.head.insertAdjacentHTML('beforeend', `
 // Avvia l'inizializzazione della dashboard.
 document.addEventListener('DOMContentLoaded', initializeDashboard);
 
+
