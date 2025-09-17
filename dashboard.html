@@ -1,44 +1,332 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ICCI FREE - Dashboard</title>
-  <link rel="stylesheet" href="/css/dashboard.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ICCI FREE - Dashboard</title>
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <style>
+        /* Stili aggiuntivi per la dashboard completa */
+        .search-results-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--surface-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 0 0 12px 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            display: none;
+            z-index: 1000;
+        }
+        
+        .search-results-dropdown.active {
+            display: block;
+        }
+        
+        .search-result-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .search-result-item:hover {
+            background: var(--surface-medium);
+        }
+        
+        .search-result-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        
+        .search-result-info {
+            flex: 1;
+        }
+        
+        .search-result-name {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .search-result-meta {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        
+        .live-badge-small {
+            display: inline-block;
+            background: #ff0000;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 700;
+            animation: pulse 2s infinite;
+        }
+        
+        .notification-bell {
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .notification-count {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ff0000;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 700;
+        }
+        
+        .category-filter {
+            display: flex;
+            gap: 10px;
+            padding: 20px 30px;
+            background: var(--surface-dark);
+            border-bottom: 1px solid var(--border-color);
+            overflow-x: auto;
+        }
+        
+        .category-pill {
+            padding: 8px 16px;
+            background: var(--surface-medium);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            color: var(--text-primary);
+            text-decoration: none;
+            white-space: nowrap;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        
+        .category-pill:hover,
+        .category-pill.active {
+            background: var(--primary-yellow);
+            color: var(--background-dark);
+            border-color: var(--primary-yellow);
+        }
+        
+        .stats-bar {
+            display: flex;
+            justify-content: space-around;
+            padding: 20px;
+            background: linear-gradient(135deg, var(--surface-dark) 0%, var(--surface-medium) 100%);
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--primary-yellow);
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+        
+        .following-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .following-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        
+        .following-item:hover {
+            background: var(--surface-medium);
+        }
+        
+        .following-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        
+        .following-name {
+            flex: 1;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+        
+        .following-status {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #888;
+        }
+        
+        .following-status.online {
+            background: #00ff00;
+        }
+    </style>
 </head>
 <body>
-  <!-- Stato di caricamento -->
-  <div id="loadingState" class="loading-screen">
-    <p>Caricamento dashboard...</p>
-  </div>
 
-  <!-- Contenitore principale app -->
-  <div id="appContainer" style="display:none; flex-direction: column; min-height: 100vh;">
-    <!-- Header -->
-    <header class="dashboard-header">
-      <div class="header-left">
-        <img id="userAvatar" class="user-avatar" src="https://placehold.co/40x40" alt="Avatar">
-        <a id="myProfileLink" href="/profile.html" class="profile-link">Il mio profilo</a>
-      </div>
-      <div class="header-right">
-        <a href="/golive-webrtc.html" class="go-live-btn">🎥 GO LIVE</a>
-      </div>
-    </header>
+    <div id="loadingState">
+        <div class="spinner"></div>
+        <p class="loading-text">Caricamento dashboard...</p>
+    </div>
 
-    <!-- Contenuto principale -->
-    <main class="dashboard-main">
-      <h2>Dirette in corso</h2>
-      <div id="streamGrid" class="stream-grid">
-        <!-- Qui vengono caricate le live -->
-      </div>
-    </main>
-  </div>
+    <div id="appContainer" style="display: none;">
+        <!-- Header migliorato -->
+        <header class="app-header">
+            <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+            
+            <div class="logo" onclick="location.href='/'">
+                ICCI<span class="free">FREE</span>
+            </div>
+            
+            <!-- Barra di ricerca migliorata -->
+            <div class="search-bar">
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    placeholder="Cerca streamer, live o categorie..."
+                    autocomplete="off"
+                >
+                <div class="search-results-dropdown" id="searchResults"></div>
+            </div>
+            
+            <div class="header-actions">
+                <!-- Notifiche -->
+                <div class="notification-bell" onclick="toggleNotifications()">
+                    🔔
+                    <span class="notification-count" id="notificationCount" style="display: none;">0</span>
+                </div>
+                
+                <!-- GO LIVE -->
+                <a href="/golive-webrtc.html" class="go-live-btn">
+                    <span>🔴</span>
+                    <span>GO LIVE</span>
+                </a>
+                
+                <!-- Menu profilo -->
+                <div class="profile-menu">
+                    <img id="userAvatar" src="https://placehold.co/40x40/1a1a1a/FFFFFF?text=?" alt="User" class="user-avatar">
+                    <div class="profile-dropdown">
+                        <a href="#" id="myProfileLink">👤 Il mio Profilo</a>
+                        <a href="/edit-profile.html">⚙️ Impostazioni</a>
+                        <a href="#" onclick="toggleTheme()">🌓 Tema</a>
+                        <a href="#" onclick="logout()">🚪 Logout</a>
+                    </div>
+                </div>
+            </div>
+        </header>
 
-  <!-- Script -->
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  <script src="/js/supabaseClient.js"></script>
-  <script src="/js/dashboard.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-  <script>eruda.init();</script>
+        <!-- Stats Bar -->
+        <div class="stats-bar">
+            <div class="stat-item">
+                <div class="stat-number" id="totalViewers">0</div>
+                <div class="stat-label">Spettatori Totali</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="liveStreams">0</div>
+                <div class="stat-label">Live Ora</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="totalStreamers">0</div>
+                <div class="stat-label">Streamers</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="yourFollowers">0</div>
+                <div class="stat-label">Tuoi Followers</div>
+            </div>
+        </div>
+
+        <!-- Filtri categoria -->
+        <div class="category-filter" id="categoryFilter">
+            <div class="category-pill active" data-category="all">🔥 Tutti</div>
+            <div class="category-pill" data-category="talk-show">💬 Talk Show</div>
+            <div class="category-pill" data-category="gaming">🎮 Gaming</div>
+            <div class="category-pill" data-category="music">🎵 Musica</div>
+            <div class="category-pill" data-category="art">🎨 Arte</div>
+            <div class="category-pill" data-category="cooking">🍳 Cucina</div>
+            <div class="category-pill" data-category="sports">⚽ Sport</div>
+            <div class="category-pill" data-category="study">📚 Studio</div>
+            <div class="category-pill" data-category="irl">🌍 IRL</div>
+            <div class="category-pill" data-category="tech">💻 Tech</div>
+        </div>
+
+        <main class="main-content">
+            <!-- Sidebar con following -->
+            <aside class="sidebar" id="sidebar">
+                <h3>🔴 Live che segui</h3>
+                <div id="followingLive" class="following-list">
+                    <!-- Popolato da JS -->
+                </div>
+                
+                <h3>👥 Following</h3>
+                <div id="followingList" class="following-list">
+                    <!-- Popolato da JS -->
+                </div>
+                
+                <h3>📂 Categorie</h3>
+                <ul class="category-list">
+                    <li><a href="#" data-filter="talk-show">💬 Talk Show</a></li>
+                    <li><a href="#" data-filter="gaming">🎮 Gaming</a></li>
+                    <li><a href="#" data-filter="music">🎵 Musica</a></li>
+                    <li><a href="#" data-filter="art">🎨 Arte</a></li>
+                    <li><a href="#" data-filter="cooking">🍳 Cucina</a></li>
+                </ul>
+                
+                <h3>ℹ️ Info</h3>
+                <div style="padding: 10px; color: var(--text-secondary); font-size: 12px;">
+                    <p>© 2025 ICCI FREE</p>
+                    <p>Versione 1.0.0</p>
+                    <a href="#" style="color: var(--primary-yellow);">Terms</a> • 
+                    <a href="#" style="color: var(--primary-yellow);">Privacy</a>
+                </div>
+            </aside>
+
+            <!-- Feed principale -->
+            <section class="feed-container">
+                <h2 id="feedTitle">🔥 Stream in Evidenza</h2>
+                <div class="stream-grid" id="streamGrid">
+                    <!-- Stream cards verranno inserite qui -->
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Notification Panel (nascosto) -->
+    <div id="notificationPanel" class="notification-panel" style="display: none;">
+        <div class="notification-header">
+            <h3>Notifiche</h3>
+            <button onclick="clearNotifications()">Cancella tutto</button>
+        </div>
+        <div id="notificationList">
+            <!-- Notifiche qui -->
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="/js/supabase.js"></script>
+    <script src="/js/dashboard-complete.js"></script>
 </body>
 </html>
