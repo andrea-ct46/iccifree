@@ -1,8 +1,8 @@
 // supabaseClient.js
 
 // 1️⃣ Configurazione Supabase
-const supabaseUrl = "https://TUO-PROGETTO.supabase.co"; // sostituisci con il tuo URL
-const supabaseKey = "TUO-ANON-KEY";                     // sostituisci con la tua chiave anon
+const supabaseUrl = "https://itfndtgrfjvnavbitfgy.supabase.co"; // sostituisci con il tuo URL
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml0Zm5kdGdyZmp2bmF2Yml0Zmd5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4ODc3MjIsImV4cCI6MjA3MzQ2MzcyMn0.73_f6oR5cQWL2Y69EMZ-FciDXkle_85okZ9pOOgmXu4";                     // sostituisci con la tua chiave anon
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
 // 2️⃣ Funzione per controllare l'utente loggato
