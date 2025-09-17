@@ -1,66 +1,42 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ICCI FREE - Dashboard</title>
-    <link rel="stylesheet" href="/css/dashboard.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ICCI FREE - Dashboard</title>
+  <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
+  <!-- Stato di caricamento -->
+  <div id="loadingState" class="loading-screen">
+    <p>Caricamento dashboard...</p>
+  </div>
 
-    <div id="loadingState">
-        <div class="spinner"></div>
-        <p class="loading-text">Verifica profilo in corso...</p>
-    </div>
+  <!-- Contenitore principale app -->
+  <div id="appContainer" style="display:none; flex-direction: column; min-height: 100vh;">
+    <!-- Header -->
+    <header class="dashboard-header">
+      <div class="header-left">
+        <img id="userAvatar" class="user-avatar" src="https://placehold.co/40x40" alt="Avatar">
+        <a id="myProfileLink" href="/profile.html" class="profile-link">Il mio profilo</a>
+      </div>
+      <div class="header-right">
+        <a href="/golive-webrtc.html" class="go-live-btn">🎥 GO LIVE</a>
+      </div>
+    </header>
 
-    <div id="appContainer" style="display: none;">
-        <header class="app-header">
-            <div class="logo">ICCI<span class="free">FREE</span></div>
-            <div class="search-bar">
-                <input type="text" placeholder="Cerca streamer o categorie...">
-            </div>
-            <div class="header-actions">
-                <!-- MODIFICA CRUCIALE: Il link ora punta a /golive.html -->
-                <a href="/golive.html" class="go-live-btn">GO LIVE</a>
-                <div class="profile-menu">
-                    <img id="userAvatar" src="https://placehold.co/40x40/1a1a1a/FFFFFF?text=?" alt="User Avatar" class="user-avatar">
-                    <div class="profile-dropdown">
-                        <a href="#" id="myProfileLink">Il mio Profilo</a>
-                        <a href="#">Impostazioni</a>
-                        <a href="#" onclick="logout()">Logout</a>
-                    </div>
-                </div>
-            </div>
-        </header>
+    <!-- Contenuto principale -->
+    <main class="dashboard-main">
+      <h2>Dirette in corso</h2>
+      <div id="streamGrid" class="stream-grid">
+        <!-- Qui vengono caricate le live -->
+      </div>
+    </main>
+  </div>
 
-        <main class="main-content">
-            <aside class="sidebar">
-                <h3>Consigliati per te</h3>
-                <div id="sidebar-streamers">
-                    <!-- Streamer consigliati verranno inseriti qui da JS -->
-                </div>
-                <h3>Categorie</h3>
-                <ul class="category-list">
-                    <li><a href="#">Talk Show & IRL</a></li>
-                    <li><a href="#">Gaming</a></li>
-                    <li><a href="#">Musica</a></li>
-                    <li><a href="#">Arte</a></li>
-                </ul>
-            </aside>
-
-            <section class="feed-container">
-                <h2>Stream in Evidenza</h2>
-                <div class="stream-grid" id="streamGrid">
-                    <!-- Le card degli stream verranno inserite qui da JS -->
-                </div>
-            </section>
-        </main>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="/js/supabase.js"></script>
-    <script src="/js/dashboard.js"></script>
+  <!-- Script -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="/js/supabaseClient.js"></script>
+  <script src="/js/dashboard.js"></script>
 </body>
 </html>
-
-
