@@ -1,137 +1,171 @@
-// =================================================================================
-// ICCI FREE - LOGICA DELLA PAGINA PROFILO
-// Carica i dati dell'utente e gestisce l'interattività.
-// =================================================================================
+// js/profile.js
+// Pagina Profilo - integra followingSystem
 
-// Funzione principale che si avvia al caricamento della pagina
+// assicurati che supabase.js sia caricato prima
+
+// carica following.js se non è già presente (solo se non caricato)
+if (!window.followingSystem) {
+    const s = document.createElement('script');
+    s.src = '/js/following.js';
+    document.head.appendChild(s);
+}
+
 async function initializeProfilePage() {
     const messageContainer = document.getElementById('messageState');
     const messageText = document.getElementById('messageText');
     const profileContainer = document.getElementById('profileContainer');
 
     try {
-        // 1. Legge lo username dall'URL (es. ?user=NOMEUTENTE)
         const params = new URLSearchParams(window.location.search);
         const username = params.get('user');
 
         if (!username) {
-            throw new Error("Nessun utente specificato nell'URL.");
+            const currentUser = await checkUser();
+            if (currentUser) {
+                const { data: profile } = await supabaseClient.from('profiles').select('username').eq('id', currentUser.id).single();
+                if (profile?.username) { window.location.replace(`/profile.html?user=${profile.username}`); return; }
+            }
+            messageText.innerHTML = '<p>Nessun profilo specificato.</p>'; return;
         }
 
-        // 2. Cerca il profilo nel database usando lo username
-        const { data: profile, error } = await supabaseClient
-            .from('profiles')
-            .select('*') // Prende tutti i dati del profilo
-            .eq('username', username)
-            .single(); // .single() si aspetta un solo risultato
+        const { data: profile, error } = await supabaseClient.from('profiles').select('*').eq('username', username).single();
+        if (error || !profile) { messageText.innerHTML = `<p>Utente "${username}" non trovato.</p>`; return; }
 
-        if (error || !profile) {
-            throw new Error(`Utente "${username}" non trovato.`);
-        }
-
-        // 3. Popola la pagina con i dati trovati
         populateProfileData(profile);
+        await setupActionButtons(profile);
+        await loadFollowData(profile);
 
-        // 4. Controlla chi è l'utente loggato per mostrare i pulsanti giusti
-        const currentUser = await checkUser();
-        await setupActionButtons(profile, currentUser);
-
-        // 5. Mostra il contenuto e nascondi il caricamento
         profileContainer.style.display = 'block';
         messageContainer.style.display = 'none';
-
-    } catch (error) {
-        // In caso di errore, mostra un messaggio chiaro
-        messageText.textContent = error.message;
-        console.error("Errore nel caricamento del profilo:", error);
+    } catch (err) {
+        console.error(err);
+        messageText.innerHTML = '<p>Errore nel caricamento del profilo.</p>';
     }
 }
 
-// Funzione per inserire i dati del profilo nell'HTML
 function populateProfileData(profile) {
-    document.title = `${profile.username} - ICCI FREE`; // Aggiorna il titolo della pagina
-    document.getElementById('profileUsername').textContent = profile.username;
-    document.getElementById('profileBio').textContent = profile.bio || 'Questo utente non ha ancora una biografia.';
-    document.getElementById('followersCount').textContent = profile.followers_count || 0;
-    document.getElementById('followingCount').textContent = profile.following_count || 0;
-    // Gestione avatar fallback
-    document.getElementById('profileAvatar').src = profile.avatar_url || `https://placehold.co/150x150/181818/A0A0A0?text=${profile.username.charAt(0).toUpperCase()}`;
+    document.title = `${profile.username} - ICCI FREE`;
+    const elU = document.getElementById('profileUsername'); if (elU) elU.textContent = profile.username;
+    const elB = document.getElementById('profileBio'); if (elB) elB.textContent = profile.bio || 'Nessuna biografia impostata.';
+    const elF = document.getElementById('followersCount'); if (elF) elF.textContent = profile.followers_count || 0;
+    const elG = document.getElementById('followingCount'); if (elG) elG.textContent = profile.following_count || 0;
+
+    const profileAvatar = document.getElementById('profileAvatar');
+    if (profileAvatar) {
+        if (profile.avatar_url) profileAvatar.src = profile.avatar_url;
+        else {
+            const initials = profile.username.substring(0,2).toUpperCase();
+            const colors = ['FF5733','33FF57','3357FF','FF33F5','F5FF33','33FFF5'];
+            const colorIndex = profile.username.charCodeAt(0) % colors.length;
+            profileAvatar.src = `https://placehold.co/150x150/${colors[colorIndex]}/FFFFFF?text=${initials}`;
+        }
+    }
 }
 
-// Funzione per decidere se mostrare "Follow", "Unfollow" o "Edit Profile"
-async function setupActionButtons(profile, currentUser) {
+async function setupActionButtons(profile) {
+    const currentUser = await checkUser();
     const profileActionsDiv = document.getElementById('profileActions');
-    if (!profileActionsDiv) return;
+    const headerActionBtn = document.getElementById('headerActionBtn');
 
-    // Se non c'è un utente loggato, non mostrare nessun pulsante
-    if (!currentUser) {
-        profileActionsDiv.innerHTML = '';
+    if (currentUser && currentUser.id === profile.id) {
+        profileActionsDiv.innerHTML = `<a href="/setup-profile.html?edit=true" class="action-btn edit">✏️ Modifica Profilo</a>`;
+        headerActionBtn.style.display = 'none';
         return;
     }
 
-    // Se l'utente sta guardando il suo stesso profilo
-    if (currentUser.id === profile.id) {
-        profileActionsDiv.innerHTML = `<a href="/setup-profile.html" class="action-btn edit">Modifica Profilo</a>`;
+    const isFollowing = await window.followingSystem.checkIfFollowing(profile.id);
+    profileActionsDiv.innerHTML = `
+        <button class="action-btn ${isFollowing ? 'following' : 'follow'}"
+                data-follow-user="${profile.id}"
+                onclick="handleFollowClick('${profile.id}')">
+            ${isFollowing ? '✓ Following' : '+ Follow'}
+        </button>`;
+    headerActionBtn.href = '/dashboard.html'; headerActionBtn.textContent = '← Dashboard'; headerActionBtn.style.display = 'block';
+}
+
+async function handleFollowClick(userId) {
+    if (!window.followingSystem) return console.error('Sistema not loaded');
+    await window.followingSystem.toggleFollow(userId);
+    // After toggle, refresh the exact state from DB and update UI
+    const isNowFollowing = await window.followingSystem.checkIfFollowing(userId);
+    window.followingSystem.updateFollowButton(userId, isNowFollowing);
+    await window.followingSystem.updateFollowersCountFromDB(userId);
+    // If followers tab open, refresh list
+    if (document.querySelector('.content-tabs .tab.active')?.textContent.toLowerCase().includes('followers')) {
+        refreshFollowers(userId);
+    }
+}
+
+async function loadFollowData(profile) {
+    const contentTabs = document.querySelector('.content-tabs');
+    if (!contentTabs) return;
+    contentTabs.innerHTML = `
+        <button class="tab active" onclick="showTab('streams')">Stream Recenti</button>
+        <button class="tab" onclick="showTab('followers')">Followers (${profile.followers_count||0})</button>
+        <button class="tab" onclick="showTab('following')">Following (${profile.following_count||0})</button>
+        <button class="tab" onclick="showTab('clips')">Clips</button>
+    `;
+    showTab('streams');
+}
+
+async function showTab(tabName) {
+    const contentGrid = document.querySelector('.content-grid');
+    const tabs = document.querySelectorAll('.content-tabs .tab');
+    tabs.forEach(t => t.classList.toggle('active', t.textContent.toLowerCase().includes(tabName)));
+
+    const params = new URLSearchParams(window.location.search);
+    const username = params.get('user');
+    const { data: profile } = await supabaseClient.from('profiles').select('id').eq('username', username).single();
+    if (!profile) { contentGrid.innerHTML = '<p>Utente non trovato.</p>'; return; }
+
+    if (tabName === 'followers') {
+        const followers = await window.followingSystem.getFollowers(profile.id);
+        displayFollowers(followers);
+    } else if (tabName === 'following') {
+        const following = await window.followingSystem.getFollowing(profile.id);
+        displayFollowing(following);
     } else {
-        // Se l'utente sta guardando il profilo di qualcun altro
-        const isFollowing = await checkIfFollowing(currentUser.id, profile.id);
-        
-        // Creiamo il pulsante
-        const followButton = document.createElement('button');
-        followButton.classList.add('action-btn', 'follow');
-        updateFollowButton(followButton, isFollowing);
-
-        // Aggiungiamo la logica al click
-        followButton.addEventListener('click', async () => {
-            await toggleFollow(followButton, currentUser.id, profile.id);
-        });
-
-        profileActionsDiv.innerHTML = ''; // Pulisce l'area
-        profileActionsDiv.appendChild(followButton);
+        contentGrid.innerHTML = '<p id="noContentMessage">Nessun contenuto da mostrare.</p>';
     }
 }
 
-// Funzione per gestire il click del pulsante follow/unfollow
-async function toggleFollow(button, followerId, followingId) {
-    button.disabled = true; // Previene doppi click
-    const isCurrentlyFollowing = button.textContent.includes('Smetti');
-
-    let success;
-    if (isCurrentlyFollowing) {
-        success = await unfollowUser(followerId, followingId);
-    } else {
-        success = await followUser(followerId, followingId);
-    }
-
-    if (success) {
-        // Aggiorna l'interfaccia solo se l'operazione è andata a buon fine
-        updateFollowButton(button, !isCurrentlyFollowing);
-        updateFollowerCount(!isCurrentlyFollowing);
-    }
-
-    button.disabled = false;
+function displayFollowers(followers) {
+    const contentGrid = document.querySelector('.content-grid');
+    if (!followers || followers.length === 0) { contentGrid.innerHTML = '<p id="noContentMessage">Nessun follower ancora.</p>'; return; }
+    let html = '<div style="display:grid;gap:16px;padding:20px;">';
+    followers.forEach(f => {
+        const username = f.follower_username || 'Anon';
+        const avatar = f.follower_avatar || `https://placehold.co/50x50/FFD700/000000?text=${username.substring(0,2).toUpperCase()}`;
+        html += `<div style="display:flex;align-items:center;gap:16px;padding:16px;background:var(--surface-dark);border-radius:12px;">
+            <a href="/profile.html?user=${username}"><img src="${avatar}" alt="${username}" style="width:50px;height:50px;border-radius:50%;border:2px solid var(--border-color);"></a>
+            <div style="flex:1;"><a href="/profile.html?user=${username}" style="color:var(--text-primary);text-decoration:none;font-weight:600;">${username}</a>
+            <p style="color:var(--text-secondary);font-size:14px;margin:4px 0;">${f.follower_bio || 'Nessuna bio'}</p></div>
+        </div>`;
+    });
+    html += '</div>'; contentGrid.innerHTML = html;
 }
 
-// Funzione helper per aggiornare lo stile e il testo del pulsante
-function updateFollowButton(button, isFollowing) {
-    if (isFollowing) {
-        button.textContent = 'Smetti di seguire';
-        // Aggiungi una classe per cambiare stile se vuoi, es:
-        button.classList.add('unfollow-style'); 
-    } else {
-        button.textContent = 'Segui';
-        button.classList.remove('unfollow-style');
-    }
+function displayFollowing(following) {
+    const contentGrid = document.querySelector('.content-grid');
+    if (!following || following.length === 0) { contentGrid.innerHTML = '<p id="noContentMessage">Non segui nessuno ancora.</p>'; return; }
+    let html = '<div style="display:grid;gap:16px;padding:20px;">';
+    following.forEach(f => {
+        const username = f.following_username || 'Anon';
+        const avatar = f.following_avatar || `https://placehold.co/50x50/FFD700/000000?text=${username.substring(0,2).toUpperCase()}`;
+        html += `<div style="display:flex;align-items:center;gap:16px;padding:16px;background:var(--surface-dark);border-radius:12px;">
+            <a href="/profile.html?user=${username}"><img src="${avatar}" alt="${username}" style="width:50px;height:50px;border-radius:50%;border:2px solid var(--border-color);"></a>
+            <div style="flex:1;"><a href="/profile.html?user=${username}" style="color:var(--text-primary);text-decoration:none;font-weight:600;">${username}</a>
+            <p style="color:var(--text-secondary);font-size:14px;margin:4px 0;">${f.following_bio || 'Nessuna bio'}</p></div></div>`;
+    });
+    html += '</div>'; contentGrid.innerHTML = html;
 }
 
-// Funzione helper per aggiornare il contatore dei follower sull'interfaccia
-function updateFollowerCount(isFollowing) {
-    const followersSpan = document.getElementById('followersCount');
-    let currentCount = parseInt(followersSpan.textContent);
-    followersSpan.textContent = isFollowing ? currentCount + 1 : currentCount - 1;
+async function refreshFollowers(userId) {
+    const followers = await window.followingSystem.getFollowers(userId);
+    displayFollowers(followers);
+    const elem = document.getElementById('followersCount');
+    if (elem) elem.textContent = followers.length;
 }
 
-
-// Avvia tutto al caricamento della pagina
+// start
 document.addEventListener('DOMContentLoaded', initializeProfilePage);
-
