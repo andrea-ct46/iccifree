@@ -3,7 +3,7 @@
 // =================================================================================
 
 // Variabile globale per mantenere lo stream della fotocamera
-let localStream = null;
+/* let localStream = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
     const videoElement = document.getElementById('cameraPreview');
@@ -96,4 +96,4 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 });
-
+*/
