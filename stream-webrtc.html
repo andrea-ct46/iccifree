@@ -1,0 +1,31 @@
+<!-- File: stream-webrtc.html -->
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Viewer - ICCI FREE</title>
+<link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+    <main class="container">
+        <h1>Viewer Stream</h1>
+        <div id="streamInfo"></div>
+        <video id="remoteVideo" autoplay playsinline controls style="width:100%;max-width:720px;border-radius:8px;background:#000"></video>
+        <div id="viewerControls">
+            <button id="followBtn">Follow</button>
+            <div id="viewerStats"></div>
+        </div>
+
+        <section id="chat">
+            <div id="chatBox" style="height:200px;overflow:auto;background:#111;padding:10px;border-radius:8px;"></div>
+            <input id="chatInput" placeholder="Scrivi..." />
+            <button id="sendBtn">Invia</button>
+        </section>
+    </main>
+
+    <script src="/js/supabase.js"></script>
+    <script src="/js/webrtc-streaming.js"></script>
+    <script src="/js/stream-viewer.js"></script>
+</body>
+</html>
