@@ -90,7 +90,7 @@ async function populateStreamFeed() {
 
             // Creiamo la card come un link alla pagina dello stream
             streamHTML += `
-                <a href="/stream.html?id=${stream.id}" class="stream-card-link">
+                <a href="/stream-webrtc.html?id=${stream.id}"> class="stream-card-link">
                     <div class="stream-card">
                         <div class="stream-thumbnail">
                             <img src="https://placehold.co/300x170/181818/FFD700?text=${stream.category || 'LIVE'}" alt="Stream Thumbnail">
