@@ -1,12 +1,8 @@
 // =================================================================================
-// ICCI FREE - LOGICA DELLA DASHBOARD DINAMICA (VERSIONE CORRETTA)
+// ICCI FREE - LOGICA DELLA DASHBOARD (VERSIONE CORRETTA CON WEBRTC)
 // =================================================================================
 
-/**
- * Funzione principale che inizializza la dashboard.
- */
 async function initializeDashboard() {
-    // Controlla chi è l'utente loggato.
     const user = await checkUser();
     if (!user) {
         window.location.replace('/auth.html');
@@ -14,7 +10,6 @@ async function initializeDashboard() {
     }
 
     try {
-        // Recuperiamo i dati del profilo per popolare l'header.
         const { data: profile, error } = await supabaseClient
             .from('profiles')
             .select('*')
@@ -22,13 +17,11 @@ async function initializeDashboard() {
             .single();
 
         if (error) throw error;
-
-        // Se il profilo esiste, mostra l'app e popola i dati.
+        
         document.getElementById('loadingState').style.display = 'none';
         document.getElementById('appContainer').style.display = 'flex';
-
+        
         populateUserData(profile);
-        // Ora chiamiamo la nuova funzione asincrona per caricare il feed.
         await populateStreamFeed();
 
     } catch (error) {
@@ -37,31 +30,24 @@ async function initializeDashboard() {
     }
 }
 
-/**
- * Popola gli elementi dell'interfaccia con i dati dell'utente.
- */
 function populateUserData(profile) {
     const userAvatar = document.getElementById('userAvatar');
-    const myProfileLink = document.getElementById('myProfileLink'); // Assicurati di avere questo ID in dashboard.html
+    const myProfileLink = document.getElementById('myProfileLink');
 
     if (userAvatar && profile.avatar_url) {
         userAvatar.src = profile.avatar_url;
     }
-
+    
     if (myProfileLink && profile.username) {
         myProfileLink.href = `/profile.html?user=${profile.username}`;
     }
 }
 
-/**
- * NUOVA VERSIONE: Carica gli stream reali dal database e li mostra nel feed.
- */
 async function populateStreamFeed() {
     const streamGrid = document.getElementById('streamGrid');
     if (!streamGrid) return;
 
     try {
-        // 1. Chiediamo a Supabase tutti gli stream con status 'live'.
         const { data: streams, error } = await supabaseClient
             .from('streams')
             .select(`
@@ -69,38 +55,47 @@ async function populateStreamFeed() {
                 profiles ( username, avatar_url )
             `)
             .eq('status', 'live')
-            .order('created_at', { ascending: false }); // I più recenti prima
+            .order('created_at', { ascending: false });
 
         if (error) throw error;
 
-        // 2. Se non ci sono dirette, mostriamo un messaggio.
         if (!streams || streams.length === 0) {
-            streamGrid.innerHTML = '<p class="empty-feed">Nessuna diretta al momento. Sii il primo ad andare live!</p>';
+            streamGrid.innerHTML = `
+                <div class="empty-feed">
+                    <p>🎥 Nessuna diretta al momento</p>
+                    <p>Sii il primo ad andare live!</p>
+                    <a href="/golive-webrtc.html" class="go-live-empty-btn">GO LIVE ORA</a>
+                </div>
+            `;
             return;
         }
 
-        // 3. Se ci sono dirette, costruiamo le card HTML.
         let streamHTML = '';
         streams.forEach(stream => {
             const streamer = stream.profiles;
             if (!streamer) return;
 
-            // Creiamo la card come un link alla pagina dello stream WebRTC
+            // IMPORTANTE: Link aggiornato per WebRTC
             streamHTML += `
                 <a href="/stream-webrtc.html?id=${stream.id}" class="stream-card-link">
                     <div class="stream-card">
                         <div class="stream-thumbnail">
-                            <img src="https://placehold.co/300x170/181818/FFD700?text=${stream.category || 'LIVE'}" alt="Stream Thumbnail">
-                            <div class="live-indicator">LIVE</div>
+                            <img src="https://placehold.co/320x180/0d0d0d/FFD700?text=LIVE" alt="Stream Thumbnail">
+                            <div class="live-indicator">
+                                <span class="live-dot">●</span> LIVE
+                            </div>
+                            <div class="viewer-counter">
+                                👁️ ${stream.viewer_count || 0}
+                            </div>
                         </div>
                         <div class="stream-info">
                             <div class="streamer-avatar">
-                                <img src="${streamer.avatar_url || 'https://placehold.co/40x40/282828/A0A0A0?text=?'}" alt="${streamer.username} avatar">
+                                <img src="${streamer.avatar_url || 'https://placehold.co/40x40/282828/FFD700?text=?'}" alt="${streamer.username} avatar">
                             </div>
                             <div class="stream-details">
                                 <div class="title">${stream.title}</div>
                                 <div class="streamer-name">${streamer.username}</div>
-                                <div class="category">${stream.category || 'Nessuna categoria'}</div>
+                                <div class="category">${stream.category || 'Live Stream'}</div>
                             </div>
                         </div>
                     </div>
@@ -116,13 +111,87 @@ async function populateStreamFeed() {
     }
 }
 
-// Aggiungiamo uno stile per il messaggio di feed vuoto nel CSS se non c'è già.
-document.head.insertAdjacentHTML('beforeend', `
-<style>
-    .stream-card-link { text-decoration: none; color: inherit; }
-    .empty-feed { color: var(--text-secondary); }
-</style>
-`);
+// Aggiorna il link GO LIVE nell'header
+document.addEventListener('DOMContentLoaded', () => {
+    // Fix GO LIVE button link
+    const goLiveBtn = document.querySelector('.go-live-btn');
+    if (goLiveBtn) {
+        goLiveBtn.href = '/golive-webrtc.html'; // WEBRTC VERSION
+    }
+    
+    initializeDashboard();
+});
 
-// Avvia l'inizializzazione della dashboard.
-document.addEventListener('DOMContentLoaded', initializeDashboard);
+// CSS aggiuntivo per empty state
+const style = document.createElement('style');
+style.textContent = `
+    .empty-feed {
+        text-align: center;
+        color: var(--text-secondary);
+        padding: 60px 20px;
+    }
+    
+    .empty-feed p {
+        margin: 10px 0;
+        font-size: 18px;
+    }
+    
+    .go-live-empty-btn {
+        display: inline-block;
+        margin-top: 20px;
+        padding: 12px 30px;
+        background: linear-gradient(135deg, var(--primary-yellow) 0%, #FFB700 100%);
+        color: var(--background-dark);
+        text-decoration: none;
+        border-radius: 12px;
+        font-weight: 700;
+        transition: all 0.3s;
+    }
+    
+    .go-live-empty-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(255, 215, 0, 0.3);
+    }
+    
+    .stream-card-link { 
+        text-decoration: none; 
+        color: inherit; 
+    }
+    
+    .viewer-counter {
+        position: absolute;
+        bottom: 12px;
+        right: 12px;
+        background: rgba(0,0,0,0.8);
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    
+    .live-indicator {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        background: #ff3b30;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        animation: pulse 2s infinite;
+    }
+    
+    .live-dot {
+        animation: blink 1s infinite;
+    }
+    
+    @keyframes blink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+`;
+document.head.appendChild(style);
