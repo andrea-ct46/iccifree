@@ -22,12 +22,13 @@ async function initializeDashboard() {
             .single();
 
         if (error) throw error;
-        
+
         // Se il profilo esiste, mostra l'app e popola i dati.
         document.getElementById('loadingState').style.display = 'none';
         document.getElementById('appContainer').style.display = 'flex';
-        
+
         populateUserData(profile);
+
         // Ora chiamiamo la nuova funzione asincrona per caricare il feed.
         await populateStreamFeed();
 
@@ -42,12 +43,12 @@ async function initializeDashboard() {
  */
 function populateUserData(profile) {
     const userAvatar = document.getElementById('userAvatar');
-    const myProfileLink = document.getElementById('myProfileLink'); // Assicurati di avere questo ID in dashboard.html
+    const myProfileLink = document.getElementById('myProfileLink'); 
 
     if (userAvatar && profile.avatar_url) {
         userAvatar.src = profile.avatar_url;
     }
-    
+
     if (myProfileLink && profile.username) {
         myProfileLink.href = `/profile.html?user=${profile.username}`;
     }
@@ -62,8 +63,6 @@ async function populateStreamFeed() {
 
     try {
         // 1. Chiediamo a Supabase tutti gli stream con status 'live'.
-        //    Con la join `profiles ( username, avatar_url )`, otteniamo
-        //    contemporaneamente anche i dati dello streamer.
         const { data: streams, error } = await supabaseClient
             .from('streams')
             .select(`
@@ -71,37 +70,35 @@ async function populateStreamFeed() {
                 profiles ( username, avatar_url )
             `)
             .eq('status', 'live')
-            .order('created_at', { ascending: false }); // I più recenti prima
+            .order('created_at', { ascending: false });
 
         if (error) throw error;
 
         // 2. Se non ci sono dirette, mostriamo un messaggio.
         if (!streams || streams.length === 0) {
-            streamGrid.innerHTML = '<p class="empty-feed">Nessuna diretta al momento. Sii il primo ad andare live!</p>';
+            streamGrid.innerHTML = '<p class="empty-feed">🎥 Nessuna diretta al momento. Sii il primo ad andare live!</p>';
             return;
         }
 
         // 3. Se ci sono dirette, costruiamo le card HTML.
         let streamHTML = '';
         streams.forEach(stream => {
-            // Controlliamo che i dati dello streamer esistano
             const streamer = stream.profiles;
             if (!streamer) return;
 
-            // Creiamo la card come un link alla pagina dello stream
             streamHTML += `
-                <a href="/stream-webrtc.html?id=${stream.id}"> class="stream-card-link">
+                <a href="/stream-webrtc.html?id=${stream.id}" class="stream-card-link">
                     <div class="stream-card">
                         <div class="stream-thumbnail">
-                            <img src="https://placehold.co/300x170/181818/FFD700?text=${stream.category || 'LIVE'}" alt="Stream Thumbnail">
+                            <img src="https://placehold.co/300x170/181818/FFD700?text=${stream.category || 'LIVE'}" alt="Anteprima stream">
                             <div class="live-indicator">LIVE</div>
                         </div>
                         <div class="stream-info">
                             <div class="streamer-avatar">
-                                <img src="${streamer.avatar_url || 'https://placehold.co/40x40/282828/A0A0A0?text=?'}" alt="${streamer.username} avatar">
+                                <img src="${streamer.avatar_url || 'https://placehold.co/40x40/282828/A0A0A0?text=?'}" alt="Avatar di ${streamer.username}">
                             </div>
                             <div class="stream-details">
-                                <div class="title">${stream.title}</div>
+                                <div class="title">${stream.title || 'Diretta senza titolo'}</div>
                                 <div class="streamer-name">${streamer.username}</div>
                                 <div class="category">${stream.category || 'Nessuna categoria'}</div>
                             </div>
@@ -115,20 +112,24 @@ async function populateStreamFeed() {
 
     } catch (error) {
         console.error("Errore nel caricamento del feed:", error.message);
-        streamGrid.innerHTML = '<p class="empty-feed">Impossibile caricare le dirette. Riprova più tardi.</p>';
+        streamGrid.innerHTML = '<p class="empty-feed">⚠️ Impossibile caricare le dirette. Riprova più tardi.</p>';
     }
 }
 
 // Aggiungiamo uno stile per il messaggio di feed vuoto nel CSS se non c'è già.
 document.head.insertAdjacentHTML('beforeend', `
 <style>
-    .stream-card-link { text-decoration: none; color: inherit; }
-    .empty-feed { color: var(--text-secondary); }
+    .stream-card-link { 
+        text-decoration: none; 
+        color: inherit; 
+    }
+    .empty-feed { 
+        color: var(--text-secondary); 
+        text-align: center; 
+        margin-top: 20px;
+    }
 </style>
 `);
 
-
 // Avvia l'inizializzazione della dashboard.
 document.addEventListener('DOMContentLoaded', initializeDashboard);
-
-
