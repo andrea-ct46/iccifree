@@ -1,0 +1,35 @@
+<!-- File: golive-webrtc.html -->
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Go Live - ICCI FREE</title>
+<link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+    <main class="container">
+        <h1>Go Live (WebRTC)</h1>
+
+        <div id="controls">
+            <label>Title: <input id="streamTitle" placeholder="Titolo stream"></label>
+            <label>Category: <input id="streamCategory" placeholder="Categoria"></label>
+            <button id="startBtn">Avvia Live</button>
+            <button id="stopBtn" disabled>Stop Live</button>
+            <button id="toggleCamBtn">Toggle Camera</button>
+            <button id="toggleMicBtn">Toggle Mic</button>
+            <button id="screenShareBtn">Condividi Schermo</button>
+            <div id="status"></div>
+            <div id="stats"></div>
+        </div>
+
+        <section id="preview">
+            <video id="localVideo" autoplay playsinline muted style="width:100%;max-width:720px;border-radius:8px;background:#000"></video>
+        </section>
+    </main>
+
+    <script src="/js/supabase.js"></script>
+    <script src="/js/webrtc-streaming.js"></script>
+    <script src="/js/golive-webrtc.js"></script>
+</body>
+</html>
