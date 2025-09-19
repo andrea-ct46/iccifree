@@ -6,7 +6,96 @@
     <title>Live Stream - ICCI FREE</title>
     <link rel="stylesheet" href="/css/stream.css">
     <style>
-        /* Stili specifici per WebRTC */
+        /* Stili completi integrati */
+        body {
+            margin: 0;
+            padding: 0;
+            background: #0a0a0a;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top-color: #FFD700;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        #loadingState {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #0a0a0a;
+            z-index: 9999;
+        }
+        
+        .loading-text {
+            margin-top: 20px;
+            color: #999;
+            font-size: 16px;
+        }
+        
+        #streamPageContainer {
+            display: flex;
+            width: 100%;
+            height: 100vh;
+        }
+        
+        .video-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #000;
+            position: relative;
+        }
+        
+        .video-player {
+            flex: 1;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        #streamVideo {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        
+        .loading-stream {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: white;
+            z-index: 10;
+        }
+        
+        .loading-stream .spinner {
+            width: 50px;
+            height: 50px;
+            margin: 0 auto 16px;
+        }
+        
         .stream-controls {
             position: absolute;
             bottom: 20px;
@@ -15,22 +104,24 @@
             display: flex;
             gap: 12px;
             z-index: 100;
+            background: rgba(0,0,0,0.8);
+            padding: 12px 20px;
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
         }
         
         .control-btn {
-            padding: 12px;
-            background: rgba(0,0,0,0.7);
-            border: none;
-            border-radius: 50%;
-            color: white;
-            cursor: pointer;
-            backdrop-filter: blur(10px);
-            transition: all 0.2s;
             width: 50px;
             height: 50px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: all 0.3s ease;
         }
         
         .control-btn:hover {
@@ -40,7 +131,7 @@
         }
         
         .control-btn.active {
-            background: var(--primary-yellow);
+            background: #FFD700;
             color: black;
         }
         
@@ -51,7 +142,7 @@
         
         .end-btn:hover {
             background: #cc0000 !important;
-            transform: scale(1.2);
+            transform: scale(1.2) !important;
         }
         
         @keyframes pulse {
@@ -75,35 +166,193 @@
             backdrop-filter: blur(10px);
         }
         
-        .viewer-mode .streamer-controls {
-            display: none !important;
-        }
-        
-        .broadcaster-mode .viewer-info {
-            display: none !important;
-        }
-        
-        .loading-stream {
+        .back-button {
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+            padding: 8px 16px;
+            background: rgba(0,0,0,0.7);
             color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+            font-weight: 600;
+            transition: all 0.3s;
         }
         
-        .loading-stream .spinner {
+        .back-button:hover {
+            background: rgba(255,215,0,0.8);
+            color: black;
+        }
+        
+        .stream-info-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            background: #141414;
+            border-top: 1px solid #333;
+        }
+        
+        .streamer-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .streamer-info img {
             width: 50px;
             height: 50px;
-            border: 4px solid rgba(255,255,255,0.3);
-            border-top-color: var(--primary-yellow);
             border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 16px;
+            object-fit: cover;
         }
         
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        .streamer-info h1 {
+            margin: 0 0 4px 0;
+            font-size: 20px;
+            font-weight: 700;
+        }
+        
+        .streamer-info p {
+            margin: 0;
+            color: #FFD700;
+            font-size: 14px;
+        }
+        
+        .stream-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .viewer-count {
+            background: rgba(0,0,0,0.7);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+        
+        .follow-button {
+            padding: 8px 16px;
+            background: #FFD700;
+            color: black;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .follow-button:hover {
+            background: #FFB700;
+            transform: translateY(-2px);
+        }
+        
+        .chat-container {
+            width: 350px;
+            background: #141414;
+            border-left: 1px solid #333;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        
+        .chat-header {
+            padding: 16px 20px;
+            background: #1a1a1a;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .chat-header h3 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 700;
+        }
+        
+        .toggle-chat {
+            background: none;
+            border: none;
+            color: #999;
+            cursor: pointer;
+            font-size: 18px;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .chat-welcome {
+            text-align: center;
+            color: #999;
+            font-size: 13px;
+            padding: 16px;
+            border-bottom: 1px solid #333;
+            margin-bottom: 8px;
+        }
+        
+        .chat-message {
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.05);
+            font-size: 14px;
+            line-height: 1.4;
+            animation: fadeInUp 0.3s ease;
+        }
+        
+        .chat-message strong {
+            color: #FFD700;
+        }
+        
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .chat-input-area {
+            padding: 16px;
+            background: #1a1a1a;
+            border-top: 1px solid #333;
+            display: flex;
+            gap: 8px;
+        }
+        
+        #chatInput {
+            flex: 1;
+            padding: 10px 12px;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+        }
+        
+        #chatInput:focus {
+            outline: none;
+            border-color: #FFD700;
+        }
+        
+        #sendChatBtn {
+            padding: 10px 16px;
+            background: #FFD700;
+            color: black;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        #sendChatBtn:hover {
+            background: #FFB700;
         }
         
         .notification-toast {
@@ -115,6 +364,7 @@
             padding: 16px 20px;
             border-radius: 12px;
             border: 1px solid #333;
+            border-left: 4px solid #FFD700;
             z-index: 10000;
             animation: slideInRight 0.3s ease;
             min-width: 200px;
@@ -133,59 +383,41 @@
             to { transform: translateX(100%); opacity: 0; }
         }
         
-        .chat-message {
-            padding: 8px 12px;
-            margin-bottom: 4px;
-            border-radius: 8px;
-            background: rgba(255,255,255,0.05);
-            font-size: 14px;
-            line-height: 1.4;
-            animation: fadeInUp 0.3s ease;
+        .broadcaster-mode .stream-controls {
+            display: flex;
         }
         
-        .chat-message strong {
-            color: var(--primary-yellow);
+        .viewer-mode .stream-controls {
+            display: none !important;
         }
         
-        .chat-welcome {
-            text-align: center;
-            color: var(--text-secondary);
-            font-size: 13px;
-            padding: 16px;
-            border-bottom: 1px solid var(--border-color);
-            margin-bottom: 8px;
+        .broadcaster-mode .stats-overlay {
+            display: block;
         }
         
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        .viewer-mode .stats-overlay {
+            display: none !important;
         }
         
-        .viewer-count {
-            background: rgba(0,0,0,0.7);
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 12px;
-            margin-right: 8px;
-        }
-        
-        .toggle-chat {
-            background: none;
-            border: none;
-            color: var(--text-secondary);
-            cursor: pointer;
-            font-size: 18px;
-        }
-        
-        /* Mobile adjustments */
+        /* Mobile Responsive */
         @media (max-width: 768px) {
+            #streamPageContainer {
+                flex-direction: column;
+            }
+            
+            .chat-container {
+                width: 100%;
+                height: 40vh;
+                border-left: none;
+                border-top: 1px solid #333;
+            }
+            
             .stream-controls {
                 bottom: 10px;
                 gap: 8px;
             }
             
             .control-btn {
-                padding: 8px;
                 width: 40px;
                 height: 40px;
             }
@@ -217,27 +449,29 @@
                     <p>Connessione in corso...</p>
                 </div>
                 
-                <!-- Stats Overlay -->
+                <!-- Stats Overlay (Solo Broadcaster) -->
                 <div id="statsOverlay" class="stats-overlay" style="display: none;">
-                    <div id="statsContent">📊 Stats loading...</div>
+                    <div id="statsContent">📊 Caricamento stats...</div>
                 </div>
                 
                 <!-- Streamer Controls -->
                 <div id="streamerControls" class="stream-controls" style="display: none;">
                     <button id="toggleCamBtn" class="control-btn" title="Toggle Camera">
                         <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+                            <path d="M23 7l-7 5 7 5V7z"/>
+                            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
                         </svg>
                     </button>
                     
                     <button id="toggleMicBtn" class="control-btn" title="Toggle Microphone">
                         <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-                            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="23"/>
+                            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                            <line x1="12" x2="12" y1="19" y2="23"/>
                         </svg>
                     </button>
                     
-                    <button id="screenShareBtn" class="control-btn" title="Share Screen">
+                    <button id="screenShareBtn" class="control-btn" title="Condividi Schermo">
                         <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
                             <line x1="8" x2="16" y1="21" y2="21"/>
@@ -253,7 +487,7 @@
                 </div>
             </div>
             
-            <!-- Back Button (Viewers) -->
+            <!-- Back Button (Solo Viewers) -->
             <a href="/dashboard.html" id="backButton" class="back-button" style="display: none;">
                 ← Dashboard
             </a>
@@ -263,7 +497,7 @@
                 <div class="streamer-info">
                     <img id="streamerAvatar" src="https://placehold.co/50x50/333/FFF?text=?" alt="Streamer">
                     <div>
-                        <h1 id="streamTitle">Loading stream...</h1>
+                        <h1 id="streamTitle">Caricamento stream...</h1>
                         <p id="streamerName">@streamer</p>
                     </div>
                 </div>
@@ -283,7 +517,7 @@
             
             <div class="chat-messages" id="chatMessages">
                 <div class="chat-welcome">
-                    👋 Benvenuto nella chat! Sii rispettoso.
+                    👋 Benvenuto nella chat! Sii rispettoso con gli altri utenti.
                 </div>
             </div>
             
@@ -300,369 +534,664 @@
     <script src="/js/webrtc-streaming.js"></script>
     
     <script>
-        // ============= STREAM WEBRTC CONTROLLER =============
-        // ===================================================
-// FIX ERRORE await - Sostituisci la sezione script in stream-webrtc.html
-// ===================================================
-
-// ============= STREAM WEBRTC CONTROLLER =============
-let webRTCInstance = null;
-let isBroadcaster = false;
-let currentUser = null;
-let streamData = null;
-let chatEnabled = true;
-
-// Rendi le variabili globalmente accessibili
-window.webRTCInstance = webRTCInstance;
-window.streamData = streamData;
-window.isBroadcaster = isBroadcaster;
-
-// ✅ CORREZIONE: Metti tutto dentro una funzione async
-document.addEventListener('DOMContentLoaded', async () => {
-    console.log('🚀 Stream WebRTC init...');
-    
-    try {
-        // Check auth
-        currentUser = await checkUser();
-        if (!currentUser) {
-            window.location.href = '/auth.html';
-            return;
-        }
+        // ============= VARIABILI GLOBALI =============
+        let webRTCInstance = null;
+        let isBroadcaster = false;
+        let currentUser = null;
+        let streamData = null;
+        let chatEnabled = true;
         
-        // Get stream ID and mode
-        const params = new URLSearchParams(window.location.search);
-        const streamId = params.get('id');
-        const mode = params.get('mode');
+        // Rendi globalmente accessibili
+        window.webRTCInstance = null;
+        window.streamData = null;
+        window.isBroadcaster = false;
         
-        if (!streamId) {
-            throw new Error('Stream ID mancante');
-        }
-        
-        // Load stream data
-        const { data: stream, error } = await supabaseClient
-            .from('streams')
-            .select(`
-                *,
-                profiles!user_id (username, avatar_url)
-            `)
-            .eq('id', streamId)
-            .single();
-        
-        if (error || !stream) {
-            throw new Error('Stream non trovato');
-        }
-        
-        streamData = stream;
-        window.streamData = streamData;
-        isBroadcaster = (stream.user_id === currentUser.id) || mode === 'broadcaster';
-        window.isBroadcaster = isBroadcaster;
-        
-        console.log('📊 Stream data:', streamData);
-        console.log('👤 Is broadcaster:', isBroadcaster);
-        
-        // Setup UI
-        setupStreamUI();
-        
-        // Initialize WebRTC
-        await initWebRTC(streamId);
-        
-        // Setup chat
-        setupChat(streamId);
-        
-        // Hide loading
-        document.getElementById('loadingState').style.display = 'none';
-        document.getElementById('streamPageContainer').style.display = 'flex';
-        
-        console.log('✅ Stream ready!');
-        
-    } catch (error) {
-        console.error('❌ Stream error:', error);
-        document.querySelector('.loading-text').textContent = 'Errore: ' + error.message;
-    }
-});
-
-function setupStreamUI() {
-    // Update stream info
-    document.getElementById('streamTitle').textContent = streamData.title;
-    document.getElementById('streamerName').textContent = '@' + streamData.profiles.username;
-    document.getElementById('streamerAvatar').src = streamData.profiles.avatar_url || 
-        `https://placehold.co/50x50/FFD700/000?text=${streamData.profiles.username.charAt(0).toUpperCase()}`;
-    
-    // Show/hide controls based on mode
-    if (isBroadcaster) {
-        document.body.classList.add('broadcaster-mode');
-        document.getElementById('streamerControls').style.display = 'flex';
-        document.getElementById('statsOverlay').style.display = 'block';
-        setupBroadcasterControls();
-    } else {
-        document.body.classList.add('viewer-mode');
-        document.getElementById('backButton').style.display = 'block';
-        document.getElementById('followBtn').style.display = 'block';
-        setupViewerControls();
-    }
-    
-    document.title = streamData.title + ' - ICCI FREE';
-}
-
-async function initWebRTC(roomId) {
-    webRTCInstance = new WebRTCStreaming({
-        roomId: roomId,
-        isBroadcaster: isBroadcaster,
-        onRemoteStream: (stream) => {
-            console.log('📺 Remote stream received');
-            const video = document.getElementById('streamVideo');
-            video.srcObject = stream;
-            document.getElementById('loadingStream').style.display = 'none';
-        },
-        onStats: (stats) => {
-            if (isBroadcaster) {
-                document.getElementById('statsContent').innerHTML = 
-                    `📊 Bitrate: ${stats.bitrate || 'N/A'} | Viewers: ${streamData.viewer_count || 0}`;
-            }
-        },
-        onDataMessage: (msg) => {
-            addChatMessage(msg);
-        }
-    });
-    
-    window.webRTCInstance = webRTCInstance;
-    
-    await webRTCInstance.init();
-    
-    if (isBroadcaster) {
-        // Broadcaster: start camera and create offer
-        const stream = await webRTCInstance.startLocalCameraAudio();
-        document.getElementById('streamVideo').srcObject = stream;
-        document.getElementById('loadingStream').style.display = 'none';
-        
-        webRTCInstance.createDataChannel('chat');
-        await webRTCInstance.createOffer();
-        
-        webRTCInstance.startStats(3000);
-    }
-}
-
-function setupBroadcasterControls() {
-    let cameraEnabled = true;
-    let micEnabled = true;
-    
-    document.getElementById('toggleCamBtn').onclick = () => {
-        if (!webRTCInstance?.localStream) return;
-        const videoTrack = webRTCInstance.localStream.getVideoTracks()[0];
-        if (videoTrack) {
-            cameraEnabled = !cameraEnabled;
-            videoTrack.enabled = cameraEnabled;
-            document.getElementById('toggleCamBtn').classList.toggle('active', !cameraEnabled);
-        }
-    };
-    
-    document.getElementById('toggleMicBtn').onclick = () => {
-        if (!webRTCInstance?.localStream) return;
-        const audioTrack = webRTCInstance.localStream.getAudioTracks()[0];
-        if (audioTrack) {
-            micEnabled = !micEnabled;
-            audioTrack.enabled = micEnabled;
-            document.getElementById('toggleMicBtn').classList.toggle('active', !micEnabled);
-        }
-    };
-    
-    document.getElementById('screenShareBtn').onclick = async () => {
-        try {
-            await webRTCInstance.startScreenShare();
-            showNotification('Screen sharing started!', 'success');
-        } catch (error) {
-            showNotification('Screen share failed', 'error');
-        }
-    };
-    
-    // COLLEGAMENTO PULSANTE TERMINA STREAM
-    document.getElementById('endStreamBtn').onclick = async () => {
-        console.log('🔴 End stream button clicked!');
-        await endStream();
-    };
-}
-
-function setupViewerControls() {
-    document.getElementById('followBtn').onclick = async () => {
-        showNotification('Follow feature coming soon!', 'info');
-    };
-}
-
-function setupChat(streamId) {
-    const chatInput = document.getElementById('chatInput');
-    const sendBtn = document.getElementById('sendChatBtn');
-    
-    const sendMessage = async () => {
-        const message = chatInput.value.trim();
-        if (!message || !currentUser) return;
-        
-        // Send via DataChannel if available
-        if (webRTCInstance?.dataChannel?.readyState === 'open') {
-            const msg = {
-                username: currentUser.email.split('@')[0],
-                text: message,
-                timestamp: new Date().toISOString()
-            };
-            webRTCInstance.dataChannel.send(JSON.stringify(msg));
-        } else {
-            // Fallback: save to database
-            await supabaseClient.from('chat_messages').insert({
-                stream_id: streamId,
-                user_id: currentUser.id,
-                username: currentUser.email.split('@')[0],
-                message: message
-            });
-        }
-        
-        chatInput.value = '';
-    };
-    
-    sendBtn.onclick = sendMessage;
-    chatInput.onkeypress = (e) => {
-        if (e.key === 'Enter') sendMessage();
-    };
-}
-
-function addChatMessage(msg) {
-    const chatMessages = document.getElementById('chatMessages');
-    const messageEl = document.createElement('div');
-    messageEl.className = 'chat-message';
-    messageEl.innerHTML = `
-        <strong>${msg.username || 'Anon'}:</strong> ${msg.text || msg.message || ''}
-    `;
-    chatMessages.appendChild(messageEl);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-}
-
-// ===================================================
-// FUNZIONE ENDSTREAM CORRETTA CON STATUS 'ended'
-// ===================================================
-async function endStream() {
-    console.log('🔴 === AVVIO TERMINAZIONE STREAM ===');
-    
-    if (!confirm('🔴 Terminare la diretta?\n\nTutti i viewer verranno disconnessi.')) {
-        return;
-    }
-    
-    try {
-        showNotification('⏳ Terminando stream...', 'info');
-        
-        // Ferma WebRTC
-        if (window.webRTCInstance) {
-            await window.webRTCInstance.close();
-            window.webRTCInstance = null;
-        }
-        
-        // Ferma video
-        const video = document.getElementById('streamVideo');
-        if (video?.srcObject) {
-            video.srcObject.getTracks().forEach(track => track.stop());
-            video.srcObject = null;
-        }
-        
-        // Aggiorna database con status 'ended'
-        if (window.streamData?.id) {
-            const { error } = await supabaseClient
-                .from('streams')
-                .update({ 
-                    status: 'ended',  // ✅ Usa 'ended' invece di 'offline'
-                    ended_at: new Date().toISOString(),
-                    viewer_count: 0
-                })
-                .eq('id', window.streamData.id);
+        // ============= INIZIALIZZAZIONE =============
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('🚀 Inizializzazione Stream WebRTC...');
+            
+            try {
+                // Verifica autenticazione
+                currentUser = await checkUser();
+                if (!currentUser) {
+                    alert('Devi essere loggato per vedere il stream!');
+                    window.location.href = '/auth.html';
+                    return;
+                }
                 
-            if (error) {
-                console.error('Errore update:', error);
-                // Fallback: elimina il record
-                await supabaseClient.from('streams').delete().eq('id', window.streamData.id);
+                // Ottieni parametri URL
+                const params = new URLSearchParams(window.location.search);
+                const streamId = params.get('id');
+                const mode = params.get('mode');
+                
+                if (!streamId) {
+                    throw new Error('Stream ID mancante nell\'URL');
+                }
+                
+                console.log('Stream ID:', streamId);
+                console.log('Mode:', mode);
+                
+                // Carica dati stream dal database
+                const { data: stream, error } = await supabaseClient
+                    .from('streams')
+                    .select(`
+                        *,
+                        profiles!user_id (username, avatar_url)
+                    `)
+                    .eq('id', streamId)
+                    .single();
+                
+                if (error) {
+                    console.error('Errore caricamento stream:', error);
+                    throw new Error('Stream non trovato nel database');
+                }
+                
+                if (!stream) {
+                    throw new Error('Stream non esistente');
+                }
+                
+                streamData = stream;
+                window.streamData = streamData;
+                
+                // Determina se l'utente è il broadcaster
+                isBroadcaster = (stream.user_id === currentUser.id) || (mode === 'broadcaster');
+                window.isBroadcaster = isBroadcaster;
+                
+                console.log('✅ Stream data caricato:', streamData);
+                console.log('👤 Sei il broadcaster:', isBroadcaster);
+                
+                // Setup interfaccia utente
+                setupStreamUI();
+                
+                // Inizializza WebRTC
+                await initWebRTC(streamId);
+                
+                // Setup chat
+                setupChat(streamId);
+                
+                // Nascondi loading e mostra stream
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('streamPageContainer').style.display = 'flex';
+                
+                console.log('✅ Stream completamente inizializzato!');
+                
+            } catch (error) {
+                console.error('❌ Errore inizializzazione:', error);
+                document.querySelector('.loading-text').textContent = 'Errore: ' + error.message;
+                
+                // Reindirizza alla dashboard dopo 3 secondi in caso di errore
+                setTimeout(() => {
+                    window.location.href = '/dashboard.html';
+                }, 3000);
+            }
+        });
+        
+        // ============= SETUP UI =============
+        function setupStreamUI() {
+            console.log('🎨 Setup interfaccia utente...');
+            
+            // Aggiorna informazioni stream
+            document.getElementById('streamTitle').textContent = streamData.title || 'Stream Live';
+            document.getElementById('streamerName').textContent = '@' + (streamData.profiles?.username || 'unknown');
+            
+            const avatarUrl = streamData.profiles?.avatar_url || 
+                `https://placehold.co/50x50/FFD700/000000?text=${(streamData.profiles?.username || 'U').charAt(0).toUpperCase()}`;
+            document.getElementById('streamerAvatar').src = avatarUrl;
+            
+            // Aggiorna viewer count
+            document.getElementById('viewerCount').textContent = '👁️ ' + (streamData.viewer_count || 0);
+            
+            // Mostra/nascondi controlli in base al ruolo
+            if (isBroadcaster) {
+                console.log('👑 Modalità Broadcaster attivata');
+                document.body.classList.add('broadcaster-mode');
+                document.getElementById('streamerControls').style.display = 'flex';
+                document.getElementById('statsOverlay').style.display = 'block';
+                setupBroadcasterControls();
+            } else {
+                console.log('👀 Modalità Viewer attivata');
+                document.body.classList.add('viewer-mode');
+                document.getElementById('backButton').style.display = 'block';
+                document.getElementById('followBtn').style.display = 'block';
+                setupViewerControls();
             }
             
-            // Pulisci segnali WebRTC
-            await supabaseClient.from('webrtc_signals').delete().eq('room_id', window.streamData.id.toString());
+            // Aggiorna titolo pagina
+            document.title = (streamData.title || 'Live Stream') + ' - ICCI FREE';
         }
         
-        // Nascondi controlli
-        const controls = document.getElementById('streamerControls');
-        if (controls) controls.style.display = 'none';
+        // ============= WEBRTC INITIALIZATION =============
+        async function initWebRTC(roomId) {
+            console.log('🔌 Inizializzazione WebRTC per room:', roomId);
+            
+            try {
+                webRTCInstance = new WebRTCStreaming({
+                    roomId: roomId,
+                    isBroadcaster: isBroadcaster,
+                    onRemoteStream: (stream) => {
+                        console.log('📺 Stream remoto ricevuto');
+                        const video = document.getElementById('streamVideo');
+                        video.srcObject = stream;
+                        document.getElementById('loadingStream').style.display = 'none';
+                    },
+                    onStats: (stats) => {
+                        if (isBroadcaster) {
+                            const statsContent = document.getElementById('statsContent');
+                            if (statsContent) {
+                                statsContent.innerHTML = `📊 Viewers: ${streamData.viewer_count || 0} | Bitrate: ${stats.bitrate || 'N/A'}`;
+                            }
+                        }
+                    },
+                    onDataMessage: (msg) => {
+                        addChatMessage(msg);
+                    }
+                });
+                
+                window.webRTCInstance = webRTCInstance;
+                
+                await webRTCInstance.init();
+                console.log('✅ WebRTC inizializzato');
+                
+                if (isBroadcaster) {
+                    console.log('📹 Avvio camera per broadcaster...');
+                    const stream = await webRTCInstance.startLocalCameraAudio();
+                    document.getElementById('streamVideo').srcObject = stream;
+                    document.getElementById('loadingStream').style.display = 'none';
+                    
+                    // Crea data channel per chat
+                    webRTCInstance.createDataChannel('chat');
+                    
+                    // Crea offer per i viewer
+                    await webRTCInstance.createOffer();
+                    
+                    // Avvia statistiche
+                    webRTCInstance.startStats(5000);
+                    
+                    console.log('✅ Broadcaster setup completato');
+                }
+                
+            } catch (error) {
+                console.error('❌ Errore inizializzazione WebRTC:', error);
+                showNotification('Errore connessione WebRTC: ' + error.message, 'error');
+            }
+        }
         
-        // Aggiorna UI
-        document.getElementById('streamTitle').textContent = '🔴 Stream Terminato';
+        // ============= BROADCASTER CONTROLS =============
+        function setupBroadcasterControls() {
+            console.log('🎛️ Setup controlli broadcaster...');
+            
+            let cameraEnabled = true;
+            let micEnabled = true;
+            
+            // Toggle Camera
+            document.getElementById('toggleCamBtn').onclick = () => {
+                if (!webRTCInstance?.localStream) return;
+                
+                const videoTrack = webRTCInstance.localStream.getVideoTracks()[0];
+                if (videoTrack) {
+                    cameraEnabled = !cameraEnabled;
+                    videoTrack.enabled = cameraEnabled;
+                    document.getElementById('toggleCamBtn').classList.toggle('active', !cameraEnabled);
+                    
+                    showNotification(
+                        cameraEnabled ? 'Camera attivata' : 'Camera disattivata', 
+                        'info'
+                    );
+                }
+            };
+            
+            // Toggle Microfono
+            document.getElementById('toggleMicBtn').onclick = () => {
+                if (!webRTCInstance?.localStream) return;
+                
+                const audioTrack = webRTCInstance.localStream.getAudioTracks()[0];
+                if (audioTrack) {
+                    micEnabled = !micEnabled;
+                    audioTrack.enabled = micEnabled;
+                    document.getElementById('toggleMicBtn').classList.toggle('active', !micEnabled);
+                    
+                    showNotification(
+                        micEnabled ? 'Microfono attivato' : 'Microfono disattivato', 
+                        'info'
+                    );
+                }
+            };
+            
+            // Condivisione Schermo
+            document.getElementById('screenShareBtn').onclick = async () => {
+                try {
+                    await webRTCInstance.startScreenShare();
+                    showNotification('Condivisione schermo avviata!', 'success');
+                } catch (error) {
+                    console.error('Errore screen share:', error);
+                    showNotification('Impossibile condividere schermo', 'error');
+                }
+            };
+            
+            // PULSANTE TERMINA STREAM - COLLEGAMENTO PRINCIPALE
+            document.getElementById('endStreamBtn').onclick = async () => {
+                console.log('🔴 Pulsante Termina Stream cliccato!');
+                await endStream();
+            };
+            
+            console.log('✅ Controlli broadcaster configurati');
+        }
         
-        const videoContainer = document.querySelector('.video-player');
-        if (videoContainer) {
-            videoContainer.innerHTML = `
-                <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;background:#000;color:white;text-align:center;font-size:24px;">
-                    <div style="font-size:64px;margin-bottom:20px;">📺</div>
-                    <div style="font-weight:bold;">Stream Terminato</div>
-                </div>
+        // ============= VIEWER CONTROLS =============
+        function setupViewerControls() {
+            console.log('👀 Setup controlli viewer...');
+            
+            document.getElementById('followBtn').onclick = async () => {
+                showNotification('Funzione Follow in arrivo!', 'info');
+            };
+        }
+        
+        // ============= CHAT SYSTEM =============
+        function setupChat(streamId) {
+            console.log('💬 Setup sistema chat...');
+            
+            const chatInput = document.getElementById('chatInput');
+            const sendBtn = document.getElementById('sendChatBtn');
+            
+            const sendMessage = async () => {
+                const message = chatInput.value.trim();
+                if (!message || !currentUser) return;
+                
+                try {
+                    // Invia via DataChannel se disponibile
+                    if (webRTCInstance?.dataChannel?.readyState === 'open') {
+                        const msg = {
+                            username: currentUser.email?.split('@')[0] || 'Utente',
+                            text: message,
+                            timestamp: new Date().toISOString()
+                        };
+                        webRTCInstance.dataChannel.send(JSON.stringify(msg));
+                        
+                        // Mostra il messaggio localmente per chi lo invia
+                        addChatMessage(msg);
+                    } else {
+                        // Fallback: salva nel database
+                        const { error } = await supabaseClient.from('chat_messages').insert({
+                            stream_id: streamId,
+                            user_id: currentUser.id,
+                            username: currentUser.email?.split('@')[0] || 'Utente',
+                            message: message
+                        });
+                        
+                        if (error) {
+                            console.error('Errore invio chat:', error);
+                            showNotification('Impossibile inviare messaggio', 'error');
+                        }
+                    }
+                    
+                    chatInput.value = '';
+                    
+                } catch (error) {
+                    console.error('Errore chat:', error);
+                    showNotification('Errore invio messaggio', 'error');
+                }
+            };
+            
+            sendBtn.onclick = sendMessage;
+            chatInput.onkeypress = (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            };
+            
+            console.log('✅ Sistema chat configurato');
+        }
+        
+        function addChatMessage(msg) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageEl = document.createElement('div');
+            messageEl.className = 'chat-message';
+            messageEl.innerHTML = `
+                <strong>${msg.username || 'Anonimo'}:</strong> 
+                ${(msg.text || msg.message || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}
             `;
+            
+            chatMessages.appendChild(messageEl);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            // Limita messaggi a 100 per performance
+            while (chatMessages.children.length > 100) {
+                chatMessages.removeChild(chatMessages.firstChild);
+            }
         }
         
-        showNotification('✅ Stream terminato!', 'success');
+        // ============= TERMINA STREAM - FUNZIONE PRINCIPALE =============
+        async function endStream() {
+            console.log('🔴 === INIZIO TERMINAZIONE STREAM ===');
+            
+            // Conferma utente
+            if (!confirm('🔴 Sei sicuro di voler terminare la diretta?\n\n⚠️ Tutti i viewer verranno disconnessi\n⚠️ Il stream sarà rimosso dalla dashboard')) {
+                console.log('❌ Terminazione annullata dall\'utente');
+                return;
+            }
+            
+            try {
+                showNotification('⏳ Terminazione stream in corso...', 'info');
+                
+                // ===== STEP 1: CHIUDI WEBRTC =====
+                console.log('🔌 Chiusura connessione WebRTC...');
+                if (window.webRTCInstance) {
+                    try {
+                        await window.webRTCInstance.close();
+                        window.webRTCInstance = null;
+                        console.log('✅ WebRTC chiuso');
+                    } catch (e) {
+                        console.warn('⚠️ Avviso chiusura WebRTC:', e);
+                    }
+                }
+                
+                // ===== STEP 2: FERMA TRACCE MEDIA =====
+                console.log('📹 Interruzione tracce video/audio...');
+                const video = document.getElementById('streamVideo');
+                if (video && video.srcObject) {
+                    video.srcObject.getTracks().forEach(track => {
+                        track.stop();
+                        console.log('🛑 Fermata traccia:', track.kind);
+                    });
+                    video.srcObject = null;
+                }
+                
+                // ===== STEP 3: AGGIORNA DATABASE =====
+                console.log('💾 Aggiornamento database...');
+                if (window.streamData && window.streamData.id) {
+                    const { error: updateError } = await supabaseClient
+                        .from('streams')
+                        .update({ 
+                            status: 'ended',
+                            ended_at: new Date().toISOString(),
+                            viewer_count: 0
+                        })
+                        .eq('id', window.streamData.id);
+                        
+                    if (updateError) {
+                        console.error('❌ Errore aggiornamento database:', updateError);
+                        
+                        // Fallback: elimina il record se update fallisce
+                        console.log('🗑️ Tentativo eliminazione record...');
+                        const { error: deleteError } = await supabaseClient
+                            .from('streams')
+                            .delete()
+                            .eq('id', window.streamData.id);
+                            
+                        if (deleteError) {
+                            console.error('❌ Errore eliminazione:', deleteError);
+                        } else {
+                            console.log('✅ Stream eliminato dal database');
+                        }
+                    } else {
+                        console.log('✅ Database aggiornato: status = ended');
+                    }
+                    
+                    // ===== STEP 4: PULIZIA SEGNALI WEBRTC =====
+                    console.log('🧹 Pulizia segnali WebRTC...');
+                    try {
+                        const { error: cleanError } = await supabaseClient
+                            .from('webrtc_signals')
+                            .delete()
+                            .eq('room_id', window.streamData.id.toString());
+                            
+                        if (cleanError) {
+                            console.warn('⚠️ Avviso pulizia segnali:', cleanError);
+                        } else {
+                            console.log('✅ Segnali WebRTC rimossi');
+                        }
+                    } catch (cleanupError) {
+                        console.warn('⚠️ Errore pulizia segnali:', cleanupError);
+                    }
+                }
+                
+                // ===== STEP 5: AGGIORNA INTERFACCIA =====
+                console.log('🎨 Aggiornamento interfaccia utente...');
+                
+                // Nascondi controlli
+                const controls = document.getElementById('streamerControls');
+                if (controls) controls.style.display = 'none';
+                
+                const stats = document.getElementById('statsOverlay');
+                if (stats) stats.style.display = 'none';
+                
+                // Aggiorna titolo
+                document.getElementById('streamTitle').textContent = '🔴 Stream Terminato';
+                
+                // Sostituisci video con messaggio
+                const videoContainer = document.querySelector('.video-player');
+                if (videoContainer) {
+                    videoContainer.innerHTML = `
+                        <div style="
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            justify-content: center;
+                            height: 100%;
+                            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+                            color: white;
+                            text-align: center;
+                            padding: 40px;
+                        ">
+                            <div style="font-size: 80px; margin-bottom: 30px; opacity: 0.7;">📺</div>
+                            <h2 style="font-size: 32px; font-weight: 800; margin-bottom: 16px; color: #FFD700;">Stream Terminato</h2>
+                            <p style="font-size: 18px; opacity: 0.8; margin-bottom: 30px;">La diretta è terminata con successo</p>
+                            <a href="/dashboard.html" style="
+                                display: inline-block;
+                                padding: 12px 24px;
+                                background: #FFD700;
+                                color: #000;
+                                text-decoration: none;
+                                border-radius: 8px;
+                                font-weight: 700;
+                                transition: all 0.3s;
+                            ">← Torna alla Dashboard</a>
+                        </div>
+                    `;
+                }
+                
+                // ===== STEP 6: DISCONNETTI CANALI REALTIME =====
+                console.log('📡 Disconnessione canali realtime...');
+                try {
+                    supabaseClient.removeAllChannels();
+                } catch (realtimeError) {
+                    console.warn('⚠️ Avviso disconnessione realtime:', realtimeError);
+                }
+                
+                showNotification('✅ Stream terminato con successo!', 'success');
+                
+                // ===== STEP 7: REINDIRIZZAMENTO AUTOMATICO =====
+                console.log('↩️ Reindirizzamento alla dashboard...');
+                
+                let countdown = 5;
+                const countdownInterval = setInterval(() => {
+                    showNotification(`↩️ Reindirizzamento in ${countdown} secondi...`, 'info');
+                    countdown--;
+                    
+                    if (countdown < 0) {
+                        clearInterval(countdownInterval);
+                        window.location.href = '/dashboard.html?refresh=' + Date.now();
+                    }
+                }, 1000);
+                
+                console.log('✅ === TERMINAZIONE COMPLETATA CON SUCCESSO ===');
+                
+            } catch (error) {
+                console.error('❌ ERRORE CRITICO durante terminazione:', error);
+                showNotification('❌ Errore durante terminazione: ' + error.message, 'error');
+                
+                // ===== FALLBACK: CLEANUP DI EMERGENZA =====
+                console.log('🆘 Esecuzione cleanup di emergenza...');
+                
+                try {
+                    if (window.streamData?.id) {
+                        // Forza eliminazione del record stream
+                        await supabaseClient
+                            .from('streams')
+                            .delete()
+                            .eq('id', window.streamData.id);
+                        
+                        showNotification('🆘 Cleanup di emergenza completato', 'warning');
+                    }
+                    
+                    setTimeout(() => {
+                        const forceRedirect = confirm(
+                            'Si è verificato un errore durante la terminazione.\n\n' +
+                            'Il stream potrebbe non essere stato chiuso correttamente.\n' +
+                            'Vuoi tornare alla dashboard?'
+                        );
+                        
+                        if (forceRedirect) {
+                            window.location.href = '/dashboard.html?force_refresh=true';
+                        }
+                    }, 2000);
+                    
+                } catch (fallbackError) {
+                    console.error('❌ Anche il cleanup di emergenza è fallito:', fallbackError);
+                    
+                    // ULTIMA RISORSA: redirect forzato
+                    alert('Errore critico. Chiudi manualmente questa scheda e torna alla dashboard.');
+                    setTimeout(() => {
+                        window.location.href = '/dashboard.html';
+                    }, 1000);
+                }
+            }
+        }
         
-        // Reindirizza dopo 3 secondi
-        setTimeout(() => {
-            window.location.href = '/dashboard.html?refresh=' + Date.now();
-        }, 3000);
+        // ============= SISTEMA NOTIFICHE =============
+        function showNotification(message, type = 'info') {
+            console.log(`📢 [${type.toUpperCase()}] ${message}`);
+            
+            // Rimuovi notifiche esistenti
+            document.querySelectorAll('.notification-toast').forEach(toast => toast.remove());
+            
+            const toast = document.createElement('div');
+            toast.className = `notification-toast ${type}`;
+            
+            const icons = { 
+                success: '✅', 
+                error: '❌', 
+                warning: '⚠️', 
+                info: 'ℹ️' 
+            };
+            
+            const colors = {
+                success: '#00ff00',
+                error: '#ff4444', 
+                warning: '#FFD700',
+                info: '#00aaff'
+            };
+            
+            toast.style.borderLeftColor = colors[type] || colors.info;
+            toast.innerHTML = `${icons[type] || 'ℹ️'} ${message}`;
+            
+            document.body.appendChild(toast);
+            
+            // Auto rimozione (tranne per messaggi di countdown)
+            if (!message.includes('Reindirizzamento in')) {
+                setTimeout(() => {
+                    toast.style.animation = 'slideOutRight 0.3s ease';
+                    setTimeout(() => {
+                        if (toast.parentNode) {
+                            toast.remove();
+                        }
+                    }, 300);
+                }, 4000);
+            }
+        }
         
-    } catch (error) {
-        console.error('❌ Errore terminazione:', error);
-        showNotification('❌ Errore: ' + error.message, 'error');
+        // ============= CLEANUP AUTOMATICO =============
+        window.addEventListener('beforeunload', async () => {
+            console.log('🚪 Chiusura pagina - cleanup automatico...');
+            
+            try {
+                // Ferma WebRTC
+                if (webRTCInstance) {
+                    await webRTCInstance.close();
+                }
+                
+                // Se sei broadcaster, marca stream come terminato
+                if (isBroadcaster && streamData) {
+                    await supabaseClient
+                        .from('streams')
+                        .update({ 
+                            status: 'ended',
+                            ended_at: new Date().toISOString() 
+                        })
+                        .eq('id', streamData.id);
+                }
+                
+                // Disconnetti canali realtime
+                supabaseClient.removeAllChannels();
+                
+            } catch (error) {
+                console.warn('⚠️ Errore cleanup:', error);
+            }
+        });
         
-        // Fallback: redirect comunque
-        setTimeout(() => {
-            window.location.href = '/dashboard.html';
-        }, 2000);
-    }
-}
-
-function showNotification(message, type = 'info') {
-    // Rimuovi notifiche esistenti
-    document.querySelectorAll('.notification-toast').forEach(toast => toast.remove());
-    
-    const toast = document.createElement('div');
-    toast.className = `notification-toast ${type}`;
-    
-    const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
-    const colors = { success: '#00ff00', error: '#ff4444', warning: '#FFD700', info: '#00aaff' };
-    
-    toast.style.borderLeftColor = colors[type] || colors.info;
-    toast.innerHTML = `${icons[type] || 'ℹ️'} ${message}`;
-    
-    document.body.appendChild(toast);
-    
-    // Auto rimuovi dopo 4 secondi
-    setTimeout(() => {
-        toast.style.animation = 'slideOutRight 0.3s ease';
-        setTimeout(() => toast.remove(), 300);
-    }, 4000);
-}
-
-// Cleanup on page unload
-window.addEventListener('beforeunload', async () => {
-    if (webRTCInstance) {
-        await webRTCInstance.close();
-    }
-    
-    if (isBroadcaster && streamData) {
-        await supabaseClient.from('streams').update({ 
-            status: 'ended',
-            ended_at: new Date().toISOString() 
-        }).eq('id', streamData.id);
-    }
-});
-
-// Hotkeys
-document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape' && isBroadcaster) {
-        endStream();
-    }
-    if (event.ctrlKey && event.shiftKey && event.key === 'E' && isBroadcaster) {
-        endStream();
-    }
-});
-
-console.log('🔧 Stream WebRTC con fix await caricato!');
+        // ============= HOTKEYS =============
+        document.addEventListener('keydown', (event) => {
+            // ESC = termina stream (solo broadcaster)
+            if (event.key === 'Escape' && isBroadcaster) {
+                console.log('⌨️ Hotkey ESC - terminazione stream...');
+                endStream();
+            }
+            
+            // CTRL + SHIFT + E = termina stream (solo broadcaster)
+            if (event.ctrlKey && event.shiftKey && event.key === 'E' && isBroadcaster) {
+                console.log('⌨️ Hotkey CTRL+SHIFT+E - terminazione stream...');
+                endStream();
+            }
+            
+            // CTRL + SHIFT + D = debug info
+            if (event.ctrlKey && event.shiftKey && event.key === 'D') {
+                console.log('=== DEBUG INFO ===');
+                console.log('Stream Data:', window.streamData);
+                console.log('Is Broadcaster:', window.isBroadcaster);
+                console.log('WebRTC Instance:', window.webRTCInstance);
+                console.log('Current User:', currentUser);
+                console.log('==================');
+            }
+        });
+        
+        // ============= FUNZIONI DEBUG =============
+        window.debugStream = function() {
+            console.log('=== STREAM DEBUG INFO ===');
+            console.log('URL:', window.location.href);
+            console.log('Stream ID:', new URLSearchParams(window.location.search).get('id'));
+            console.log('Mode:', new URLSearchParams(window.location.search).get('mode'));
+            console.log('Current User:', currentUser);
+            console.log('Stream Data:', window.streamData);
+            console.log('Is Broadcaster:', window.isBroadcaster);
+            console.log('WebRTC Instance:', window.webRTCInstance);
+            console.log('========================');
+        };
+        
+        window.forceEndStream = async function() {
+            console.log('🆘 FORCE END STREAM');
+            const streamId = new URLSearchParams(window.location.search).get('id');
+            if (streamId) {
+                const { error } = await supabaseClient
+                    .from('streams')
+                    .update({ status: 'ended', ended_at: new Date().toISOString() })
+                    .eq('id', streamId);
+                if (!error) {
+                    alert('✅ Stream forzatamente terminato!');
+                    window.location.href = '/dashboard.html';
+                }
+            }
+        };
+        
+        // ============= INIZIALIZZAZIONE COMPLETATA =============
+        console.log('🎉 Script Stream WebRTC caricato completamente!');
+        console.log('📖 Comandi debug disponibili:');
+        console.log('   - debugStream() - Info complete debug');
+        console.log('   - forceEndStream() - Termina stream forzatamente');
+        console.log('⌨️  Hotkeys disponibili:');
+        console.log('   - ESC - Termina stream (broadcaster)');
+        console.log('   - CTRL+SHIFT+E - Termina stream (broadcaster)');
+        console.log('   - CTRL+SHIFT+D - Mostra debug info');
         
     </script>
 </body>
