@@ -532,28 +532,236 @@
         // ===================================================
         // FUNZIONE ENDSTREAM COMPLETA
         // ===================================================
-        async function endStream() {
-            console.log('🔴 === AVVIO TERMINAZIONE COMPLETA STREAM ===');
+      // ===================================================
+// FIX DEFINITIVO - Sostituisci la funzione endStream in stream-webrtc.html
+// Cambia tutti i 'offline' con 'ended'
+// ===================================================
+
+async function endStream() {
+    console.log('🔴 === AVVIO TERMINAZIONE COMPLETA STREAM ===');
+    
+    if (!confirm('🔴 Terminare definitivamente la diretta?\n\n⚠️ Tutti i viewer verranno disconnessi\n⚠️ Lo stream sarà rimosso dalla dashboard')) {
+        console.log('❌ Terminazione annullata');
+        return;
+    }
+    
+    try {
+        showNotification('⏳ Terminando stream...', 'info');
+        
+        // ===== STEP 1: FERMA TUTTO IL WEBRTC =====
+        console.log('🔌 Fermando WebRTC...');
+        if (window.webRTCInstance) {
+            try {
+                await window.webRTCInstance.close();
+                window.webRTCInstance = null;
+                console.log('✅ WebRTC chiuso');
+            } catch (e) {
+                console.warn('⚠️ Errore chiusura WebRTC:', e);
+            }
+        }
+        
+        // ===== STEP 2: FERMA TUTTE LE TRACCE MEDIA =====
+        console.log('📹 Fermando tutte le tracce media...');
+        const video = document.getElementById('streamVideo');
+        if (video && video.srcObject) {
+            video.srcObject.getTracks().forEach(track => {
+                track.stop();
+                console.log('🛑 Fermata traccia:', track.kind, track.label);
+            });
+            video.srcObject = null;
+        }
+        
+        // ===== STEP 3: PULISCI DATABASE CON STATUS CORRETTO =====
+        if (window.streamData && window.streamData.id) {
+            console.log('💾 Aggiornamento database completo...');
             
-            if (!confirm('🔴 Terminare definitivamente la diretta?\n\n⚠️ Tutti i viewer verranno disconnessi\n⚠️ Lo stream sarà rimosso dalla dashboard')) {
-                console.log('❌ Terminazione annullata');
-                return;
+            // CORREZIONE: Usa 'ended' invece di 'offline'
+            const { error: updateError } = await supabaseClient
+                .from('streams')
+                .update({ 
+                    status: 'ended',  // ✅ Funziona
+                    ended_at: new Date().toISOString(),
+                    viewer_count: 0
+                })
+                .eq('id', window.streamData.id);
+                
+            if (updateError) {
+                console.error('❌ Errore update stream:', updateError);
+                
+                // FALLBACK: Se l'update fallisce, elimina il record
+                console.log('🗑️ Tentativo eliminazione record...');
+                const { error: deleteError } = await supabaseClient
+                    .from('streams')
+                    .delete()
+                    .eq('id', window.streamData.id);
+                    
+                if (deleteError) {
+                    console.error('❌ Errore eliminazione:', deleteError);
+                } else {
+                    console.log('✅ Stream eliminato dal database');
+                }
+            } else {
+                console.log('✅ Stream aggiornato nel DB con status "ended"');
             }
             
-            try {
-                showNotification('⏳ Terminando stream...', 'info');
+            // ===== STEP 4: PULISCI SEGNALI WEBRTC =====
+            console.log('🧹 Pulizia segnali WebRTC...');
+            const { error: cleanError } = await supabaseClient
+                .from('webrtc_signals')
+                .delete()
+                .eq('room_id', window.streamData.id.toString());
                 
-                // ===== STEP 1: FERMA TUTTO IL WEBRTC =====
-                console.log('🔌 Fermando WebRTC...');
-                if (window.webRTCInstance) {
-                    try {
-                        await window.webRTCInstance.close();
-                        window.webRTCInstance = null;
-                        console.log('✅ WebRTC chiuso');
-                    } catch (e) {
-                        console.warn('⚠️ Errore chiusura WebRTC:', e);
-                    }
+            if (cleanError) {
+                console.warn('⚠️ Errore pulizia segnali:', cleanError);
+            } else {
+                console.log('✅ Segnali WebRTC puliti');
+            }
+        }
+        
+        // ===== STEP 5: PULISCI UI COMPLETAMENTE =====
+        console.log('🎨 Pulizia interfaccia...');
+        
+        // Nascondi controlli streamer
+        const controls = document.getElementById('streamerControls');
+        if (controls) controls.style.display = 'none';
+        
+        // Aggiorna titolo
+        const title = document.getElementById('streamTitle');
+        if (title) title.textContent = '🔴 Stream Terminato';
+        
+        // Mostra messaggio sul video
+        const videoContainer = document.querySelector('.video-player');
+        if (videoContainer) {
+            videoContainer.innerHTML = `
+                <div style="
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    height: 100%;
+                    background: #000;
+                    color: white;
+                    text-align: center;
+                    font-size: 24px;
+                ">
+                    <div style="font-size: 64px; margin-bottom: 20px;">📺</div>
+                    <div style="font-weight: bold; margin-bottom: 10px;">Stream Terminato</div>
+                    <div style="font-size: 16px; opacity: 0.7;">La diretta è terminata</div>
+                </div>
+            `;
+        }
+        
+        // ===== STEP 6: DISCONNETTI REALTIME =====
+        console.log('📡 Disconnessione canali realtime...');
+        try {
+            supabaseClient.removeAllChannels();
+        } catch (e) {
+            console.warn('⚠️ Errore disconnessione realtime:', e);
+        }
+        
+        showNotification('✅ Stream terminato completamente!', 'success');
+        
+        // ===== STEP 7: REINDIRIZZAMENTO =====
+        console.log('↩️ Preparando reindirizzamento...');
+        
+        let countdown = 3;
+        const countdownInterval = setInterval(() => {
+            showNotification(`↩️ Tornando alla dashboard in ${countdown}s...`, 'info');
+            countdown--;
+            
+            if (countdown < 0) {
+                clearInterval(countdownInterval);
+                window.location.href = '/dashboard.html?refresh=' + Date.now();
+            }
+        }, 1000);
+        
+        console.log('✅ === TERMINAZIONE STREAM COMPLETATA ===');
+        
+    } catch (error) {
+        console.error('❌ ERRORE nella terminazione:', error);
+        showNotification('❌ Errore: ' + error.message, 'error');
+        
+        // FALLBACK: Elimina direttamente lo stream
+        try {
+            if (window.streamData?.id) {
+                await supabaseClient
+                    .from('streams')
+                    .delete()
+                    .eq('id', window.streamData.id);
+                    
+                showNotification('✅ Stream eliminato con successo', 'success');
+            }
+            
+            setTimeout(() => {
+                window.location.href = '/dashboard.html?force_refresh=true';
+            }, 2000);
+            
+        } catch (fallbackError) {
+            console.error('❌ Fallback fallito:', fallbackError);
+            
+            // ULTIMA RISORSA: Redirect forzato
+            setTimeout(() => {
+                if (confirm('Impossibile terminare automaticamente. Tornare alla dashboard?')) {
+                    window.location.href = '/dashboard.html';
                 }
+            }, 2000);
+        }
+    }
+}
+
+// ===================================================
+// AGGIORNA ANCHE LA DASHBOARD PER RICONOSCERE 'ended'
+// ===================================================
+
+// Nel dashboard.js, cambia anche il filtro:
+async function loadStreams() {
+    const streamGrid = document.getElementById('streamGrid');
+    if (!streamGrid) return;
+    
+    try {
+        // CORREZIONE: Filtra streams con status = 'live' (non 'ended')
+        const { data: streams, error } = await supabaseClient
+            .from('streams')
+            .select(`
+                *,
+                profiles!user_id (
+                    username,
+                    avatar_url
+                )
+            `)
+            .eq('status', 'live')  // Solo streams attivi
+            .order('created_at', { ascending: false });
+        
+        // ... resto del codice loadStreams
+        console.log('Streams attivi trovati:', streams?.length || 0);
+        
+    } catch (error) {
+        console.error('Error loading streams:', error);
+    }
+}
+
+// ===================================================
+// AGGIORNA ANCHE LA VISTA live_streams IN SUPABASE
+// ===================================================
+
+/*
+Esegui questo SQL in Supabase per aggiornare la vista:
+
+CREATE OR REPLACE VIEW live_streams AS
+SELECT 
+    s.*,
+    p.username,
+    p.avatar_url,
+    p.followers_count,
+    COALESCE(s.viewer_count, 0) as current_viewers,
+    AGE(NOW(), s.started_at) as duration
+FROM streams s
+JOIN profiles p ON s.user_id = p.id
+WHERE s.status = 'live'  -- Solo streams con status 'live'
+ORDER BY s.started_at DESC;
+*/
+
+console.log('🔧 Fix status "ended" applicato!');
                 
                 // ===== STEP 2: FERMA TUTTE LE TRACCE MEDIA =====
                 console.log('📹 Fermando tutte le tracce media...');
