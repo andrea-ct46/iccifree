@@ -94,11 +94,186 @@ async function loadStreams() {
     if (!streamGrid) return;
     
     try {
-        // AGGIORNATO: Usa la nuova vista live_streams per maggiore efficienza
+        console.log('🔍 Caricamento streams con FIX...');
+        
+        // ✅ CORREZIONE: Query più specifica per stream live
         const { data: streams, error } = await supabaseClient
-            .from('live_streams')
-            .select('*')
+            .from('streams')
+            .select(`
+                *,
+                profiles!user_id (
+                    username,
+                    avatar_url,
+                    followers_count
+                )
+            `)
+            .eq('status', 'live')
+            .is('ended_at', null)  // ✅ Escludi stream già terminati
             .order('started_at', { ascending: false });
+        
+        console.log('🔍 Query risultati:', streams?.length || 0, 'streams trovati');
+        
+        if (error) {
+            console.error('❌ Errore query streams:', error);
+            throw error;
+        }
+        
+        // ✅ DEBUG: Mostra tutti gli stream per debug
+        const { data: allStreams } = await supabaseClient
+            .from('streams')
+            .select('id, status, title, started_at, ended_at, profiles!user_id(username)')
+            .order('created_at', { ascending: false })
+            .limit(10);
+            
+        console.log('🔍 DEBUG - Tutti gli stream recenti:', allStreams);
+        
+        if (!streams || streams.length === 0) {
+            streamGrid.innerHTML = `
+                <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: #888;">
+                    <p style="font-size: 48px;">📺</p>
+                    <h3 style="color: #fff; margin: 16px 0;">Nessuna diretta al momento</h3>
+                    <p>Sii il primo ad andare live!</p>
+                    <a href="/golive.html" style="
+                        display: inline-block; 
+                        margin-top: 20px; 
+                        padding: 12px 30px; 
+                        background: linear-gradient(135deg, #FFD700 0%, #FFB700 100%); 
+                        color: #000; 
+                        text-decoration: none; 
+                        border-radius: 12px; 
+                        font-weight: 700;
+                        transition: all 0.3s;
+                    " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">🔴 GO LIVE ORA</a>
+                    <div style="margin-top: 30px; padding: 20px; background: rgba(255,255,255,0.05); border-radius: 12px; font-size: 13px; color: #666;">
+                        <strong>📊 DEBUG INFO:</strong><br>
+                        Stream totali nel database: ${allStreams?.length || 0}<br>
+                        Stream con status 'live': ${allStreams?.filter(s => s.status === 'live')?.length || 0}<br>
+                        <details style="margin-top: 10px;">
+                            <summary style="cursor: pointer; color: #FFD700;">Dettagli tecnici</summary>
+                            <pre style="font-size: 11px; margin-top: 10px; color: #999; text-align: left;">${JSON.stringify(allStreams, null, 2)}</pre>
+                        </details>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+        
+        // ✅ CORREZIONE: Filtra stream con profili validi
+        const validStreams = streams.filter(stream => {
+            if (!stream.profiles || !stream.profiles.username) {
+                console.warn('⚠️ Stream senza profilo valido:', stream.id);
+                return false;
+            }
+            return true;
+        });
+        
+        console.log('✅ Stream validi dopo filtro:', validStreams.length);
+        
+        // ✅ CORREZIONE: Mostra stream con link corretto
+        streamGrid.innerHTML = validStreams.map((stream, index) => {
+            const streamer = stream.profiles;
+            const timeAgo = getTimeAgo(stream.started_at);
+            
+            return `
+                <a href="/stream-webrtc.html?id=${stream.id}" 
+                   style="text-decoration: none; color: inherit;"
+                   class="stream-card-link"
+                   data-stream-id="${stream.id}">
+                    <div class="stream-card" style="animation-delay: ${index * 0.1}s;">
+                        <div class="stream-thumbnail">
+                            <img src="https://picsum.photos/320/180?random=${stream.id}" 
+                                 alt="Stream Thumbnail" 
+                                 loading="lazy">
+                            
+                            <div class="live-indicator">
+                                <span style="animation: blink 1.5s infinite;">●</span> LIVE
+                            </div>
+                            
+                            <div class="viewer-counter">
+                                👁️ ${formatViewerCount(stream.viewer_count || 0)}
+                            </div>
+
+                            <div class="stream-duration" style="
+                                position: absolute;
+                                top: 12px;
+                                right: 12px;
+                                background: rgba(0, 0, 0, 0.7);
+                                padding: 4px 8px;
+                                border-radius: 4px;
+                                font-size: 10px;
+                                font-weight: 600;
+                                backdrop-filter: blur(5px);
+                            ">
+                                ${timeAgo}
+                            </div>
+                        </div>
+                        
+                        <div class="stream-info">
+                            <div class="streamer-avatar">
+                                <img src="${getStreamerAvatar(streamer)}" 
+                                     alt="${streamer.username}"
+                                     loading="lazy">
+                                ${(streamer.followers_count > 1000) ? '<div class="verified-badge">✓</div>' : ''}
+                            </div>
+                            
+                            <div class="stream-details">
+                                <div class="title">${escapeHtml(stream.title || 'Untitled Stream')}</div>
+                                <div class="streamer-name">${escapeHtml(streamer.username)}</div>
+                                <div class="category">
+                                    <span class="category-tag">${escapeHtml(stream.category || 'Live Stream')}</span>
+                                    ${streamer.followers_count ? `• ${formatNumber(streamer.followers_count)} followers` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            `;
+        }).join('');
+        
+        // Add effects
+        addStreamCardEffects();
+        
+        console.log('✅ Dashboard aggiornata con', validStreams.length, 'stream live');
+        
+    } catch (error) {
+        console.error('❌ Errore caricamento streams:', error);
+        streamGrid.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 40px 20px; background: rgba(255, 68, 68, 0.1); border: 1px solid #ff4444; border-radius: 12px; color: #ff4444;">
+                <h3>⚠️ Errore Caricamento</h3>
+                <p>Impossibile caricare gli stream: ${error.message}</p>
+                <button onclick="loadStreams()" style="margin-top: 16px; padding: 10px 20px; background: #FFD700; color: #000; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">🔄 Riprova</button>
+            </div>
+        `;
+    }
+}
+
+// Utility functions - aggiungi queste DOPO la funzione loadStreams
+function getStreamerAvatar(streamer) {
+    if (streamer.avatar_url) return streamer.avatar_url;
+    const colors = ['FF5733','33FF57','3357FF','FF33F5','F5FF33','33FFF5'];
+    const colorIndex = streamer.username.charCodeAt(0) % colors.length;
+    const initials = streamer.username.substring(0, 2).toUpperCase();
+    return `https://placehold.co/40x40/${colors[colorIndex]}/FFFFFF?text=${initials}`;
+}
+
+function formatViewerCount(count) {
+    if (count < 1000) return count.toString();
+    if (count < 1000000) return (count / 1000).toFixed(1) + 'K';
+    return (count / 1000000).toFixed(1) + 'M';
+}
+
+function getTimeAgo(startedAt) {
+    const now = new Date();
+    const started = new Date(startedAt);
+    const diffMs = now - started;
+    const diffMins = Math.floor(diffMs / 60000);
+    
+    if (diffMins < 1) return 'Ora';
+    if (diffMins < 60) return `${diffMins}m`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h`;
+    return `${Math.floor(diffHours / 24)}g`;
+});
         
         if (error) throw error;
         
