@@ -1,6 +1,6 @@
 // =================================================================================
-// ICCI FREE - GO LIVE JAVASCRIPT FUNZIONANTE
-// Sistema WebRTC completo per streaming
+// ICCI FREE - GO LIVE JAVASCRIPT CON TUTTI I FIX
+// Sistema WebRTC completo e robusto per streaming
 // =================================================================================
 
 let localStream = null;
@@ -9,7 +9,7 @@ let currentUser = null;
 let currentStreamRecord = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log('🚀 Inizializzazione Go Live...');
+    console.log('🚀 Inizializzazione Go Live con FIX...');
     
     // Controlla autenticazione
     currentUser = await checkUser();
@@ -46,7 +46,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     height: { ideal: 720 },
                     facingMode: facingMode
                 },
-                audio: true
+                audio: {
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    autoGainControl: true
+                }
             };
             
             const stream = await navigator.mediaDevices.getUserMedia(constraints);
@@ -70,13 +74,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ============= EVENT LISTENERS =============
     
     // Flip Camera
-    flipCameraBtn.addEventListener('click', async () => {
+    flipCameraBtn?.addEventListener('click', async () => {
         currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
         await startCamera(currentFacingMode);
     });
     
     // Toggle Microfono
-    toggleMicBtn.addEventListener('click', () => {
+    toggleMicBtn?.addEventListener('click', () => {
         if (!localStream) return;
         
         const audioTrack = localStream.getAudioTracks()[0];
@@ -91,11 +95,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
     
     // GO LIVE Button
-    goLiveBtn.addEventListener('click', async () => {
-        const title = streamTitleInput.value.trim();
+    goLiveBtn?.addEventListener('click', async () => {
+        const title = streamTitleInput?.value.trim();
         if (!title) {
             alert("Inserisci un titolo per la diretta!");
-            streamTitleInput.focus();
+            streamTitleInput?.focus();
             return;
         }
         
@@ -117,71 +121,133 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
     
-    // ============= WEBRTC STREAMING =============
+    // ============= WEBRTC STREAMING CON FIX =============
     
     async function startWebRTCStream(title) {
-    try {
-        showNotification('⏳ Preparando lo stream...', 'info');
-        
-        // 1. Crea stream record con status corretto
-        const { data: streamRecord, error: streamError } = await supabaseClient
-            .from('streams')
-            .insert({
-                user_id: currentUser.id,
-                title: title.trim(),
-                status: 'live',  // ✅ IMPORTANTE: deve essere 'live'
-                category: 'Live Stream',
-                viewer_count: 0,
-                started_at: new Date().toISOString(),
-                offer_sdp: null  // Sarà aggiornato dopo
-            })
-            .select()
-            .single();
-        
-        if (streamError) {
-            console.error('Errore creazione stream:', streamError);
-            throw new Error('Impossibile creare lo stream: ' + streamError.message);
-        }
-        
-        currentStreamRecord = streamRecord;
-        console.log('✅ Stream creato nel database:', streamRecord.id);
+        try {
+            showNotification('⏳ Preparando lo stream...', 'info');
             
-            // 2. Inizializza WebRTC
+            // 1. Crea stream record con status corretto
+            const { data: streamRecord, error: streamError } = await supabaseClient
+                .from('streams')
+                .insert({
+                    user_id: currentUser.id,
+                    title: title.trim(),
+                    status: 'live',  // ✅ IMPORTANTE: deve essere 'live'
+                    category: 'Live Stream',
+                    viewer_count: 0,
+                    started_at: new Date().toISOString(),
+                    offer_sdp: null  // Sarà aggiornato dopo
+                })
+                .select()
+                .single();
+            
+            if (streamError) {
+                console.error('Errore creazione stream:', streamError);
+                throw new Error('Impossibile creare lo stream: ' + streamError.message);
+            }
+            
+            currentStreamRecord = streamRecord;
+            console.log('✅ Stream creato nel database:', streamRecord.id);
+            
+            // 2. Verifica che sia stato creato
+            const { data: verifyStream } = await supabaseClient
+                .from('streams')
+                .select('*')
+                .eq('id', streamRecord.id)
+                .single();
+                
+            if (!verifyStream) {
+                throw new Error('Stream non trovato dopo creazione');
+            }
+            
+            console.log('✅ Stream verificato:', verifyStream);
+            
+            // 3. Inizializza WebRTC DOPO aver creato il database record
+            showNotification('🔌 Inizializzazione WebRTC...', 'info');
+            
             webRTCStreaming = new WebRTCStreaming({
                 roomId: streamRecord.id,
                 isBroadcaster: true,
                 onStats: (stats) => {
                     console.log('📊 Stats:', stats);
+                    // Aggiorna viewer count nel database
+                    updateViewerCount(streamRecord.id);
                 }
             });
             
             await webRTCStreaming.init();
             console.log('✅ WebRTC inizializzato');
             
-            // 3. Aggiungi stream locale al WebRTC
+            // 4. Aggiungi tracce locali
             localStream.getTracks().forEach(track => {
                 webRTCStreaming.pc.addTrack(track, localStream);
             });
             
-            // 4. Crea data channel per chat
+            // 5. Crea data channel per chat
             webRTCStreaming.createDataChannel('chat');
             
-            // 5. Crea offer per i viewer
-            await webRTCStreaming.createOffer();
+            // 6. Crea offer SDP
+            const offer = await webRTCStreaming.createOffer();
             console.log('✅ Offer WebRTC creato');
             
-            // 6. Avvia statistiche
+            // 7. IMPORTANTE: Salva l'offer SDP nel database
+            const { error: updateError } = await supabaseClient
+                .from('streams')
+                .update({ offer_sdp: offer.sdp })
+                .eq('id', streamRecord.id);
+                
+            if (updateError) {
+                console.warn('⚠️ Errore aggiornamento offer SDP:', updateError);
+            } else {
+                console.log('✅ Offer SDP salvato nel database');
+            }
+            
+            // 8. Avvia statistiche
             webRTCStreaming.startStats(3000);
             
-            // 7. Reindirizza alla pagina streaming
-            goLiveBtn.textContent = '🔴 IN DIRETTA!';
+            showNotification('🎉 Stream LIVE! Reindirizzamento...', 'success');
+            
+            // 9. Reindirizza con parametri corretti
             setTimeout(() => {
                 window.location.href = `/stream-webrtc.html?id=${streamRecord.id}&mode=broadcaster`;
-            }, 1000);
+            }, 2000);
             
         } catch (error) {
-            console.error('Errore WebRTC:', error);
+            console.error('❌ Errore avvio stream:', error);
+            showNotification('❌ Errore: ' + error.message, 'error');
+            
+            // Cleanup in caso di errore
+            if (currentStreamRecord) {
+                await supabaseClient
+                    .from('streams')
+                    .delete()
+                    .eq('id', currentStreamRecord.id);
+            }
+            
             throw error;
+        }
+    }
+    
+    // Funzione per aggiornare viewer count
+    async function updateViewerCount(streamId) {
+        try {
+            // Conta viewer attivi dai segnali WebRTC
+            const { count } = await supabaseClient
+                .from('webrtc_signals')
+                .select('sender', { count: 'exact', head: true })
+                .eq('room_id', streamId)
+                .gte('created_at', new Date(Date.now() - 30000).toISOString()); // Ultimi 30 secondi
+                
+            // Aggiorna il database
+            await supabaseClient
+                .from('streams')
+                .update({ viewer_count: Math.max(count || 0, 0) })
+                .eq('id', streamId);
+                
+            console.log(`👁️ Viewer count aggiornato: ${count || 0}`);
+        } catch (error) {
+            console.warn('⚠️ Errore aggiornamento viewer count:', error);
         }
     }
     
@@ -199,7 +265,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             await supabaseClient
                 .from('streams')
                 .update({ 
-                    status: 'offline',
+                    status: 'ended',
                     ended_at: new Date().toISOString() 
                 })
                 .eq('id', currentStreamRecord.id);
@@ -209,12 +275,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ============= INIZIALIZZA =============
     
     await startCamera();
-    console.log('✅ Go Live pronto!');
+    console.log('✅ Go Live con FIX pronto!');
 });
 
 // ============= UTILITY FUNCTIONS =============
 
 function showNotification(message, type = 'info') {
+    console.log(`📢 [${type.toUpperCase()}] ${message}`);
+    
     const toast = document.createElement('div');
     toast.className = `notification-toast ${type}`;
     toast.style.cssText = `
