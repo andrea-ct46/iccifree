@@ -66,6 +66,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             searchInput.addEventListener('input', debounce(handleSearch, 300));
         }
         
+        // Setup realtime updates for streams
+        setupRealtimeUpdates();
+        
     } catch (error) {
         console.error('Error:', error);
         document.getElementById('loadingState').innerHTML = `
@@ -91,17 +94,11 @@ async function loadStreams() {
     if (!streamGrid) return;
     
     try {
+        // AGGIORNATO: Usa la nuova vista live_streams per maggiore efficienza
         const { data: streams, error } = await supabaseClient
-            .from('streams')
-            .select(`
-                *,
-                profiles!user_id (
-                    username,
-                    avatar_url
-                )
-            `)
-            .eq('status', 'live')
-            .order('created_at', { ascending: false });
+            .from('live_streams')
+            .select('*')
+            .order('started_at', { ascending: false });
         
         if (error) throw error;
         
@@ -114,17 +111,18 @@ async function loadStreams() {
                     color: #888;
                 ">
                     <p style="font-size: 48px;">📺</p>
-                    <h3 style="color: #fff;">Nessuna diretta al momento</h3>
+                    <h3 style="color: #fff; margin: 16px 0;">Nessuna diretta al momento</h3>
                     <p>Sii il primo ad andare live!</p>
-                    <a href="/golive-webrtc.html" style="
+                    <a href="/golive.html" style="
                         display: inline-block;
                         margin-top: 20px;
                         padding: 12px 30px;
-                        background: #FFD700;
+                        background: linear-gradient(135deg, #FFD700 0%, #FFB700 100%);
                         color: #000;
                         text-decoration: none;
                         border-radius: 12px;
                         font-weight: 700;
+                        transition: all 0.3s;
                     ">🔴 GO LIVE ORA</a>
                 </div>
             `;
@@ -132,27 +130,39 @@ async function loadStreams() {
         }
         
         streamGrid.innerHTML = streams.map(stream => {
-            const streamer = stream.profiles;
-            if (!streamer) return '';
+            if (!stream.username) return '';
+            
+            const duration = stream.duration ? formatDuration(stream.duration) : 'Live';
             
             return `
                 <a href="/stream-webrtc.html?id=${stream.id}" style="text-decoration: none; color: inherit;">
                     <div class="stream-card">
                         <div class="stream-thumbnail">
-                            <img src="https://placehold.co/320x180/0d0d0d/FFD700?text=LIVE" alt="Stream">
-                            <div class="live-indicator">● LIVE</div>
-                            <div style="position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.7); padding: 4px 8px; border-radius: 4px; font-size: 12px;">
-                                👁️ ${stream.viewer_count || 0}
+                            <img src="https://picsum.photos/320/180?random=${stream.id}" 
+                                 alt="Stream Thumbnail" 
+                                 loading="lazy">
+                            <div class="live-indicator">
+                                <span>●</span> LIVE
                             </div>
+                            <div class="viewer-counter">
+                                👁️ ${formatNumber(stream.current_viewers || 0)}
+                            </div>
+                            <div class="duration-badge">${duration}</div>
                         </div>
                         <div class="stream-info">
                             <div class="streamer-avatar">
-                                <img src="${streamer.avatar_url || 'https://placehold.co/40x40/282828/FFD700?text=?'}" alt="${streamer.username}">
+                                <img src="${stream.avatar_url || getDefaultAvatar(stream.username)}" 
+                                     alt="${stream.username}"
+                                     loading="lazy">
+                                ${stream.followers_count > 1000 ? '<div class="verified-badge">✓</div>' : ''}
                             </div>
                             <div class="stream-details">
-                                <div class="title">${stream.title || 'Untitled Stream'}</div>
-                                <div class="streamer-name">${streamer.username}</div>
-                                <div class="category">${stream.category || 'Live Stream'}</div>
+                                <div class="title">${escapeHtml(stream.title || 'Untitled Stream')}</div>
+                                <div class="streamer-name">${escapeHtml(stream.username)}</div>
+                                <div class="category">
+                                    <span class="category-tag">${escapeHtml(stream.category || 'Live Stream')}</span>
+                                    ${stream.followers_count ? `• ${formatNumber(stream.followers_count)} followers` : ''}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -160,10 +170,61 @@ async function loadStreams() {
             `;
         }).join('');
         
+        // Add hover effects
+        addStreamCardEffects();
+        
     } catch (error) {
         console.error('Error loading streams:', error);
-        streamGrid.innerHTML = '<div style="text-align: center; color: #ff4444;">Errore caricamento streams</div>';
+        streamGrid.innerHTML = `
+            <div style="
+                grid-column: 1 / -1;
+                text-align: center;
+                padding: 40px 20px;
+                color: #ff4444;
+            ">
+                <p style="font-size: 32px;">⚠️</p>
+                <h3>Errore nel caricamento</h3>
+                <p>${error.message}</p>
+                <button onclick="loadStreams()" style="
+                    margin-top: 16px;
+                    padding: 10px 20px;
+                    background: #FFD700;
+                    color: #000;
+                    border: none;
+                    border-radius: 8px;
+                    cursor: pointer;
+                ">Riprova</button>
+            </div>
+        `;
     }
+}
+
+function setupRealtimeUpdates() {
+    // Listen for real-time updates on streams table
+    const channel = supabaseClient.channel('dashboard_streams');
+    
+    channel.on(
+        'postgres_changes',
+        { 
+            event: '*', 
+            schema: 'public', 
+            table: 'streams',
+            filter: 'status=eq.live'
+        },
+        (payload) => {
+            console.log('Stream update:', payload);
+            
+            // Debounce reload to avoid too many updates
+            clearTimeout(window.streamReloadTimeout);
+            window.streamReloadTimeout = setTimeout(() => {
+                loadStreams();
+            }, 1000);
+        }
+    );
+    
+    channel.subscribe((status) => {
+        console.log('Realtime status:', status);
+    });
 }
 
 async function handleSearch(event) {
@@ -176,24 +237,37 @@ async function handleSearch(event) {
     }
     
     try {
+        // Search users
         const { data: users } = await supabaseClient
-            .rpc('search_users', { search_query: query });
+            .from('profiles')
+            .select('username, avatar_url, followers_count, bio')
+            .or(`username.ilike.%${query}%,bio.ilike.%${query}%`)
+            .limit(5);
         
+        // Search live streams
         const { data: streams } = await supabaseClient
-            .rpc('search_streams', { search_query: query });
+            .from('live_streams')
+            .select('*')
+            .or(`title.ilike.%${query}%,category.ilike.%${query}%,username.ilike.%${query}%`)
+            .limit(5);
         
         let html = '';
         
         if (streams && streams.length > 0) {
-            html += '<div style="padding: 8px 16px; color: #888; font-size: 12px;">LIVE ORA</div>';
+            html += '<div style="padding: 8px 16px; color: #FFD700; font-size: 12px; font-weight: 600;">🔴 LIVE NOW</div>';
             streams.forEach(stream => {
                 html += `
                     <a href="/stream-webrtc.html?id=${stream.id}" class="search-result-item">
-                        <img src="${stream.avatar_url || 'https://placehold.co/40x40/282828/FFD700?text=?'}" 
+                        <img src="${stream.avatar_url || getDefaultAvatar(stream.username)}" 
                              class="search-result-avatar">
                         <div class="search-result-info">
-                            <div class="search-result-name">${stream.title}</div>
-                            <div class="search-result-meta">${stream.username} • ${stream.category}</div>
+                            <div class="search-result-name">
+                                ${escapeHtml(stream.title)}
+                                <span class="live-badge-small">LIVE</span>
+                            </div>
+                            <div class="search-result-meta">
+                                ${escapeHtml(stream.username)} • ${escapeHtml(stream.category)} • ${stream.current_viewers || 0} viewers
+                            </div>
                         </div>
                     </a>
                 `;
@@ -201,15 +275,18 @@ async function handleSearch(event) {
         }
         
         if (users && users.length > 0) {
-            html += '<div style="padding: 8px 16px; color: #888; font-size: 12px;">UTENTI</div>';
+            html += '<div style="padding: 8px 16px; color: #888; font-size: 12px; font-weight: 600;">👤 USERS</div>';
             users.forEach(user => {
                 html += `
                     <a href="/profile.html?user=${user.username}" class="search-result-item">
-                        <img src="${user.avatar_url || 'https://placehold.co/40x40/282828/FFD700?text=?'}" 
+                        <img src="${user.avatar_url || getDefaultAvatar(user.username)}" 
                              class="search-result-avatar">
                         <div class="search-result-info">
-                            <div class="search-result-name">${user.username}</div>
-                            <div class="search-result-meta">${user.followers_count} followers</div>
+                            <div class="search-result-name">${escapeHtml(user.username)}</div>
+                            <div class="search-result-meta">
+                                ${user.followers_count || 0} followers
+                                ${user.bio ? ' • ' + escapeHtml(user.bio.substring(0, 30) + '...') : ''}
+                            </div>
                         </div>
                     </a>
                 `;
@@ -217,7 +294,7 @@ async function handleSearch(event) {
         }
         
         if (!html) {
-            html = '<div style="padding: 20px; text-align: center; color: #666;">Nessun risultato</div>';
+            html = '<div style="padding: 20px; text-align: center; color: #666;">Nessun risultato per "' + escapeHtml(query) + '"</div>';
         }
         
         if (resultsDiv) {
@@ -227,9 +304,28 @@ async function handleSearch(event) {
         
     } catch (error) {
         console.error('Search error:', error);
+        if (resultsDiv) {
+            resultsDiv.innerHTML = '<div style="padding: 20px; text-align: center; color: #ff4444;">Errore nella ricerca</div>';
+            resultsDiv.classList.add('active');
+        }
     }
 }
 
+function addStreamCardEffects() {
+    const cards = document.querySelectorAll('.stream-card');
+    
+    cards.forEach(card => {
+        card.addEventListener('mouseenter', () => {
+            card.style.transform = 'translateY(-8px) scale(1.02)';
+        });
+        
+        card.addEventListener('mouseleave', () => {
+            card.style.transform = 'translateY(0) scale(1)';
+        });
+    });
+}
+
+// UTILITY FUNCTIONS
 function debounce(func, wait) {
     let timeout;
     return function executedFunction(...args) {
@@ -242,6 +338,40 @@ function debounce(func, wait) {
     };
 }
 
+function formatNumber(num) {
+    if (num < 1000) return num.toString();
+    if (num < 1000000) return (num / 1000).toFixed(1) + 'K';
+    return (num / 1000000).toFixed(1) + 'M';
+}
+
+function formatDuration(duration) {
+    // duration is a PostgreSQL interval
+    if (typeof duration === 'string') {
+        const match = duration.match(/(\d+):(\d+):(\d+)/);
+        if (match) {
+            const hours = parseInt(match[1]);
+            const minutes = parseInt(match[2]);
+            if (hours > 0) return `${hours}h ${minutes}m`;
+            return `${minutes}m`;
+        }
+    }
+    return 'Live';
+}
+
+function getDefaultAvatar(username) {
+    const colors = ['FF5733','33FF57','3357FF','FF33F5','F5FF33','33FFF5'];
+    const colorIndex = username.charCodeAt(0) % colors.length;
+    const initials = username.substring(0, 2).toUpperCase();
+    return `https://placehold.co/40x40/${colors[colorIndex]}/FFFFFF?text=${initials}`;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// GLOBAL FUNCTIONS
 window.logout = async function() {
     try {
         await supabaseClient.auth.signOut();
@@ -249,5 +379,51 @@ window.logout = async function() {
     } catch (error) {
         console.error('Logout error:', error);
         window.location.href = '/';
+    }
+}
+
+window.filterByCategory = async function(category) {
+    const streamGrid = document.getElementById('streamGrid');
+    if (!streamGrid) return;
+    
+    streamGrid.innerHTML = '<div style="text-align: center; padding: 40px; color: #888;">🔄 Caricamento...</div>';
+    
+    try {
+        let query = supabaseClient.from('live_streams').select('*');
+        
+        if (category !== 'all') {
+            query = query.eq('category', category);
+        }
+        
+        const { data: streams, error } = await query.order('started_at', { ascending: false });
+        
+        if (error) throw error;
+        
+        if (!streams || streams.length === 0) {
+            streamGrid.innerHTML = `
+                <div style="grid-column: 1/-1; text-align: center; padding: 60px 20px; color: #888;">
+                    <p style="font-size: 48px;">📺</p>
+                    <h3>Nessuna diretta ${category !== 'all' ? 'in ' + category : ''}</h3>
+                    <a href="/golive.html" style="
+                        display: inline-block;
+                        margin-top: 20px;
+                        padding: 12px 24px;
+                        background: #FFD700;
+                        color: #000;
+                        text-decoration: none;
+                        border-radius: 12px;
+                        font-weight: 700;
+                    ">GO LIVE ORA</a>
+                </div>
+            `;
+            return;
+        }
+        
+        // Reload streams with filtered data
+        loadStreams();
+        
+    } catch (error) {
+        console.error('Filter error:', error);
+        streamGrid.innerHTML = '<div style="text-align: center; color: #ff4444;">Errore nel filtro</div>';
     }
 }
