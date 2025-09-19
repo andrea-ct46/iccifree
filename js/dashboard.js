@@ -427,3 +427,58 @@ window.filterByCategory = async function(category) {
         streamGrid.innerHTML = '<div style="text-align: center; color: #ff4444;">Errore nel filtro</div>';
     }
 }
+// ===================================================
+// AGGIUNGI ALLA FINE DEL dashboard.js
+// ===================================================
+
+// Auto-refresh per streams nella dashboard
+async function forceRefreshStreams() {
+    console.log('🔄 Auto-refresh streams...');
+    
+    try {
+        // Prima pulisci streams "fantasma" (offline ma segnati come live)
+        const { error: cleanupError } = await supabaseClient
+            .from('streams')
+            .update({ status: 'offline' })
+            .lt('started_at', new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString()) // Più di 6 ore fa
+            .eq('status', 'live');
+            
+        if (cleanupError) {
+            console.warn('⚠️ Cleanup warning:', cleanupError);
+        }
+        
+        // Poi ricarica la lista streams
+        await loadStreams();
+        
+    } catch (error) {
+        console.error('❌ Errore auto-refresh:', error);
+    }
+}
+
+// Setup auto-refresh solo nella dashboard
+if (window.location.pathname === '/dashboard.html' || window.location.pathname === '/') {
+    
+    // Auto-refresh ogni 15 secondi
+    setInterval(forceRefreshStreams, 15000);
+    
+    // Refresh immediato se la pagina viene caricata con parametri speciali
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('refresh') || urlParams.has('force_refresh')) {
+        console.log('🔄 Force refresh richiesto via URL');
+        setTimeout(forceRefreshStreams, 2000);
+        
+        // Pulisci l'URL dopo il refresh
+        const cleanUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, cleanUrl);
+    }
+    
+    // Refresh quando la pagina diventa visibile (cambio tab)
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+            console.log('🔄 Pagina visibile - refresh streams');
+            setTimeout(forceRefreshStreams, 1000);
+        }
+    });
+    
+    console.log('✅ Auto-refresh dashboard attivato');
+}
