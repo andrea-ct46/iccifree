@@ -114,7 +114,7 @@ async function loadStreams() {
         console.log('🔍 Query risultati:', streams?.length || 0, 'streams trovati');
         
         if (error) {
-            console.error('❌ Errore query streams:', error);
+            console.error('❌ Errore query streams:', error;
             throw error;
         }
         
