@@ -1,7 +1,6 @@
 // File: js/webrtc-streaming.js
-// Core WebRTC helper for ICCI FREE - minimal, usable for streamer & viewer
+// Core WebRTC helper for ICCI FREE - VERSIONE CON TUTTI I FIX
 // Uses global supabaseClient for signaling (table: webrtc_signals).
-// Requires: supabaseClient, checkUser()
 
 class WebRTCStreaming {
     constructor({ roomId, isBroadcaster = false, onRemoteStream, onStats, onDataMessage }) {
@@ -11,12 +10,16 @@ class WebRTCStreaming {
         this.onStats = onStats;
         this.onDataMessage = onDataMessage;
 
-        // RTCPeerConnection config: include STUN; add TURN in production
+        // ✅ CORREZIONE: ICE servers più robusti
         this.pcConfig = {
             iceServers: [
                 { urls: 'stun:stun.l.google.com:19302' },
-                // add TURN servers here if available
-            ]
+                { urls: 'stun:stun1.l.google.com:19302' },
+                { urls: 'stun:stun2.l.google.com:19302' },
+                { urls: 'stun:stun.cloudflare.com:3478' },
+                // Aggiungi TURN servers in produzione per NAT traversal
+            ],
+            iceCandidatePoolSize: 10  // ✅ CORREZIONE: Pool più ampio
         };
 
         this.pc = null;
@@ -25,6 +28,11 @@ class WebRTCStreaming {
         this.statsInterval = null;
         this.signalSubscription = null;
         this.clientId = this._makeId();
+        
+        // ✅ CORREZIONE: Flag per tracking stato
+        this.isConnected = false;
+        this.connectionAttempts = 0;
+        this.maxAttempts = 3;
     }
 
     _makeId() {
@@ -35,33 +43,100 @@ class WebRTCStreaming {
         // create peer connection
         this.pc = new RTCPeerConnection(this.pcConfig);
 
-        // ICE -> push to supabase signals
+        // ✅ CORREZIONE: Event handlers migliorati
         this.pc.onicecandidate = (e) => {
             if (!e.candidate) return;
+            console.log('📤 Invio ICE candidate');
             this._sendSignal({ type: 'ice-candidate', candidate: e.candidate });
         };
 
-        // Remote stream
         this.pc.ontrack = (e) => {
-            if (this.onRemoteStream) this.onRemoteStream(e.streams[0]);
+            console.log('🎥 Traccia ricevuta!');
+            if (this.onRemoteStream && e.streams[0]) {
+                this.onRemoteStream(e.streams[0]);
+                this.isConnected = true;
+            }
         };
 
-        // Data channel (for viewers only, or broadcaster can create)
         this.pc.ondatachannel = (event) => {
-            const dc = event.channel;
-            this._setupDataChannel(dc);
+            console.log('💬 Data channel ricevuto');
+            this._setupDataChannel(event.channel);
         };
 
-        // monitor connection state
+        // ✅ CORREZIONE: Monitoring connessione
         this.pc.onconnectionstatechange = () => {
-            console.log('PC state', this.pc.connectionState);
+            console.log('🔗 Stato connessione:', this.pc.connectionState);
+            
+            if (this.pc.connectionState === 'connected') {
+                this.isConnected = true;
+                this.connectionAttempts = 0;
+                console.log('✅ WebRTC connesso!');
+            } else if (this.pc.connectionState === 'failed') {
+                console.warn('⚠️ Connessione fallita, retry...');
+                this._retryConnection();
+            } else if (this.pc.connectionState === 'disconnected') {
+                console.warn('⚠️ WebRTC disconnesso');
+                this.isConnected = false;
+            }
         };
 
-        // subscribe to signaling messages for this room
+        // ✅ CORREZIONE: Monitor ICE connection
+        this.pc.oniceconnectionstatechange = () => {
+            console.log('🧊 ICE state:', this.pc.iceConnectionState);
+            
+            if (this.pc.iceConnectionState === 'failed' || 
+                this.pc.iceConnectionState === 'disconnected') {
+                console.warn('⚠️ ICE connection issues, retry...');
+                setTimeout(() => this._retryConnection(), 2000);
+            }
+        };
+
         await this._subscribeSignals();
     }
 
-    async startLocalCameraAudio(constraints = { video: { width: 1280, height: 720, facingMode: 'user' }, audio: true }) {
+    // ✅ CORREZIONE: Retry automatico
+    async _retryConnection() {
+        this.connectionAttempts++;
+        if (this.connectionAttempts > this.maxAttempts) {
+            console.error('❌ Max retry attempts reached');
+            return;
+        }
+
+        try {
+            console.log(`🔄 Retry connessione (${this.connectionAttempts}/${this.maxAttempts})`);
+            
+            if (this.pc) {
+                this.pc.close();
+            }
+            
+            await this.init();
+            
+            if (!this.isBroadcaster) {
+                // Per i viewer, riprova a ottenere l'offer
+                const { data: stream } = await supabaseClient
+                    .from('streams')
+                    .select('offer_sdp')
+                    .eq('id', this.roomId)
+                    .single();
+                    
+                if (stream?.offer_sdp) {
+                    await this.setRemoteDescription(stream.offer_sdp, 'offer');
+                    await this.createAnswer();
+                }
+            }
+        } catch (error) {
+            console.error('❌ Retry fallito:', error);
+        }
+    }
+
+    async startLocalCameraAudio(constraints = { 
+        video: { width: 1280, height: 720, facingMode: 'user' }, 
+        audio: { 
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true 
+        } 
+    }) {
         if (this.localStream) {
             // stop existing tracks
             this.localStream.getTracks().forEach(t => t.stop());
@@ -69,7 +144,10 @@ class WebRTCStreaming {
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
         this.localStream = stream;
         // add tracks to pc
-        stream.getTracks().forEach(track => this.pc.addTrack(track, stream));
+        stream.getTracks().forEach(track => {
+            console.log('📤 Aggiunto track:', track.kind);
+            this.pc.addTrack(track, stream);
+        });
         return stream;
     }
 
@@ -80,7 +158,7 @@ class WebRTCStreaming {
         const senders = this.pc.getSenders();
         const sender = senders.find(s => s.track && s.track.kind === 'video');
         if (sender) {
-            sender.replaceTrack(videoTrack);
+            await sender.replaceTrack(videoTrack);
         } else {
             this.pc.addTrack(videoTrack, stream);
         }
@@ -106,7 +184,10 @@ class WebRTCStreaming {
 
     _setupDataChannel(dc) {
         this.dataChannel = dc;
-        dc.onopen = () => console.log('DataChannel opened');
+        dc.onopen = () => {
+            console.log('💬 DataChannel opened');
+            this.isConnected = true;
+        };
         dc.onmessage = (evt) => {
             try {
                 const msg = JSON.parse(evt.data);
@@ -115,11 +196,20 @@ class WebRTCStreaming {
                 if (this.onDataMessage) this.onDataMessage({ text: evt.data });
             }
         };
+        dc.onerror = (error) => {
+            console.error('❌ DataChannel error:', error);
+        };
+        dc.onclose = () => {
+            console.warn('💬 DataChannel closed');
+        };
     }
 
     async createOffer() {
         // broadcaster creates offer
-        const offer = await this.pc.createOffer();
+        const offer = await this.pc.createOffer({
+            offerToReceiveAudio: true,
+            offerToReceiveVideo: true
+        });
         await this.pc.setLocalDescription(offer);
 
         // save offer in signals (so viewers can find it)
@@ -138,20 +228,27 @@ class WebRTCStreaming {
     async setRemoteDescription(sdp, type) {
         if (!this.pc) await this.init();
         const desc = { type, sdp };
-        await this.pc.setRemoteDescription(desc);
+        
+        try {
+            await this.pc.setRemoteDescription(desc);
+            console.log(`✅ Remote description set (${type})`);
+        } catch (error) {
+            console.error('❌ Error setting remote description:', error);
+            throw error;
+        }
     }
 
     async addIceCandidate(candidate) {
         try {
             await this.pc.addIceCandidate(candidate);
+            console.log('✅ ICE candidate added');
         } catch (err) {
-            console.warn('Failed to add ICE candidate', err);
+            console.warn('⚠️ Failed to add ICE candidate:', err);
         }
     }
 
     async _subscribeSignals() {
         // subscribe to realtime changes on table webrtc_signals for this room
-        // we use supabaseClient.from('webrtc_signals:roomId=eq.<roomId>')
         const channel = supabaseClient.channel(`webrtc_${this.roomId}`);
         channel.on(
             'postgres_changes',
@@ -160,6 +257,7 @@ class WebRTCStreaming {
         );
         await channel.subscribe();
         this.signalSubscription = channel;
+        console.log('📡 Subscribed to WebRTC signals for room:', this.roomId);
     }
 
     async _sendSignal(payload) {
@@ -170,34 +268,55 @@ class WebRTCStreaming {
             payload: JSON.stringify(payload),
             created_at: new Date().toISOString()
         };
-        await supabaseClient.from('webrtc_signals').insert(record).select(); // select() avoids 406 on REST
+        
+        try {
+            await supabaseClient.from('webrtc_signals').insert(record).select();
+            console.log('📤 Signal sent:', payload.type);
+        } catch (error) {
+            console.error('❌ Error sending signal:', error);
+        }
     }
 
     async _handleSignal(payload) {
-        // payload.record contains inserted row (on INSERT)
         if (!payload || !payload.record) return;
         let rec = payload.record;
         if (!rec.payload) return;
+        
         try {
             const obj = JSON.parse(rec.payload);
-            // ignore signals sent by self
             if (rec.sender === this.clientId) return;
 
+            console.log('📡 Segnale ricevuto:', obj.type);
+
             if (obj.type === 'offer') {
-                // viewer receives offer -> setRemote + createAnswer
-                await this.setRemoteDescription(obj.sdp, obj.sdpType || 'offer');
-                await this.createAnswer();
+                // ✅ CORREZIONE: Gestione offer migliorata
+                console.log('📥 Ricevuta offer, creando answer...');
+                await this.setRemoteDescription(obj.sdp, 'offer');
+                const answer = await this.createAnswer();
+                console.log('📤 Answer inviata');
             } else if (obj.type === 'answer') {
-                await this.setRemoteDescription(obj.sdp, obj.sdpType || 'answer');
+                // ✅ CORREZIONE: Gestione answer migliorata
+                console.log('📥 Ricevuta answer');
+                await this.setRemoteDescription(obj.sdp, 'answer');
             } else if (obj.type === 'ice-candidate') {
+                console.log('📥 Ricevuto ICE candidate');
                 await this.addIceCandidate(obj.candidate);
             }
         } catch (err) {
-            console.error('Signal handle error', err);
+            console.error('❌ Errore gestione segnale:', err);
+            
+            // ✅ CORREZIONE: Retry automatico
+            this.connectionAttempts++;
+            if (this.connectionAttempts < this.maxAttempts) {
+                console.log(`🔄 Retry connessione (${this.connectionAttempts}/${this.maxAttempts})`);
+                setTimeout(() => this._retryConnection(), 2000);
+            }
         }
     }
 
     async close() {
+        console.log('🚪 Closing WebRTC connection...');
+        
         if (this.signalSubscription) {
             await this.signalSubscription.unsubscribe();
             this.signalSubscription = null;
@@ -205,10 +324,18 @@ class WebRTCStreaming {
         if (this.statsInterval) {
             clearInterval(this.statsInterval);
         }
+        if (this.dataChannel) {
+            this.dataChannel.close();
+        }
+        if (this.localStream) {
+            this.localStream.getTracks().forEach(track => track.stop());
+        }
         if (this.pc) {
             this.pc.close();
             this.pc = null;
         }
+        
+        console.log('✅ WebRTC connection closed');
     }
 
     // optional: start periodic stats callback (fps/bitrate approximated)
@@ -218,17 +345,20 @@ class WebRTCStreaming {
             try {
                 const stats = await this.pc.getStats();
                 // naive extraction: look for outbound-rtp for bitrate
-                let out = {};
+                let out = { connected: this.isConnected };
                 stats.forEach(report => {
                     if (report.type === 'outbound-rtp' && report.kind === 'video') {
-                        out.bitrate = report.bitrateMean || null;
+                        out.bitrate = report.bitrateMean || 'N/A';
                     }
                 });
                 if (this.onStats) this.onStats(out);
-            } catch (err) { /* ignore */ }
+            } catch (err) { 
+                console.warn('Stats error:', err);
+            }
         }, intervalMs);
     }
 }
 
 // export to window
 window.WebRTCStreaming = WebRTCStreaming;
+console.log('✅ WebRTC Streaming con FIX caricato!');
