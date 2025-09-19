@@ -35,9 +35,250 @@
         <button id="requestPermissionBtn" style="display: none;">Abilita Fotocamera</button>
     </div>
 
+    <!-- SCRIPTS IN ORDINE CORRETTO -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="/js/supabase.js"></script>
-    <script src="/js/golive.js"></script>
+    <script src="/js/webrtc-streaming.js"></script>
+    <script>
+        // VERSIONE SEMPLIFICATA INTEGRATA (per evitare file esterni)
+        let localStream = null;
+        let webRTCStreaming = null;
+        let currentUser = null;
+        let currentStreamRecord = null;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('🚀 Inizializzazione Go Live...');
+            
+            // Controlla autenticazione
+            currentUser = await checkUser();
+            if (!currentUser) {
+                alert("Devi effettuare l'accesso per andare in diretta.");
+                window.location.href = '/auth.html';
+                return;
+            }
+            
+            // Elementi DOM
+            const videoElement = document.getElementById('cameraPreview');
+            const goLiveBtn = document.getElementById('goLiveBtn');
+            const streamTitleInput = document.getElementById('streamTitle');
+            const permissionMessage = document.getElementById('permissionMessage');
+            const permissionText = document.getElementById('permissionText');
+            const flipCameraBtn = document.getElementById('flipCameraBtn');
+            const toggleMicBtn = document.getElementById('toggleMicBtn');
+            
+            let currentFacingMode = 'user';
+            let micEnabled = true;
+            
+            // FUNZIONE CAMERA
+            async function startCamera(facingMode = 'user') {
+                try {
+                    if (localStream) {
+                        localStream.getTracks().forEach(track => track.stop());
+                    }
+                    
+                    const constraints = {
+                        video: { 
+                            width: { ideal: 1280 }, 
+                            height: { ideal: 720 },
+                            facingMode: facingMode
+                        },
+                        audio: true
+                    };
+                    
+                    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                    videoElement.srcObject = stream;
+                    localStream = stream;
+                    
+                    permissionMessage.style.display = 'none';
+                    console.log('✅ Camera avviata');
+                    
+                } catch (error) {
+                    console.error("Errore camera:", error);
+                    permissionText.textContent = "Accesso negato. Abilita i permessi e ricarica.";
+                    permissionMessage.style.display = 'flex';
+                    
+                    const retryBtn = document.getElementById('requestPermissionBtn');
+                    retryBtn.style.display = 'block';
+                    retryBtn.onclick = () => location.reload();
+                }
+            }
+            
+            // EVENT LISTENERS
+            flipCameraBtn.addEventListener('click', async () => {
+                currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
+                await startCamera(currentFacingMode);
+            });
+            
+            toggleMicBtn.addEventListener('click', () => {
+                if (!localStream) return;
+                
+                const audioTrack = localStream.getAudioTracks()[0];
+                if (audioTrack) {
+                    micEnabled = !micEnabled;
+                    audioTrack.enabled = micEnabled;
+                }
+            });
+            
+            // GO LIVE BUTTON
+            goLiveBtn.addEventListener('click', async () => {
+                const title = streamTitleInput.value.trim();
+                if (!title) {
+                    alert("Inserisci un titolo per la diretta!");
+                    streamTitleInput.focus();
+                    return;
+                }
+                
+                if (!localStream) {
+                    alert("Camera non pronta. Riprova.");
+                    return;
+                }
+                
+                goLiveBtn.disabled = true;
+                goLiveBtn.textContent = '⏳ AVVIO...';
+                
+                try {
+                    await startWebRTCStream(title);
+                } catch (error) {
+                    console.error('Errore Go Live:', error);
+                    alert('Errore nell\'avvio: ' + error.message);
+                    goLiveBtn.disabled = false;
+                    goLiveBtn.textContent = 'GO LIVE';
+                }
+            });
+            
+            // WEBRTC STREAMING
+            async function startWebRTCStream(title) {
+                try {
+                    // 1. Crea record stream
+                    const { data: streamRecord, error: streamError } = await supabaseClient
+                        .from('streams')
+                        .insert({
+                            user_id: currentUser.id,
+                            title: title,
+                            status: 'live',
+                            category: 'Live Stream',
+                            viewer_count: 0,
+                            started_at: new Date().toISOString()
+                        })
+                        .select()
+                        .single();
+                    
+                    if (streamError) throw streamError;
+                    currentStreamRecord = streamRecord;
+                    console.log('✅ Stream record creato:', streamRecord.id);
+                    
+                    // 2. Verifica che WebRTCStreaming sia disponibile
+                    if (typeof WebRTCStreaming === 'undefined') {
+                        console.error('❌ WebRTCStreaming non trovato');
+                        // FALLBACK: Redirect diretto senza WebRTC per ora
+                        showNotification('WebRTC non disponibile. Redirect alla pagina streaming...', 'warning');
+                        setTimeout(() => {
+                            window.location.href = `/stream-webrtc.html?id=${streamRecord.id}&mode=broadcaster`;
+                        }, 2000);
+                        return;
+                    }
+                    
+                    // 3. Inizializza WebRTC
+                    webRTCStreaming = new WebRTCStreaming({
+                        roomId: streamRecord.id,
+                        isBroadcaster: true,
+                        onStats: (stats) => {
+                            console.log('📊 Stats:', stats);
+                        }
+                    });
+                    
+                    await webRTCStreaming.init();
+                    console.log('✅ WebRTC inizializzato');
+                    
+                    // 4. Aggiungi stream locale
+                    localStream.getTracks().forEach(track => {
+                        webRTCStreaming.pc.addTrack(track, localStream);
+                    });
+                    
+                    // 5. Crea data channel per chat
+                    webRTCStreaming.createDataChannel('chat');
+                    
+                    // 6. Crea offer
+                    await webRTCStreaming.createOffer();
+                    console.log('✅ Offer WebRTC creato');
+                    
+                    // 7. Redirect alla pagina streaming
+                    goLiveBtn.textContent = '🔴 IN DIRETTA!';
+                    showNotification('Diretta avviata! Reindirizzamento...', 'success');
+                    setTimeout(() => {
+                        window.location.href = `/stream-webrtc.html?id=${streamRecord.id}&mode=broadcaster`;
+                    }, 1500);
+                    
+                } catch (error) {
+                    console.error('Errore WebRTC:', error);
+                    throw error;
+                }
+            }
+            
+            // CLEANUP
+            window.addEventListener('beforeunload', async () => {
+                if (localStream) {
+                    localStream.getTracks().forEach(track => track.stop());
+                }
+                if (webRTCStreaming) {
+                    await webRTCStreaming.close();
+                }
+                if (currentStreamRecord) {
+                    await supabaseClient
+                        .from('streams')
+                        .update({ 
+                            status: 'offline',
+                            ended_at: new Date().toISOString() 
+                        })
+                        .eq('id', currentStreamRecord.id);
+                }
+            });
+            
+            // INIZIALIZZA
+            await startCamera();
+            console.log('✅ Go Live pronto!');
+        });
+
+        // UTILITY
+        function showNotification(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: var(--surface-dark, #1a1a1a);
+                color: white;
+                padding: 16px 20px;
+                border-radius: 12px;
+                z-index: 9999;
+                animation: slideIn 0.3s ease;
+                max-width: 300px;
+                border: 1px solid ${type === 'success' ? '#00ff00' : type === 'error' ? '#ff0000' : type === 'warning' ? '#ffaa00' : '#0088ff'};
+            `;
+            
+            const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+            toast.innerHTML = `${icons[type] || 'ℹ️'} ${message}`;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+    </script>
+    
+    <style>
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+    </style>
 
 </body>
 </html>
