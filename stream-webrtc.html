@@ -474,6 +474,268 @@
                     .eq('id', streamData.id);
             }
         });
+        // ===================================================
+// FIX DEFINITIVO per il Pulsante "Termina Stream"
+// Sostituisci la funzione endStream in stream-webrtc.html
+// ===================================================
+
+// STEP 1: Aggiungi questa funzione corretta in stream-webrtc.html
+async function endStream() {
+    console.log('🔴 Tentativo di terminare stream...');
+    
+    // Conferma dall'utente
+    if (!confirm('🔴 Sei sicuro di voler terminare la diretta?\n\nTutti i viewer verranno disconnessi.')) {
+        console.log('❌ Terminazione annullata dall\'utente');
+        return;
+    }
+    
+    try {
+        showNotification('⏳ Terminando stream...', 'info');
+        
+        // 1. Chiudi WebRTC connection
+        if (window.webRTCInstance) {
+            console.log('🔌 Chiudendo connessione WebRTC...');
+            await window.webRTCInstance.close();
+        }
+        
+        // 2. Ferma stream locale se esiste
+        const streamVideo = document.getElementById('streamVideo');
+        if (streamVideo && streamVideo.srcObject) {
+            console.log('📹 Fermando stream video...');
+            streamVideo.srcObject.getTracks().forEach(track => {
+                track.stop();
+                console.log('🛑 Track fermato:', track.kind);
+            });
+            streamVideo.srcObject = null;
+        }
+        
+        // 3. Aggiorna database - stream offline
+        if (window.streamData && window.streamData.id) {
+            console.log('💾 Aggiornando database...');
+            const { error } = await supabaseClient
+                .from('streams')
+                .update({ 
+                    status: 'offline',
+                    ended_at: new Date().toISOString() 
+                })
+                .eq('id', window.streamData.id);
+            
+            if (error) {
+                console.error('❌ Errore aggiornamento DB:', error);
+                throw error;
+            }
+            console.log('✅ Database aggiornato');
+        }
+        
+        // 4. Nascondi controlli streamer
+        const streamerControls = document.getElementById('streamerControls');
+        if (streamerControls) {
+            streamerControls.style.display = 'none';
+        }
+        
+        // 5. Mostra messaggio di successo
+        showNotification('✅ Stream terminato con successo!', 'success');
+        
+        // 6. Aggiorna UI
+        const streamTitle = document.getElementById('streamTitle');
+        if (streamTitle) {
+            streamTitle.textContent = '🔴 Stream Terminato';
+        }
+        
+        // 7. Reindirizza alla dashboard dopo 3 secondi
+        let countdown = 3;
+        const countdownInterval = setInterval(() => {
+            showNotification(`↩️ Reindirizzo alla dashboard in ${countdown} secondi...`, 'info');
+            countdown--;
+            
+            if (countdown < 0) {
+                clearInterval(countdownInterval);
+                window.location.href = '/dashboard.html';
+            }
+        }, 1000);
+        
+        console.log('✅ Stream terminato correttamente!');
+        
+    } catch (error) {
+        console.error('❌ Errore durante terminazione stream:', error);
+        showNotification('❌ Errore nella terminazione: ' + error.message, 'error');
+        
+        // Fallback: forza il redirect comunque
+        setTimeout(() => {
+            if (confirm('Si è verificato un errore. Vuoi tornare alla dashboard?')) {
+                window.location.href = '/dashboard.html';
+            }
+        }, 3000);
+    }
+}
+
+// ===================================================
+// STEP 2: Assicurati che il pulsante sia collegato
+// ===================================================
+
+// Funzione per collegare correttamente il pulsante
+function connectEndStreamButton() {
+    // Trova tutti i possibili pulsanti "end stream"
+    const endButtons = [
+        document.getElementById('endStreamBtn'),
+        document.querySelector('.end-stream-button'),
+        document.querySelector('[title="End Stream"]'),
+        document.querySelector('.control-btn[style*="ff3b30"]') // pulsante rosso
+    ];
+    
+    endButtons.forEach((btn, index) => {
+        if (btn) {
+            console.log(`🔗 Collegando pulsante end stream ${index + 1}:`, btn);
+            
+            // Rimuovi event listeners esistenti
+            btn.replaceWith(btn.cloneNode(true));
+            const newBtn = document.querySelector(btn.tagName + (btn.id ? `#${btn.id}` : ''));
+            
+            // Aggiungi nuovo event listener
+            newBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🔴 Pulsante end stream cliccato!');
+                endStream();
+            });
+            
+            // Aggiungi stili visivi per conferma
+            newBtn.style.backgroundColor = '#ff3b30';
+            newBtn.style.cursor = 'pointer';
+            newBtn.title = 'TERMINA STREAM';
+        }
+    });
+}
+
+// ===================================================
+// STEP 3: Inizializza quando la pagina è pronta
+// ===================================================
+
+// Esegui quando il DOM è caricato
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(connectEndStreamButton, 1000);
+    });
+} else {
+    setTimeout(connectEndStreamButton, 1000);
+}
+
+// Riconnetti ogni 5 secondi per sicurezza
+setInterval(connectEndStreamButton, 5000);
+
+// ===================================================
+// STEP 4: Hotkey di emergenza
+// ===================================================
+
+document.addEventListener('keydown', (event) => {
+    // CTRL + SHIFT + E = termina stream
+    if (event.ctrlKey && event.shiftKey && event.key === 'E') {
+        console.log('⌨️ Hotkey terminazione attivata!');
+        endStream();
+    }
+    
+    // ESC = termina stream (solo se sei broadcaster)
+    if (event.key === 'Escape' && window.isBroadcaster) {
+        console.log('⌨️ ESC pressed - terminando stream...');
+        endStream();
+    }
+});
+
+// ===================================================
+// STEP 5: Funzione showNotification migliorata
+// ===================================================
+
+function showNotification(message, type = 'info') {
+    console.log(`📢 Notification [${type}]: ${message}`);
+    
+    // Rimuovi notifiche esistenti
+    document.querySelectorAll('.notification-toast').forEach(toast => toast.remove());
+    
+    const toast = document.createElement('div');
+    toast.className = `notification-toast ${type}`;
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: var(--surface-dark, #1a1a1a);
+        color: var(--text-primary, white);
+        padding: 16px 20px;
+        border-radius: 12px;
+        border: 1px solid var(--border-color, #333);
+        z-index: 10000;
+        animation: slideInRight 0.3s ease;
+        min-width: 200px;
+        max-width: 400px;
+        font-weight: 600;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    `;
+    
+    const icons = { 
+        success: '✅', 
+        error: '❌', 
+        warning: '⚠️', 
+        info: 'ℹ️' 
+    };
+    
+    const colors = {
+        success: '#00ff00',
+        error: '#ff4444', 
+        warning: '#FFD700',
+        info: '#00aaff'
+    };
+    
+    toast.style.borderLeftColor = colors[type] || colors.info;
+    toast.innerHTML = `${icons[type] || 'ℹ️'} ${message}`;
+    
+    document.body.appendChild(toast);
+    
+    // Auto rimuovi dopo 4 secondi (tranne per info importanti)
+    if (type !== 'info' || !message.includes('Reindirizzo')) {
+        setTimeout(() => {
+            toast.style.animation = 'slideOutRight 0.3s ease';
+            setTimeout(() => toast.remove(), 300);
+        }, 4000);
+    }
+}
+
+// CSS per le animazioni
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideInRight {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOutRight {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+    }
+`;
+document.head.appendChild(style);
+
+console.log('🔧 Fix end stream button caricato!');
+
+// ===================================================
+// STEP 6: Debug function
+// ===================================================
+window.debugEndButton = function() {
+    console.log('=== DEBUG END BUTTON ===');
+    console.log('Stream Data:', window.streamData);
+    console.log('Is Broadcaster:', window.isBroadcaster);
+    console.log('WebRTC Instance:', window.webRTCInstance);
+    
+    const buttons = document.querySelectorAll('button');
+    console.log('All buttons:', buttons);
+    buttons.forEach((btn, i) => {
+        if (btn.style.backgroundColor === 'rgb(255, 59, 48)' || btn.innerText.includes('■')) {
+            console.log(`Button ${i}:`, btn, 'Has click listener:', btn.onclick !== null);
+        }
+    });
+};
+
+// ===================================================
+// ESEGUI IMMEDIATAMENTE
+// ===================================================
+connectEndStreamButton();8
         
     </script>
     
