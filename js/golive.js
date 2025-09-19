@@ -120,24 +120,31 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ============= WEBRTC STREAMING =============
     
     async function startWebRTCStream(title) {
-        try {
-            // 1. Crea record stream nel database
-            const { data: streamRecord, error: streamError } = await supabaseClient
-                .from('streams')
-                .insert({
-                    user_id: currentUser.id,
-                    title: title,
-                    status: 'live',
-                    category: 'Live Stream',
-                    viewer_count: 0,
-                    started_at: new Date().toISOString()
-                })
-                .select()
-                .single();
-            
-            if (streamError) throw streamError;
-            currentStreamRecord = streamRecord;
-            console.log('✅ Stream record creato:', streamRecord.id);
+    try {
+        showNotification('⏳ Preparando lo stream...', 'info');
+        
+        // 1. Crea stream record con status corretto
+        const { data: streamRecord, error: streamError } = await supabaseClient
+            .from('streams')
+            .insert({
+                user_id: currentUser.id,
+                title: title.trim(),
+                status: 'live',  // ✅ IMPORTANTE: deve essere 'live'
+                category: 'Live Stream',
+                viewer_count: 0,
+                started_at: new Date().toISOString(),
+                offer_sdp: null  // Sarà aggiornato dopo
+            })
+            .select()
+            .single();
+        
+        if (streamError) {
+            console.error('Errore creazione stream:', streamError);
+            throw new Error('Impossibile creare lo stream: ' + streamError.message);
+        }
+        
+        currentStreamRecord = streamRecord;
+        console.log('✅ Stream creato nel database:', streamRecord.id);
             
             // 2. Inizializza WebRTC
             webRTCStreaming = new WebRTCStreaming({
