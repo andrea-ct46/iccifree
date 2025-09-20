@@ -1,171 +1,325 @@
-// js/profile.js
-// Pagina Profilo - integra followingSystem
+// ======================================================
+// ICCI FREE - PROFILE PAGE CONTROLLER
+// ======================================================
 
-// assicurati che supabase.js sia caricato prima
-
-// carica following.js se non è già presente (solo se non caricato)
-if (!window.followingSystem) {
-    const s = document.createElement('script');
-    s.src = '/js/following.js';
-    document.head.appendChild(s);
-}
+let currentUser = null;
+let profileUser = null;
 
 async function initializeProfilePage() {
     const messageContainer = document.getElementById('messageState');
     const messageText = document.getElementById('messageText');
     const profileContainer = document.getElementById('profileContainer');
-
+    
     try {
+        // Get current user
+        currentUser = await checkUser();
+        
+        // Get username from URL
         const params = new URLSearchParams(window.location.search);
-        const username = params.get('user');
-
-        if (!username) {
-            const currentUser = await checkUser();
-            if (currentUser) {
-                const { data: profile } = await supabaseClient.from('profiles').select('username').eq('id', currentUser.id).single();
-                if (profile?.username) { window.location.replace(`/profile.html?user=${profile.username}`); return; }
+        let username = params.get('user');
+        
+        // If no username, try to use current user's
+        if (!username && currentUser) {
+            const { data: profile } = await supabaseClient
+                .from('profiles')
+                .select('username')
+                .eq('id', currentUser.id)
+                .single();
+                
+            if (profile?.username) {
+                window.location.replace(`/profile.html?user=${profile.username}`);
+                return;
             }
-            messageText.innerHTML = '<p>Nessun profilo specificato.</p>'; return;
         }
-
-        const { data: profile, error } = await supabaseClient.from('profiles').select('*').eq('username', username).single();
-        if (error || !profile) { messageText.innerHTML = `<p>Utente "${username}" non trovato.</p>`; return; }
-
+        
+        if (!username) {
+            messageText.innerHTML = '<p>Nessun profilo specificato.</p>';
+            return;
+        }
+        
+        // Load profile data
+        const { data: profile, error } = await supabaseClient
+            .from('profiles')
+            .select('*')
+            .eq('username', username)
+            .single();
+            
+        if (error || !profile) {
+            messageText.innerHTML = `<p>Utente "${username}" non trovato.</p>`;
+            return;
+        }
+        
+        profileUser = profile;
+        
+        // Setup page
         populateProfileData(profile);
         await setupActionButtons(profile);
-        await loadFollowData(profile);
-
+        await loadProfileContent(profile);
+        setupTabs(profile);
+        
+        // Show profile
         profileContainer.style.display = 'block';
         messageContainer.style.display = 'none';
+        
     } catch (err) {
-        console.error(err);
+        console.error('Errore caricamento profilo:', err);
         messageText.innerHTML = '<p>Errore nel caricamento del profilo.</p>';
     }
 }
 
+// Populate profile information
 function populateProfileData(profile) {
     document.title = `${profile.username} - ICCI FREE`;
-    const elU = document.getElementById('profileUsername'); if (elU) elU.textContent = profile.username;
-    const elB = document.getElementById('profileBio'); if (elB) elB.textContent = profile.bio || 'Nessuna biografia impostata.';
-    const elF = document.getElementById('followersCount'); if (elF) elF.textContent = profile.followers_count || 0;
-    const elG = document.getElementById('followingCount'); if (elG) elG.textContent = profile.following_count || 0;
-
+    
+    // Username
+    const usernameEl = document.getElementById('profileUsername');
+    if (usernameEl) usernameEl.textContent = profile.username;
+    
+    // Bio
+    const bioEl = document.getElementById('profileBio');
+    if (bioEl) bioEl.textContent = profile.bio || 'Nessuna biografia impostata.';
+    
+    // Stats
+    updateProfileStats(profile);
+    
+    // Avatar
     const profileAvatar = document.getElementById('profileAvatar');
     if (profileAvatar) {
-        if (profile.avatar_url) profileAvatar.src = profile.avatar_url;
-        else {
-            const initials = profile.username.substring(0,2).toUpperCase();
-            const colors = ['FF5733','33FF57','3357FF','FF33F5','F5FF33','33FFF5'];
+        if (profile.avatar_url) {
+            profileAvatar.src = profile.avatar_url;
+        } else {
+            const initials = profile.username.substring(0, 2).toUpperCase();
+            const colors = ['FF5733', '33FF57', '3357FF', 'FF33F5', 'F5FF33', '33FFF5'];
             const colorIndex = profile.username.charCodeAt(0) % colors.length;
             profileAvatar.src = `https://placehold.co/150x150/${colors[colorIndex]}/FFFFFF?text=${initials}`;
         }
     }
 }
 
-async function setupActionButtons(profile) {
-    const currentUser = await checkUser();
-    const profileActionsDiv = document.getElementById('profileActions');
-    const headerActionBtn = document.getElementById('headerActionBtn');
+// Update profile statistics
+function updateProfileStats(profile) {
+    const followersEl = document.getElementById('followersCount');
+    if (followersEl) followersEl.textContent = profile.followers_count || 0;
+    
+    const followingEl = document.getElementById('followingCount');
+    if (followingEl) followingEl.textContent = profile.following_count || 0;
+    
+    // Update tab labels
+    const tabs = document.querySelectorAll('.content-tabs .tab');
+    tabs.forEach(tab => {
+        if (tab.textContent.includes('Followers')) {
+            tab.textContent = `Followers (${profile.followers_count || 0})`;
+        } else if (tab.textContent.includes('Following')) {
+            tab.textContent = `Following (${profile.following_count || 0})`;
+        }
+    });
+}
 
+// Setup action buttons
+async function setupActionButtons(profile) {
+    const profileActionsDiv = document.getElementById('profileActions');
+    if (!profileActionsDiv) return;
+    
+    // Check if viewing own profile
     if (currentUser && currentUser.id === profile.id) {
-        profileActionsDiv.innerHTML = `<a href="/setup-profile.html?edit=true" class="action-btn edit">✏️ Modifica Profilo</a>`;
-        headerActionBtn.style.display = 'none';
+        profileActionsDiv.innerHTML = `
+            <a href="/edit-profile.html" class="action-btn edit">✏️ Modifica Profilo</a>
+        `;
         return;
     }
-
-    const isFollowing = await window.followingSystem.checkIfFollowing(profile.id);
+    
+    // Setup follow button
+    if (!currentUser) {
+        profileActionsDiv.innerHTML = `
+            <a href="/auth.html" class="action-btn follow">+ Follow</a>
+        `;
+        return;
+    }
+    
+    const isFollowing = await followingSystem.checkIfFollowing(profile.id);
+    
     profileActionsDiv.innerHTML = `
         <button class="action-btn ${isFollowing ? 'following' : 'follow'}"
-                data-follow-user="${profile.id}"
-                onclick="handleFollowClick('${profile.id}')">
+                id="followBtn"
+                data-follow-user="${profile.id}">
             ${isFollowing ? '✓ Following' : '+ Follow'}
-        </button>`;
-    headerActionBtn.href = '/dashboard.html'; headerActionBtn.textContent = '← Dashboard'; headerActionBtn.style.display = 'block';
-}
-
-async function handleFollowClick(userId) {
-    if (!window.followingSystem) return console.error('Sistema not loaded');
-    await window.followingSystem.toggleFollow(userId);
-    // After toggle, refresh the exact state from DB and update UI
-    const isNowFollowing = await window.followingSystem.checkIfFollowing(userId);
-    window.followingSystem.updateFollowButton(userId, isNowFollowing);
-    await window.followingSystem.updateFollowersCountFromDB(userId);
-    // If followers tab open, refresh list
-    if (document.querySelector('.content-tabs .tab.active')?.textContent.toLowerCase().includes('followers')) {
-        refreshFollowers(userId);
+        </button>
+    `;
+    
+    // Add click handler
+    const followBtn = document.getElementById('followBtn');
+    if (followBtn) {
+        followBtn.onclick = async () => {
+            await handleFollowClick(profile.id);
+        };
     }
 }
 
-async function loadFollowData(profile) {
+// Handle follow button click
+async function handleFollowClick(userId) {
+    if (!currentUser) {
+        window.location.href = '/auth.html';
+        return;
+    }
+    
+    const success = await followingSystem.toggleFollow(userId);
+    
+    if (success) {
+        // Update button
+        const isNowFollowing = await followingSystem.checkIfFollowing(userId);
+        followingSystem.updateFollowButton(userId, isNowFollowing);
+        
+        // Update counts
+        await refreshProfileStats();
+        
+        // Refresh content if on followers tab
+        const activeTab = document.querySelector('.content-tabs .tab.active');
+        if (activeTab && activeTab.textContent.includes('Followers')) {
+            await showTab('followers');
+        }
+    }
+}
+
+// Refresh profile statistics
+async function refreshProfileStats() {
+    if (!profileUser) return;
+    
+    // Get updated profile data
+    const { data: profile } = await supabaseClient
+        .from('profiles')
+        .select('followers_count, following_count')
+        .eq('id', profileUser.id)
+        .single();
+        
+    if (profile) {
+        profileUser.followers_count = profile.followers_count;
+        profileUser.following_count = profile.following_count;
+        updateProfileStats(profileUser);
+    }
+}
+
+// Setup tabs
+function setupTabs(profile) {
     const contentTabs = document.querySelector('.content-tabs');
     if (!contentTabs) return;
+    
     contentTabs.innerHTML = `
         <button class="tab active" onclick="showTab('streams')">Stream Recenti</button>
-        <button class="tab" onclick="showTab('followers')">Followers (${profile.followers_count||0})</button>
-        <button class="tab" onclick="showTab('following')">Following (${profile.following_count||0})</button>
+        <button class="tab" onclick="showTab('followers')">Followers (${profile.followers_count || 0})</button>
+        <button class="tab" onclick="showTab('following')">Following (${profile.following_count || 0})</button>
         <button class="tab" onclick="showTab('clips')">Clips</button>
     `;
-    showTab('streams');
 }
 
+// Load profile content
+async function loadProfileContent(profile) {
+    await showTab('streams');
+}
+
+// Show tab content
 async function showTab(tabName) {
+    if (!profileUser) return;
+    
     const contentGrid = document.querySelector('.content-grid');
     const tabs = document.querySelectorAll('.content-tabs .tab');
-    tabs.forEach(t => t.classList.toggle('active', t.textContent.toLowerCase().includes(tabName)));
-
-    const params = new URLSearchParams(window.location.search);
-    const username = params.get('user');
-    const { data: profile } = await supabaseClient.from('profiles').select('id').eq('username', username).single();
-    if (!profile) { contentGrid.innerHTML = '<p>Utente non trovato.</p>'; return; }
-
-    if (tabName === 'followers') {
-        const followers = await window.followingSystem.getFollowers(profile.id);
-        displayFollowers(followers);
-    } else if (tabName === 'following') {
-        const following = await window.followingSystem.getFollowing(profile.id);
-        displayFollowing(following);
-    } else {
-        contentGrid.innerHTML = '<p id="noContentMessage">Nessun contenuto da mostrare.</p>';
+    
+    // Update active tab
+    tabs.forEach(tab => {
+        const isActive = tab.textContent.toLowerCase().includes(tabName);
+        tab.classList.toggle('active', isActive);
+    });
+    
+    // Show content based on tab
+    switch (tabName) {
+        case 'streams':
+            await showStreams(contentGrid);
+            break;
+        case 'followers':
+            await showFollowers(contentGrid);
+            break;
+        case 'following':
+            await showFollowing(contentGrid);
+            break;
+        case 'clips':
+            showClips(contentGrid);
+            break;
+        default:
+            contentGrid.innerHTML = '<p id="noContentMessage">Nessun contenuto da mostrare.</p>';
     }
 }
 
-function displayFollowers(followers) {
-    const contentGrid = document.querySelector('.content-grid');
-    if (!followers || followers.length === 0) { contentGrid.innerHTML = '<p id="noContentMessage">Nessun follower ancora.</p>'; return; }
-    let html = '<div style="display:grid;gap:16px;padding:20px;">';
-    followers.forEach(f => {
-        const username = f.follower_username || 'Anon';
-        const avatar = f.follower_avatar || `https://placehold.co/50x50/FFD700/000000?text=${username.substring(0,2).toUpperCase()}`;
-        html += `<div style="display:flex;align-items:center;gap:16px;padding:16px;background:var(--surface-dark);border-radius:12px;">
-            <a href="/profile.html?user=${username}"><img src="${avatar}" alt="${username}" style="width:50px;height:50px;border-radius:50%;border:2px solid var(--border-color);"></a>
-            <div style="flex:1;"><a href="/profile.html?user=${username}" style="color:var(--text-primary);text-decoration:none;font-weight:600;">${username}</a>
-            <p style="color:var(--text-secondary);font-size:14px;margin:4px 0;">${f.follower_bio || 'Nessuna bio'}</p></div>
-        </div>`;
-    });
-    html += '</div>'; contentGrid.innerHTML = html;
+// Show streams
+async function showStreams(container) {
+    try {
+        // Get user's recent streams
+        const { data: streams } = await supabaseClient
+            .from('streams')
+            .select('*')
+            .eq('user_id', profileUser.id)
+            .order('created_at', { ascending: false })
+            .limit(20);
+            
+        if (!streams || streams.length === 0) {
+            container.innerHTML = '<p id="noContentMessage">Nessuno stream recente.</p>';
+            return;
+        }
+        
+        container.innerHTML = `
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; padding: 20px;">
+                ${streams.map(stream => `
+                    <div style="background: #1a1a1a; border-radius: 12px; overflow: hidden; cursor: pointer;">
+                        <div style="aspect-ratio: 16/9; background: #0a0a0a; position: relative;">
+                            <img src="https://picsum.photos/320/180?random=${stream.id}" 
+                                 style="width: 100%; height: 100%; object-fit: cover;">
+                            ${stream.status === 'live' ? `
+                                <div style="position: absolute; top: 12px; left: 12px; background: #ff3b30; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 700;">
+                                    ● LIVE
+                                </div>
+                            ` : ''}
+                        </div>
+                        <div style="padding: 12px;">
+                            <h4 style="margin: 0 0 8px 0; font-size: 14px;">${stream.title || 'Untitled Stream'}</h4>
+                            <p style="margin: 0; color: #888; font-size: 12px;">
+                                ${new Date(stream.created_at).toLocaleDateString()} • ${stream.viewer_count || 0} views
+                            </p>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    } catch (err) {
+        console.error('Errore caricamento streams:', err);
+        container.innerHTML = '<p id="noContentMessage">Errore nel caricamento degli stream.</p>';
+    }
 }
 
-function displayFollowing(following) {
-    const contentGrid = document.querySelector('.content-grid');
-    if (!following || following.length === 0) { contentGrid.innerHTML = '<p id="noContentMessage">Non segui nessuno ancora.</p>'; return; }
-    let html = '<div style="display:grid;gap:16px;padding:20px;">';
-    following.forEach(f => {
-        const username = f.following_username || 'Anon';
-        const avatar = f.following_avatar || `https://placehold.co/50x50/FFD700/000000?text=${username.substring(0,2).toUpperCase()}`;
-        html += `<div style="display:flex;align-items:center;gap:16px;padding:16px;background:var(--surface-dark);border-radius:12px;">
-            <a href="/profile.html?user=${username}"><img src="${avatar}" alt="${username}" style="width:50px;height:50px;border-radius:50%;border:2px solid var(--border-color);"></a>
-            <div style="flex:1;"><a href="/profile.html?user=${username}" style="color:var(--text-primary);text-decoration:none;font-weight:600;">${username}</a>
-            <p style="color:var(--text-secondary);font-size:14px;margin:4px 0;">${f.following_bio || 'Nessuna bio'}</p></div></div>`;
-    });
-    html += '</div>'; contentGrid.innerHTML = html;
+// Show followers
+async function showFollowers(container) {
+    const followers = await followingSystem.getFollowers(profileUser.id);
+    followingSystem.displayFollowers(followers, container);
 }
 
-async function refreshFollowers(userId) {
-    const followers = await window.followingSystem.getFollowers(userId);
-    displayFollowers(followers);
-    const elem = document.getElementById('followersCount');
-    if (elem) elem.textContent = followers.length;
+// Show following
+async function showFollowing(container) {
+    const following = await followingSystem.getFollowing(profileUser.id);
+    followingSystem.displayFollowing(following, container);
 }
 
-// start
+// Show clips
+function showClips(container) {
+    container.innerHTML = `
+        <div style="text-align: center; padding: 60px 20px;">
+            <p style="font-size: 48px;">🎬</p>
+            <h3 style="color: #FFD700;">Clips Coming Soon!</h3>
+            <p style="color: #888;">La funzionalità clips sarà disponibile a breve.</p>
+        </div>
+    `;
+}
+
+// Make showTab global
+window.showTab = showTab;
+
+// Initialize on load
 document.addEventListener('DOMContentLoaded', initializeProfilePage);
+
+console.log('✅ Profile controller loaded successfully');
