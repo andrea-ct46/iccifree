@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - ICCI FREE</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Accedi a ICCI FREE - La piattaforma di streaming senza censura">
+    
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#FFD700">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
+    
+    <!-- Preconnect -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/style.css">
+    
+    <style>
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            padding: 20px;
+        }
+        
+        .auth-card {
+            background: #2a2a2a;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            max-width: 400px;
+            width: 100%;
+            border: 2px solid #FFD700;
+        }
+        
+        .auth-logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .auth-logo .logo-icon {
+            font-size: 3rem;
+            display: block;
+        }
+        
+        .auth-logo .logo-text {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #FFD700;
+        }
+        
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .form-group label {
+            color: #fff;
+            font-weight: 600;
+        }
+        
+        .form-group input {
+            padding: 12px 16px;
+            border: 2px solid #444;
+            border-radius: 10px;
+            background: #1a1a1a;
+            color: #fff;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #FFD700;
+        }
+        
+        .auth-button {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            color: #000;
+            border: none;
+            padding: 14px 20px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        
+        .auth-button:hover {
+            transform: translateY(-2px);
+        }
+        
+        .auth-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .divider {
+            text-align: center;
+            color: #888;
+            margin: 20px 0;
+            position: relative;
+        }
+        
+        .divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: #444;
+            z-index: 1;
+        }
+        
+        .divider span {
+            background: #2a2a2a;
+            padding: 0 20px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .social-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .social-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px 20px;
+            border: 2px solid #444;
+            border-radius: 10px;
+            background: #1a1a1a;
+            color: #fff;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .social-button:hover {
+            border-color: #FFD700;
+            transform: translateY(-2px);
+        }
+        
+        .social-button.google {
+            border-color: #4285f4;
+        }
+        
+        .social-button.google:hover {
+            background: #4285f4;
+        }
+        
+        .social-button.discord {
+            border-color: #5865f2;
+        }
+        
+        .social-button.discord:hover {
+            background: #5865f2;
+        }
+        
+        .auth-footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #888;
+        }
+        
+        .auth-footer a {
+            color: #FFD700;
+            text-decoration: none;
+        }
+        
+        .error-message {
+            background: #ff4444;
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .success-message {
+            background: #00ff00;
+            color: #000;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            color: #FFD700;
+        }
+        
+        @media (max-width: 480px) {
+            .auth-card {
+                padding: 30px 20px;
+                margin: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-logo">
+                <span class="logo-icon">🔥</span>
+                <div class="logo-text">ICCI<span class="free">FREE</span></div>
+            </div>
+            
+            <div class="error-message" id="errorMessage"></div>
+            <div class="success-message" id="successMessage"></div>
+            
+            <div class="loading" id="loading">
+                <p>Caricamento...</p>
+            </div>
+            
+            <form class="auth-form" id="authForm">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                
+                <button type="submit" class="auth-button" id="authButton">
+                    Accedi
+                </button>
+            </form>
+            
+            <div class="divider">
+                <span>oppure</span>
+            </div>
+            
+            <div class="social-buttons">
+                <a href="#" class="social-button google" onclick="signInWithGoogle()">
+                    <span>🔍</span>
+                    Accedi con Google
+                </a>
+                
+                <a href="#" class="social-button discord" onclick="signInWithDiscord()">
+                    <span>🎮</span>
+                    Accedi con Discord
+                </a>
+            </div>
+            
+            <div class="auth-footer">
+                <p>Non hai un account? <a href="#" onclick="showSignUp()">Registrati</a></p>
+                <p><a href="/">← Torna alla home</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase.js"></script>
+    
+    <script>
+        let isSignUp = false;
+        
+        // Inizializza Supabase
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('🔐 Auth page loaded');
+            
+            // Verifica se l'utente è già loggato
+            const user = await checkUser();
+            if (user) {
+                showSuccess('Sei già loggato!');
+                setTimeout(() => {
+                    window.location.href = '/dashboard.html';
+                }, 1500);
+            }
+        });
+        
+        // Gestione form
+        document.getElementById('authForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const button = document.getElementById('authButton');
+            
+            if (!email || !password) {
+                showError('Inserisci email e password');
+                return;
+            }
+            
+            showLoading(true);
+            hideMessages();
+            
+            try {
+                if (isSignUp) {
+                    await signUp(email, password);
+                } else {
+                    await signIn(email, password);
+                }
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                showLoading(false);
+            }
+        });
+        
+        async function signIn(email, password) {
+            try {
+                const { data, error } = await supabaseClient.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+                
+                if (error) throw error;
+                
+                showSuccess('Login effettuato con successo!');
+                setTimeout(() => {
+                    window.location.href = '/dashboard.html';
+                }, 1500);
+                
+            } catch (error) {
+                throw new Error('Credenziali non valide');
+            }
+        }
+        
+        async function signUp(email, password) {
+            try {
+                const { data, error } = await supabaseClient.auth.signUp({
+                    email: email,
+                    password: password
+                });
+                
+                if (error) throw error;
+                
+                if (data.user && !data.user.email_confirmed_at) {
+                    showSuccess('Registrazione completata! Controlla la tua email per confermare l\'account.');
+                } else {
+                    showSuccess('Registrazione completata!');
+                    setTimeout(() => {
+                        window.location.href = '/dashboard.html';
+                    }, 1500);
+                }
+                
+            } catch (error) {
+                throw new Error('Errore durante la registrazione');
+            }
+        }
+        
+        async function signInWithGoogle() {
+            try {
+                const { data, error } = await supabaseClient.auth.signInWithOAuth({
+                    provider: 'google',
+                    options: {
+                        redirectTo: window.location.origin + '/dashboard.html'
+                    }
+                });
+                
+                if (error) throw error;
+                
+            } catch (error) {
+                showError('Errore con Google OAuth');
+            }
+        }
+        
+        async function signInWithDiscord() {
+            try {
+                const { data, error } = await supabaseClient.auth.signInWithOAuth({
+                    provider: 'discord',
+                    options: {
+                        redirectTo: window.location.origin + '/dashboard.html'
+                    }
+                });
+                
+                if (error) throw error;
+                
+            } catch (error) {
+                showError('Errore con Discord OAuth');
+            }
+        }
+        
+        function showSignUp() {
+            isSignUp = true;
+            document.getElementById('authButton').textContent = 'Registrati';
+            document.querySelector('.auth-footer p').innerHTML = 'Hai già un account? <a href="#" onclick="showSignIn()">Accedi</a>';
+        }
+        
+        function showSignIn() {
+            isSignUp = false;
+            document.getElementById('authButton').textContent = 'Accedi';
+            document.querySelector('.auth-footer p').innerHTML = 'Non hai un account? <a href="#" onclick="showSignUp()">Registrati</a>';
+        }
+        
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+            document.getElementById('authButton').disabled = show;
+        }
+        
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+        
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+        }
+        
+        function hideMessages() {
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'none';
+        }
+        
+        // Gestione URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('mode') === 'signup') {
+            showSignUp();
+        }
+    </script>
+</body>
+</html>

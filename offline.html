@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline - ICCI FREE</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .offline-container {
+            text-align: center;
+            max-width: 500px;
+        }
+        
+        .offline-icon {
+            font-size: 120px;
+            margin-bottom: 30px;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        p {
+            font-size: 1.2rem;
+            color: #999;
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+        
+        .retry-btn {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            color: #000;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .retry-btn:hover {
+            transform: scale(1.05);
+        }
+        
+        .status {
+            margin-top: 30px;
+            padding: 15px;
+            background: rgba(255, 215, 0, 0.1);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+        
+        .online {
+            display: none;
+        }
+        
+        .online.active {
+            display: block;
+            color: #4CAF50;
+        }
+        
+        .spinner {
+            display: none;
+            width: 40px;
+            height: 40px;
+            margin: 20px auto;
+            border: 4px solid rgba(255, 215, 0, 0.3);
+            border-top-color: #FFD700;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        .spinner.active {
+            display: block;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="offline-container">
+        <div class="offline-icon">📡</div>
+        
+        <h1>Sei Offline</h1>
+        
+        <p>
+            Sembra che tu abbia perso la connessione internet. 
+            Controlla la tua rete e riprova.
+        </p>
+        
+        <button class="retry-btn" onclick="checkConnection()">
+            Riprova Connessione
+        </button>
+        
+        <div class="spinner" id="spinner"></div>
+        
+        <div class="status">
+            <div id="offline-status">
+                🔴 Offline - Nessuna connessione rilevata
+            </div>
+            <div class="online" id="online-status">
+                🟢 Online - Connessione ripristinata!
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Auto-check connessione
+        window.addEventListener('online', () => {
+            document.getElementById('online-status').classList.add('active');
+            document.getElementById('offline-status').style.display = 'none';
+            
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 1500);
+        });
+        
+        window.addEventListener('offline', () => {
+            document.getElementById('online-status').classList.remove('active');
+            document.getElementById('offline-status').style.display = 'block';
+        });
+        
+        function checkConnection() {
+            const spinner = document.getElementById('spinner');
+            const btn = document.querySelector('.retry-btn');
+            
+            spinner.classList.add('active');
+            btn.disabled = true;
+            btn.textContent = 'Controllo...';
+            
+            fetch('/ping', { method: 'HEAD', cache: 'no-store' })
+                .then(() => {
+                    document.getElementById('online-status').classList.add('active');
+                    document.getElementById('offline-status').style.display = 'none';
+                    btn.textContent = 'Connesso! Reindirizzamento...';
+                    
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 1000);
+                })
+                .catch(() => {
+                    spinner.classList.remove('active');
+                    btn.disabled = false;
+                    btn.textContent = 'Riprova Connessione';
+                    alert('Ancora offline. Controlla la tua connessione internet.');
+                });
+        }
+        
+        // Periodic auto-check
+        setInterval(() => {
+            if (!navigator.onLine) return;
+            
+            fetch('/ping', { method: 'HEAD', cache: 'no-store' })
+                .then(() => {
+                    window.location.href = '/';
+                })
+                .catch(() => {});
+        }, 5000);
+    </script>
+</body>
+</html>

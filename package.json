@@ -1,0 +1,92 @@
+{
+  "name": "iccifree",
+  "version": "2.0.0",
+  "description": "ICCI FREE - Stream Without Limits. La piattaforma di streaming live senza censura.",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve",
+    "dev": "npx serve -p 8000",
+    "test": "echo \"Running tests...\" && node js/testing-utils.js",
+    "build": "echo \"No build needed - static site\"",
+    "deploy:netlify": "netlify deploy --prod",
+    "deploy:vercel": "vercel --prod",
+    "lint:css": "npx stylelint \"css/**/*.css\"",
+    "lint:js": "npx eslint \"js/**/*.js\"",
+    "format": "npx prettier --write \"**/*.{html,css,js,json,md}\"",
+    "validate": "npm run lint:css && npm run lint:js",
+    "lighthouse": "npx lighthouse http://localhost:8000 --view",
+    "pwa-test": "npx lighthouse http://localhost:8000 --only-categories=pwa --view",
+    "performance": "npx lighthouse http://localhost:8000 --only-categories=performance --view",
+    "accessibility": "npx lighthouse http://localhost:8000 --only-categories=accessibility --view"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yourusername/iccifree.git"
+  },
+  "keywords": [
+    "streaming",
+    "webrtc",
+    "live",
+    "p2p",
+    "chat",
+    "video",
+    "free-speech",
+    "no-censorship",
+    "pwa"
+  ],
+  "author": "ICCI FREE Team",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/yourusername/iccifree/issues"
+  },
+  "homepage": "https://iccifree.com",
+  "devDependencies": {
+    "eslint": "^8.50.0",
+    "lighthouse": "^11.0.0",
+    "prettier": "^3.0.3",
+    "serve": "^14.2.1",
+    "stylelint": "^15.10.3"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.38.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "browserslist": [
+    "last 2 Chrome versions",
+    "last 2 Firefox versions",
+    "last 2 Safari versions",
+    "last 2 Edge versions"
+  ],
+  "eslintConfig": {
+    "env": {
+      "browser": true,
+      "es2021": true
+    },
+    "extends": "eslint:recommended",
+    "parserOptions": {
+      "ecmaVersion": "latest",
+      "sourceType": "module"
+    },
+    "rules": {
+      "no-console": "off",
+      "no-unused-vars": "warn"
+    }
+  },
+  "prettier": {
+    "semi": true,
+    "singleQuote": true,
+    "tabWidth": 2,
+    "trailingComma": "es5",
+    "printWidth": 80,
+    "arrowParens": "avoid"
+  },
+  "stylelint": {
+    "extends": "stylelint-config-standard",
+    "rules": {
+      "selector-class-pattern": null
+    }
+  }
+}

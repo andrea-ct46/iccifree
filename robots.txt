@@ -1,0 +1,41 @@
+# robots.txt for ICCI FREE
+
+User-agent: *
+Allow: /
+
+# Disallow admin/private areas
+Disallow: /admin/
+Disallow: /api/
+Disallow: /private/
+Disallow: /*.json$
+
+# Allow important paths
+Allow: /css/
+Allow: /js/
+Allow: /images/
+
+# Sitemap
+Sitemap: https://iccifree.com/sitemap.xml
+
+# Crawl-delay for respectful crawling
+Crawl-delay: 1
+
+# Specific bots
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Slurp
+Allow: /
+
+# Block bad bots
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /

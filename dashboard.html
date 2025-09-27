@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - ICCI FREE</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Dashboard ICCI FREE - Gestisci i tuoi stream e connettiti con la community">
+    
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#FFD700">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
+    
+    <!-- Preconnect -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/style.css">
+    
+    <style>
+        .dashboard-container {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            padding: 20px;
+        }
+        
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: #fff;
+        }
+        
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: #000;
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .dashboard-card {
+            background: #2a2a2a;
+            border-radius: 15px;
+            padding: 25px;
+            border: 2px solid #444;
+            transition: all 0.3s ease;
+        }
+        
+        .dashboard-card:hover {
+            border-color: #FFD700;
+            transform: translateY(-5px);
+        }
+        
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .card-icon {
+            font-size: 1.5rem;
+        }
+        
+        .card-title {
+            color: #FFD700;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        
+        .go-live-button {
+            background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .go-live-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255, 68, 68, 0.3);
+        }
+        
+        .streams-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        
+        .stream-card {
+            background: #1a1a1a;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 2px solid #444;
+            transition: all 0.3s ease;
+        }
+        
+        .stream-card:hover {
+            border-color: #FFD700;
+            transform: translateY(-3px);
+        }
+        
+        .stream-thumbnail {
+            width: 100%;
+            height: 150px;
+            background: linear-gradient(135deg, #333 0%, #555 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #888;
+            font-size: 3rem;
+        }
+        
+        .stream-info {
+            padding: 15px;
+        }
+        
+        .stream-title {
+            color: #fff;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stream-user {
+            color: #888;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+        
+        .stream-stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .viewer-count {
+            color: #ff4444;
+            font-weight: bold;
+        }
+        
+        .live-indicator {
+            background: #ff4444;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        
+        .empty-state {
+            text-align: center;
+            color: #888;
+            padding: 40px;
+        }
+        
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .streams-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo" onclick="window.location.href='/'">
+                <span class="logo-icon">🔥</span>
+                <span class="logo-text">ICCI<span class="free">FREE</span></span>
+            </div>
+            
+            <div class="nav-links">
+                <a href="/" class="nav-link">Home</a>
+                <a href="/dashboard.html" class="nav-link active">Dashboard</a>
+                <button class="nav-button" onclick="logout()">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="dashboard-container">
+        <div class="dashboard-header">
+            <div class="user-info">
+                <div class="user-avatar" id="userAvatar">👤</div>
+                <div>
+                    <div id="userName">Caricamento...</div>
+                    <div id="userEmail" style="color: #888; font-size: 0.9rem;"></div>
+                </div>
+            </div>
+            
+            <div>
+                <button class="nav-button" onclick="refreshStreams()">🔄 Aggiorna</button>
+            </div>
+        </div>
+        
+        <div class="dashboard-grid">
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <span class="card-icon">📺</span>
+                    <span class="card-title">Go Live</span>
+                </div>
+                <p style="color: #888; margin-bottom: 20px;">
+                    Inizia un nuovo stream e connettiti con la tua audience
+                </p>
+                <button class="go-live-button" onclick="goLive()">
+                    <span>🔴</span>
+                    Go Live
+                </button>
+            </div>
+            
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <span class="card-icon">👥</span>
+                    <span class="card-title">Stream Live</span>
+                </div>
+                <p style="color: #888; margin-bottom: 10px;">
+                    <span id="liveStreamsCount">0</span> stream attivi
+                </p>
+                <p style="color: #888; font-size: 0.9rem;">
+                    Connettiti con la community
+                </p>
+            </div>
+            
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <span class="card-icon">💎</span>
+                    <span class="card-title">Le Mie Gemme</span>
+                </div>
+                <p style="color: #888; margin-bottom: 10px;">
+                    <span id="userGems">0</span> gemme disponibili
+                </p>
+                <p style="color: #888; font-size: 0.9rem;">
+                    Guadagna con i tuoi stream
+                </p>
+            </div>
+        </div>
+        
+        <div class="dashboard-card">
+            <div class="card-header">
+                <span class="card-icon">📺</span>
+                <span class="card-title">Stream in Diretta</span>
+            </div>
+            
+            <div id="streamsContainer">
+                <div class="loading" style="text-align: center; color: #FFD700; padding: 40px;">
+                    Caricamento stream...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase.js"></script>
+    
+    <script>
+        let currentUser = null;
+        let liveStreams = [];
+        
+        // Inizializza dashboard
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('📊 Dashboard loaded');
+            
+            // Verifica autenticazione
+            currentUser = await checkUser();
+            if (!currentUser) {
+                window.location.href = '/auth.html';
+                return;
+            }
+            
+            // Carica dati utente
+            await loadUserData();
+            
+            // Carica stream live
+            await loadLiveStreams();
+            
+            // Aggiorna ogni 30 secondi
+            setInterval(loadLiveStreams, 30000);
+        });
+        
+        async function loadUserData() {
+            try {
+                // Aggiorna info utente
+                document.getElementById('userName').textContent = currentUser.user_metadata?.username || currentUser.email;
+                document.getElementById('userEmail').textContent = currentUser.email;
+                
+                // Avatar
+                const avatar = document.getElementById('userAvatar');
+                if (currentUser.user_metadata?.avatar_url) {
+                    avatar.style.backgroundImage = `url(${currentUser.user_metadata.avatar_url})`;
+                    avatar.style.backgroundSize = 'cover';
+                    avatar.textContent = '';
+                } else {
+                    avatar.textContent = currentUser.email.charAt(0).toUpperCase();
+                }
+                
+                // Carica gemme utente
+                await loadUserGems();
+                
+            } catch (error) {
+                console.error('Errore caricamento dati utente:', error);
+            }
+        }
+        
+        async function loadUserGems() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('user_gems')
+                    .select('balance')
+                    .eq('user_id', currentUser.id)
+                    .single();
+                
+                if (error && error.code !== 'PGRST116') {
+                    console.error('Errore caricamento gemme:', error);
+                    return;
+                }
+                
+                const gems = data?.balance || 0;
+                document.getElementById('userGems').textContent = gems.toLocaleString();
+                
+            } catch (error) {
+                console.error('Errore gemme:', error);
+            }
+        }
+        
+        async function loadLiveStreams() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('streams')
+                    .select(`
+                        id,
+                        title,
+                        description,
+                        viewer_count,
+                        started_at,
+                        profiles!streams_user_id_fkey (
+                            username,
+                            display_name
+                        )
+                    `)
+                    .eq('is_live', true)
+                    .order('viewer_count', { ascending: false });
+                
+                if (error) {
+                    console.error('Errore caricamento stream:', error);
+                    return;
+                }
+                
+                liveStreams = data || [];
+                renderStreams();
+                
+                // Aggiorna contatore
+                document.getElementById('liveStreamsCount').textContent = liveStreams.length;
+                
+            } catch (error) {
+                console.error('Errore caricamento stream:', error);
+            }
+        }
+        
+        function renderStreams() {
+            const container = document.getElementById('streamsContainer');
+            
+            if (liveStreams.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📺</div>
+                        <h3>Nessuno stream attivo</h3>
+                        <p>Sii il primo a iniziare uno stream!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = `
+                <div class="streams-grid">
+                    ${liveStreams.map(stream => `
+                        <div class="stream-card" onclick="watchStream('${stream.id}')">
+                            <div class="stream-thumbnail">
+                                📺
+                            </div>
+                            <div class="stream-info">
+                                <div class="stream-title">${stream.title}</div>
+                                <div class="stream-user">${stream.profiles?.display_name || stream.profiles?.username || 'Unknown'}</div>
+                                <div class="stream-stats">
+                                    <span class="viewer-count">👥 ${stream.viewer_count}</span>
+                                    <span class="live-indicator">LIVE</span>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        function goLive() {
+            window.location.href = '/golive.html';
+        }
+        
+        function watchStream(streamId) {
+            window.location.href = `/stream-viewer-example.html?id=${streamId}`;
+        }
+        
+        async function refreshStreams() {
+            await loadLiveStreams();
+            showNotification('Stream aggiornati!', 'success');
+        }
+        
+        async function logout() {
+            try {
+                await supabaseClient.auth.signOut();
+                window.location.href = '/';
+            } catch (error) {
+                console.error('Errore logout:', error);
+                window.location.href = '/';
+            }
+        }
+    </script>
+</body>
+</html>

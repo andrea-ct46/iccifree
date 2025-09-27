@@ -1,0 +1,131 @@
+# ============= NETLIFY CONFIGURATION =============
+
+[build]
+  publish = "."
+  command = "echo 'No build needed - static site'"
+
+# ============= REDIRECTS =============
+
+# SPA routing - redirect all to index.html
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  force = false
+  conditions = {Role = ["admin"]}
+
+# API proxy to Supabase (optional)
+[[redirects]]
+  from = "/api/*"
+  to = "https://your-project.supabase.co/:splat"
+  status = 200
+  force = true
+
+# ============= HEADERS =============
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(self), microphone=(self), geolocation=(), payment=()"
+    Strict-Transport-Security = "max-age=63072000; includeSubDomains; preload"
+
+# CSP Header
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Content-Security-Policy = """
+      default-src 'self';
+      script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com;
+      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+      font-src 'self' https://fonts.gstatic.com;
+      img-src 'self' data: https: blob:;
+      connect-src 'self' https://*.supabase.co wss://*.supabase.co;
+      media-src 'self' blob:;
+      worker-src 'self' blob:;
+      frame-src 'self';
+    """
+
+# ============= CACHE CONTROL =============
+
+# Cache static assets for 1 year
+[[headers]]
+  for = "/css/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/js/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/images/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# No cache for HTML
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# Service Worker no cache
+[[headers]]
+  for = "/service-worker.js"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+# ============= FUNCTIONS =============
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+# ============= DEV =============
+
+[dev]
+  command = "npx serve"
+  port = 8000
+  targetPort = 8000
+  publish = "."
+  autoLaunch = true
+
+# ============= CONTEXT =============
+
+# Production
+[context.production]
+  environment = { NODE_ENV = "production" }
+
+# Deploy Preview
+[context.deploy-preview]
+  environment = { NODE_ENV = "staging" }
+
+# Branch Deploy
+[context.branch-deploy]
+  environment = { NODE_ENV = "development" }
+
+# ============= PLUGINS =============
+
+[[plugins]]
+  package = "@netlify/plugin-lighthouse"
+  
+  [plugins.inputs.thresholds]
+    performance = 0.9
+    accessibility = 0.9
+    best-practices = 0.9
+    seo = 0.9
+
+[[plugins]]
+  package = "netlify-plugin-submit-sitemap"
+  
+  [plugins.inputs]
+    baseUrl = "https://iccifree.com"
+    sitemapPath = "/sitemap.xml"
+    providers = [
+      "google",
+      "bing"
+    ]

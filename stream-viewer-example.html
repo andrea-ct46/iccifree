@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Stream - ICCI FREE</title>
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/gift-system.css">
+    
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            color: white;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        
+        .stream-page {
+            display: flex;
+            height: 100vh;
+        }
+        
+        .stream-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        
+        .stream-video-container {
+            flex: 1;
+            background: #1a1a1a;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .stream-video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        
+        .stream-info-overlay {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            z-index: 10;
+        }
+        
+        .streamer-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(20px);
+            padding: 12px 16px;
+            border-radius: 50px;
+        }
+        
+        .streamer-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid #FFD700;
+        }
+        
+        .live-badge {
+            background: #ff0000;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .viewer-count {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(20px);
+            padding: 12px 20px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .chat-sidebar {
+            width: 350px;
+            background: #1a1a1a;
+            display: flex;
+            flex-direction: column;
+            border-left: 1px solid #333;
+        }
+        
+        .chat-header {
+            padding: 20px;
+            border-bottom: 1px solid #333;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        
+        .chat-message {
+            margin-bottom: 16px;
+        }
+        
+        .message-author {
+            font-weight: 600;
+            color: #FFD700;
+            margin-bottom: 4px;
+        }
+        
+        .message-text {
+            color: #ccc;
+        }
+        
+        .gift-notification {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            color: #000;
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+        
+        .chat-input-container {
+            padding: 20px;
+            border-top: 1px solid #333;
+        }
+        
+        .chat-input {
+            width: 100%;
+            background: #2d2d2d;
+            border: 1px solid #444;
+            border-radius: 25px;
+            padding: 12px 20px;
+            color: white;
+            font-size: 14px;
+        }
+        
+        .gems-display-header {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(20px);
+            padding: 12px 20px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            z-index: 100;
+        }
+        
+        .gems-display-header:hover {
+            background: rgba(255, 215, 0, 0.2);
+        }
+        
+        @media (max-width: 768px) {
+            .stream-page {
+                flex-direction: column;
+            }
+            .chat-sidebar {
+                width: 100%;
+                height: 40vh;
+                border-left: none;
+                border-top: 1px solid #333;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Gift Animation Container -->
+    <div id="gift-animation-container"></div>
+    
+    <!-- Gems Display -->
+    <div class="gems-display-header" onclick="giftSystem.showBuyGemsModal()">
+        <span id="user-gems-balance" style="font-size: 18px; font-weight: 700;">0</span>
+        <span style="font-size: 20px;">💎</span>
+    </div>
+    
+    <!-- Stream Page -->
+    <div class="stream-page">
+        <div class="stream-main">
+            <div class="stream-video-container">
+                <video id="stream-video" class="stream-video" autoplay playsinline></video>
+                
+                <div class="stream-info-overlay">
+                    <div class="streamer-info">
+                        <img id="streamer-avatar" class="streamer-avatar" src="https://via.placeholder.com/40" alt="Streamer">
+                        <div>
+                            <div id="streamer-name" style="font-weight: 600;">Streamer</div>
+                            <div class="live-badge">● LIVE</div>
+                        </div>
+                    </div>
+                    
+                    <div class="viewer-count">
+                        <span>👁️</span>
+                        <span id="viewer-count">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="chat-sidebar">
+            <div class="chat-header">
+                <h3 style="margin: 0;">Chat dal vivo</h3>
+            </div>
+            
+            <div class="chat-messages" id="chat-messages">
+                <div class="chat-message">
+                    <div class="message-author">Sistema</div>
+                    <div class="message-text">Benvenuto nella chat! 👋</div>
+                </div>
+            </div>
+            
+            <div class="chat-input-container">
+                <input type="text" class="chat-input" id="chat-input" placeholder="Invia un messaggio...">
+            </div>
+        </div>
+    </div>
+    
+    <!-- Gift Button -->
+    <button class="gift-button" id="send-gift-btn" style="position: fixed; bottom: 100px; right: 30px;">
+        🎁
+    </button>
+    
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase.js"></script>
+    <script src="js/webrtc-streaming.js"></script>
+    <script src="js/gift-system.js"></script>
+    <script src="js/analytics.js"></script>
+    
+    <script>
+        // Get stream ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const streamId = urlParams.get('id') || 'demo-stream';
+        let streamerId = null;
+        let currentUser = null;
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Get current user
+            currentUser = await getCurrentUser();
+            
+            if (!currentUser) {
+                window.location.href = '/auth.html';
+                return;
+            }
+            
+            // Load user gems
+            const gems = await giftSystem.getUserGems(currentUser.id);
+            document.getElementById('user-gems-balance').textContent = gems;
+            
+            // Load stream info
+            await loadStreamInfo();
+            
+            // Setup WebRTC
+            await setupWebRTC();
+            
+            // Setup chat
+            setupChat();
+            
+            // Setup gift button
+            setupGiftButton();
+        });
+        
+        async function loadStreamInfo() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('streams')
+                    .select('*, users:user_id(username, avatar_url)')
+                    .eq('id', streamId)
+                    .single();
+                
+                if (error) throw error;
+                
+                streamerId = data.user_id;
+                document.getElementById('streamer-name').textContent = data.users.username;
+                document.getElementById('streamer-avatar').src = data.users.avatar_url || 'https://via.placeholder.com/40';
+                
+            } catch (e) {
+                console.error('Error loading stream:', e);
+            }
+        }
+        
+        async function setupWebRTC() {
+            const webrtc = new WebRTCStreaming(streamId, 'viewer');
+            
+            webrtc.onRemoteStream = (stream) => {
+                document.getElementById('stream-video').srcObject = stream;
+            };
+            
+            await webrtc.init();
+        }
+        
+        function setupChat() {
+            const input = document.getElementById('chat-input');
+            
+            input.addEventListener('keypress', async (e) => {
+                if (e.key === 'Enter' && input.value.trim()) {
+                    await sendMessage(input.value.trim());
+                    input.value = '';
+                }
+            });
+        }
+        
+        async function sendMessage(text) {
+            const { error } = await supabaseClient
+                .from('messages')
+                .insert({
+                    stream_id: streamId,
+                    user_id: currentUser.id,
+                    content: text
+                });
+            
+            if (!error) {
+                displayMessage(currentUser.username, text);
+            }
+        }
+        
+        function displayMessage(author, text) {
+            const container = document.getElementById('chat-messages');
+            const msg = document.createElement('div');
+            msg.className = 'chat-message';
+            msg.innerHTML = `
+                <div class="message-author">${author}</div>
+                <div class="message-text">${text}</div>
+            `;
+            container.appendChild(msg);
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function setupGiftButton() {
+            document.getElementById('send-gift-btn').addEventListener('click', () => {
+                if (streamerId) {
+                    giftSystem.showSendGiftModal(streamId, streamerId);
+                }
+            });
+        }
+    </script>
+</body>
+</html>

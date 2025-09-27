@@ -1,0 +1,95 @@
+# ============= SECURITY HEADERS CONFIGURATION =============
+# Per Netlify/Vercel - aggiungi a netlify.toml o vercel.json
+# Per Apache - aggiungi a .htaccess
+# Per Nginx - aggiungi a nginx.conf
+
+## STRICT SECURITY HEADERS ##
+
+# Prevent clickjacking
+X-Frame-Options: DENY
+
+# XSS Protection
+X-XSS-Protection: 1; mode=block
+
+# Prevent MIME sniffing
+X-Content-Type-Options: nosniff
+
+# Referrer Policy
+Referrer-Policy: strict-origin-when-cross-origin
+
+# Permissions Policy
+Permissions-Policy: camera=(self), microphone=(self), geolocation=(), payment=()
+
+# Content Security Policy
+Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; worker-src 'self' blob:; frame-src 'self'; base-uri 'self'; form-action 'self'
+
+# HSTS (HTTP Strict Transport Security)
+Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+
+# Expect-CT
+Expect-CT: max-age=86400, enforce
+
+## PERFORMANCE HEADERS ##
+
+# Cache Control
+Cache-Control: public, max-age=31536000, immutable
+
+## CORS HEADERS ##
+
+# Allow specific origins
+Access-Control-Allow-Origin: https://iccifree.com
+Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS
+Access-Control-Allow-Headers: Content-Type, Authorization
+Access-Control-Allow-Credentials: true
+
+## NETLIFY SPECIFIC ##
+/*
+  X-Frame-Options: DENY
+  X-XSS-Protection: 1; mode=block
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(self), microphone=(self)
+  Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+
+## VERCEL SPECIFIC (vercel.json) ##
+{
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=63072000; includeSubDomains; preload"
+        }
+      ]
+    }
+  ]
+}
+
+## APACHE (.htaccess) ##
+<IfModule mod_headers.c>
+    Header always set X-Frame-Options "DENY"
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+</IfModule>
+
+## NGINX (nginx.conf) ##
+add_header X-Frame-Options "DENY" always;
+add_header X-XSS-Protection "1; mode=block" always;
+add_header X-Content-Type-Options "nosniff" always;
+add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
