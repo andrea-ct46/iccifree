@@ -110,16 +110,20 @@ class GiftSystem {
                 .from('user_gems')
                 .select('balance')
                 .eq('user_id', userId)
-                .single();
+                .maybeSingle();
             
             if (error) {
-                // Create if doesn't exist
+                console.error('Error getting gems:', error);
+            }
+            
+            if (!data) {
                 await this.createUserGems(userId);
+                this.userGems = 0;
                 return 0;
             }
             
-            this.userGems = data.balance;
-            return data.balance;
+            this.userGems = data.balance || 0;
+            return this.userGems;
         } catch (e) {
             console.error('Error getting gems:', e);
             return 0;

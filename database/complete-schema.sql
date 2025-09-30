@@ -409,8 +409,17 @@ CREATE POLICY "Stream views are insertable by everyone" ON stream_views
     FOR INSERT WITH CHECK (true);
 
 -- Gift system policies
+DROP POLICY IF EXISTS "Users can view own gems" ON user_gems;
 CREATE POLICY "Users can view own gems" ON user_gems
     FOR SELECT USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can create own gems row" ON user_gems;
+CREATE POLICY "Users can create own gems row" ON user_gems
+    FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can update own gems" ON user_gems;
+CREATE POLICY "Users can update own gems" ON user_gems
+    FOR UPDATE USING (auth.uid() = user_id);
 
 CREATE POLICY "Users can view their gift transactions" ON gift_transactions
     FOR SELECT USING (
