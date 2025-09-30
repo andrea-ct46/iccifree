@@ -479,10 +479,10 @@
                 });
                 
                 const previewVideo = document.getElementById('previewVideo');
-                previewVideo.innerHTML = `<video class="video-preview" autoplay muted></video>`;
+                previewVideo.innerHTML = `<video id="localVideo" class="video-preview" autoplay muted playsinline></video>`;
                 
                 const video = previewVideo.querySelector('video');
-                video.srcObject = stream;
+                try { video.srcObject = stream; } catch {}
                 
                 // Salva stream per uso successivo
                 window.previewStream = stream;

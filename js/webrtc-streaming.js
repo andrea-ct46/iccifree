@@ -64,6 +64,13 @@ class WebRTCStreamingV5 {
 
     // 6️⃣ Ascolta risposte
     this.listenForSignals();
+
+    // 🔄 Fallback: polling risposta se Realtime non è abilitato
+    try {
+      await this.waitForAnswerWithPolling(30);
+    } catch (e) {
+      console.warn("Polling answer fallback error:", e);
+    }
   }
 
   async startViewer() {
@@ -140,6 +147,35 @@ class WebRTCStreamingV5 {
         }
       )
       .subscribe();
+  }
+
+  // ⏳ Polling di answer come fallback (se Realtime non è attivo sul DB)
+  async waitForAnswerWithPolling(maxSeconds = 20) {
+    const start = Date.now();
+    while (Date.now() - start < maxSeconds * 1000) {
+      try {
+        const { data: answers, error } = await this.supabase
+          .from("signals")
+          .select("payload, created_at")
+          .eq("stream_id", this.streamId)
+          .eq("type", "answer")
+          .order("created_at", { ascending: false })
+          .limit(1);
+        if (error) {
+          console.warn("Polling answer error:", error);
+        }
+        if (answers && answers.length > 0) {
+          const answer = answers[0].payload;
+          if (this.pc && this.pc.signalingState !== "stable") {
+            await this.pc.setRemoteDescription(new RTCSessionDescription(answer));
+          }
+          return;
+        }
+      } catch (e) {
+        console.warn("Polling answer exception:", e);
+      }
+      await new Promise(r => setTimeout(r, 1000));
+    }
   }
 
   // 📤 Invia segnale su Supabase

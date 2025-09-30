@@ -365,6 +365,12 @@
                 }
             };
             await webrtc.init();
+            // Fallback: prova a caricare offerta e rispondere anche senza Realtime
+            try {
+                // already handled in class, but ensure element plays
+                const v = document.getElementById('stream-video');
+                v?.play?.().catch(() => {});
+            } catch {}
         }
         
         async function ensureUserProfile(user) {
