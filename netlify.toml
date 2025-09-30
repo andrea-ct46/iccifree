@@ -6,13 +6,7 @@
 
 # ============= REDIRECTS =============
 
-# SPA routing - redirect all to index.html
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
-  force = false
-  conditions = {Role = ["admin"]}
+# (Rimosso) SPA catch-all redirect: questo sito usa pagine HTML multiple
 
 # API proxy to Supabase (optional)
 [[redirects]]
