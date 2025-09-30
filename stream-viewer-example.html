@@ -312,12 +312,15 @@
             // Get current user (non obbligatorio per vedere il live)
             currentUser = await getCurrentUser();
             
-            // Ensure user profile exists (FK for messages)
-            await ensureUserProfile(currentUser);
-            
-            // Load user gems
-            const gems = await giftSystem.getUserGems(currentUser.id);
-            document.getElementById('user-gems-balance').textContent = gems;
+            // Ensure user profile exists (solo se loggato)
+            if (currentUser) {
+                await ensureUserProfile(currentUser);
+                // Load user gems
+                const gems = await giftSystem.getUserGems(currentUser.id);
+                document.getElementById('user-gems-balance').textContent = gems;
+            } else {
+                document.getElementById('user-gems-balance').textContent = '0';
+            }
             
             // Load stream info
             await loadStreamInfo();
@@ -402,6 +405,10 @@
             
             input.addEventListener('keypress', async (e) => {
                 if (e.key === 'Enter' && input.value.trim()) {
+                    if (!currentUser) {
+                        window.location.href = '/auth.html';
+                        return;
+                    }
                     await sendMessage(input.value.trim());
                     input.value = '';
                 }
