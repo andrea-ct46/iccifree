@@ -376,15 +376,7 @@
             try {
                 const { data, error } = await supabaseClient
                     .from('streams')
-                    .select(`
-                        id,
-                        title,
-                        description,
-                        viewer_count,
-                        started_at,
-                        user_id,
-                        profiles (username, display_name)
-                    `)
+                    .select('id, title, description, viewer_count, started_at, user_id')
                     .eq('is_live', true)
                     .order('viewer_count', { ascending: false });
                 
@@ -427,7 +419,7 @@
                             </div>
                             <div class="stream-info">
                                 <div class="stream-title">${stream.title}</div>
-                                <div class="stream-user">${stream.profiles?.display_name || stream.profiles?.username || 'Unknown'}</div>
+                                <div class="stream-user">Live di ${String(stream.user_id).slice(0, 8)}...</div>
                                 <div class="stream-stats">
                                     <span class="viewer-count">👥 ${stream.viewer_count}</span>
                                     <span class="live-indicator">LIVE</span>
