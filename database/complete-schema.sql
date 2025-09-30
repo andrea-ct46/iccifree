@@ -362,49 +362,63 @@ ALTER TABLE gem_purchases ENABLE ROW LEVEL SECURITY;
 ALTER TABLE gem_withdrawals ENABLE ROW LEVEL SECURITY;
 
 -- Profiles policies
+DROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON profiles;
 CREATE POLICY "Public profiles are viewable by everyone" ON profiles
     FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Users can update own profile" ON profiles;
 CREATE POLICY "Users can update own profile" ON profiles
     FOR UPDATE USING (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Users can insert own profile" ON profiles;
 CREATE POLICY "Users can insert own profile" ON profiles
     FOR INSERT WITH CHECK (auth.uid() = id);
 
 -- Streams policies
+DROP POLICY IF EXISTS "Streams are viewable by everyone" ON streams;
 CREATE POLICY "Streams are viewable by everyone" ON streams
     FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Users can insert own streams" ON streams;
 CREATE POLICY "Users can insert own streams" ON streams
     FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update own streams" ON streams;
 CREATE POLICY "Users can update own streams" ON streams
     FOR UPDATE USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete own streams" ON streams;
 CREATE POLICY "Users can delete own streams" ON streams
     FOR DELETE USING (auth.uid() = user_id);
 
 -- Messages policies
+DROP POLICY IF EXISTS "Messages are viewable by everyone" ON messages;
 CREATE POLICY "Messages are viewable by everyone" ON messages
     FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Users can insert messages" ON messages;
 CREATE POLICY "Users can insert messages" ON messages
     FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update own messages" ON messages;
 CREATE POLICY "Users can update own messages" ON messages
     FOR UPDATE USING (auth.uid() = user_id);
 
 -- Follows policies
+DROP POLICY IF EXISTS "Follows are viewable by everyone" ON follows;
 CREATE POLICY "Follows are viewable by everyone" ON follows
     FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Users can insert own follows" ON follows;
 CREATE POLICY "Users can insert own follows" ON follows
     FOR INSERT WITH CHECK (auth.uid() = follower_id);
 
+DROP POLICY IF EXISTS "Users can delete own follows" ON follows;
 CREATE POLICY "Users can delete own follows" ON follows
     FOR DELETE USING (auth.uid() = follower_id);
 
 -- Stream views policies
+DROP POLICY IF EXISTS "Stream views are insertable by everyone" ON stream_views;
 CREATE POLICY "Stream views are insertable by everyone" ON stream_views
     FOR INSERT WITH CHECK (true);
 
@@ -421,24 +435,30 @@ DROP POLICY IF EXISTS "Users can update own gems" ON user_gems;
 CREATE POLICY "Users can update own gems" ON user_gems
     FOR UPDATE USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can view their gift transactions" ON gift_transactions;
 CREATE POLICY "Users can view their gift transactions" ON gift_transactions
     FOR SELECT USING (
         auth.uid() = from_user_id OR 
         auth.uid() = to_user_id
     );
 
+DROP POLICY IF EXISTS "Users can insert gift transactions" ON gift_transactions;
 CREATE POLICY "Users can insert gift transactions" ON gift_transactions
     FOR INSERT WITH CHECK (auth.uid() = from_user_id);
 
+DROP POLICY IF EXISTS "Users can view own purchases" ON gem_purchases;
 CREATE POLICY "Users can view own purchases" ON gem_purchases
     FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own purchases" ON gem_purchases;
 CREATE POLICY "Users can insert own purchases" ON gem_purchases
     FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can view own withdrawals" ON gem_withdrawals;
 CREATE POLICY "Users can view own withdrawals" ON gem_withdrawals
     FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own withdrawals" ON gem_withdrawals;
 CREATE POLICY "Users can insert own withdrawals" ON gem_withdrawals
     FOR INSERT WITH CHECK (auth.uid() = user_id);
 
