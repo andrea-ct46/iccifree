@@ -21,7 +21,6 @@
     
     <!-- Styles -->
     <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="js/webrtc-streaming.js">
     
     <style>
         .golive-container {
@@ -604,7 +603,8 @@
                 
                 // Inizializza WebRTC streaming
                 if (typeof WebRTCStreaming !== 'undefined') {
-                    await WebRTCStreaming.startBroadcast(currentStream.id);
+                    window.webrtcInstance = new WebRTCStreaming(currentStream.id, 'broadcaster');
+                    await window.webrtcInstance.init();
                 }
                 
                 // Aggiorna UI
@@ -642,8 +642,9 @@
                     .eq('id', currentStream.id);
                 
                 // Termina WebRTC
-                if (typeof WebRTCStreaming !== 'undefined') {
-                    await WebRTCStreaming.stopBroadcast();
+                if (window.webrtcInstance) {
+                    await window.webrtcInstance.stop();
+                    window.webrtcInstance = null;
                 }
                 
                 // Termina preview stream
