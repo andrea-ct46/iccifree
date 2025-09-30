@@ -313,6 +313,9 @@
                 return;
             }
             
+            // Ensure user profile exists (FK for messages)
+            await ensureUserProfile(currentUser);
+            
             // Load user gems
             const gems = await giftSystem.getUserGems(currentUser.id);
             document.getElementById('user-gems-balance').textContent = gems;
@@ -355,6 +358,29 @@
             };
             
             await webrtc.init();
+        }
+        
+        async function ensureUserProfile(user) {
+            try {
+                const { data: profile, error: profileError } = await supabaseClient
+                    .from('profiles')
+                    .select('id')
+                    .eq('id', user.id)
+                    .single();
+                
+                if (profileError && profileError.code === 'PGRST116') {
+                    await supabaseClient
+                        .from('profiles')
+                        .insert({
+                            id: user.id,
+                            username: (user.email || '').split('@')[0],
+                            display_name: user.user_metadata?.full_name || (user.email || '').split('@')[0],
+                            created_at: new Date().toISOString()
+                        });
+                }
+            } catch (e) {
+                console.warn('ensureUserProfile error:', e);
+            }
         }
         
         function setupChat() {
