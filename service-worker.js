@@ -1,6 +1,6 @@
 // ============= SERVICE WORKER V2.0 - OFFLINE SUPPORT =============
 
-const CACHE_NAME = 'iccifree-v2.2';
+const CACHE_NAME = 'iccifree-v2.3';
 const OFFLINE_URL = '/offline.html';
 
 // Files da cachare
@@ -17,7 +17,7 @@ const STATIC_ASSETS = [
     '/js/error-handler.js',
     '/js/performance-optimizer.js',
     '/js/webrtc-streaming.js',
-    '/images/icon-144.png',
+    // icona rimossa: usiamo badge inline per le notifiche
     '/manifest.json',
     OFFLINE_URL
 ];
@@ -146,7 +146,7 @@ self.addEventListener('push', (event) => {
     
     const options = {
         body: data.body,
-        icon: '/images/icon-144.png',
+        icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72"><rect width="72" height="72" rx="8" fill="%23FFD700"/><text x="36" y="48" font-size="36" text-anchor="middle">🔥</text></svg>',
         badge: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72"><rect width="72" height="72" rx="8" fill="%23FFD700"/><text x="36" y="48" font-size="36" text-anchor="middle">🔥</text></svg>',
         vibrate: [200, 100, 200],
         data: { url: data.url || '/' },

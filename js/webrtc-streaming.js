@@ -13,11 +13,12 @@ class WebRTCStreamingV5 {
       ],
     };
 
-    // Client Supabase
-    this.supabase = supabase.createClient(
-      "https://itfndtgrfjvnavbitfgy.supabase.co",
-      "public-anon-key" // 🔹 sostituisci con la tua chiave pubblica
-    );
+    // Client Supabase (riusa il client globale inizializzato in supabase.js)
+    if (typeof window !== "undefined" && window.supabaseClient) {
+      this.supabase = window.supabaseClient;
+    } else {
+      throw new Error("Supabase client non inizializzato. Assicurati che js/supabase.js sia caricato prima.");
+    }
   }
 
   async init() {

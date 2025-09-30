@@ -10,9 +10,9 @@
   "scope": "/",
   "icons": [
     {
-      "src": "/images/icon-144.png",
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23FFD700'/><text x='50' y='70' font-size='60' text-anchor='middle'>🔥</text></svg>",
       "sizes": "144x144",
-      "type": "image/png",
+      "type": "image/svg+xml",
       "purpose": "any"
     },
     {
