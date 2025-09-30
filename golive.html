@@ -449,8 +449,14 @@
                 if (!uuidRegex.test(currentUser.id)) {
                     console.error('Invalid user ID format detected:', currentUser.id);
                     console.error('This might be a test user. Please login with a real account.');
-                    showNotification('ID utente non valido. Effettua il login con un account reale.', 'error');
-                    window.location.href = '/auth.html';
+                    showNotification('⚠️ ID utente non valido. Se stai usando un account di test, effettua il login con un account reale per utilizzare la funzione streaming.', 'error');
+                    
+                    // Aggiungi un pulsante per andare al login
+                    setTimeout(() => {
+                        if (confirm('Vuoi andare alla pagina di login per creare un account reale?')) {
+                            window.location.href = '/auth.html';
+                        }
+                    }, 2000);
                     return;
                 }
                 
@@ -489,6 +495,47 @@
                     <span style="margin-left: 10px;">Errore accesso camera</span>
                 `;
                 showNotification('Errore accesso camera/microfono', 'error');
+            }
+        }
+        
+        async function ensureUserProfile(user) {
+            try {
+                // Verifica se il profilo esiste
+                const { data: profile, error: profileError } = await supabaseClient
+                    .from('profiles')
+                    .select('id')
+                    .eq('id', user.id)
+                    .single();
+                
+                if (profileError && profileError.code === 'PGRST116') {
+                    // Profilo non esiste, crealo
+                    console.log('Creando profilo per utente:', user.email);
+                    
+                    const { error: insertError } = await supabaseClient
+                        .from('profiles')
+                        .insert({
+                            id: user.id,
+                            username: user.email.split('@')[0], // Usa email come username base
+                            display_name: user.user_metadata?.full_name || user.email.split('@')[0],
+                            created_at: new Date().toISOString()
+                        });
+                    
+                    if (insertError) {
+                        console.error('Errore creazione profilo:', insertError);
+                        throw new Error('Errore creazione profilo utente');
+                    }
+                    
+                    console.log('Profilo creato con successo');
+                } else if (profileError) {
+                    console.error('Errore verifica profilo:', profileError);
+                    throw new Error('Errore verifica profilo utente');
+                } else {
+                    console.log('Profilo utente esistente');
+                }
+                
+            } catch (error) {
+                console.error('Errore ensureUserProfile:', error);
+                throw error;
             }
         }
         
@@ -679,6 +726,25 @@
                 console.error('Errore logout:', error);
                 window.location.href = '/';
             }
+        }
+        
+        // Test function per verificare UUID validation
+        function testUUIDValidation() {
+            const testCases = [
+                { id: 'test-user-123', expected: false },
+                { id: '550e8400-e29b-41d4-a716-446655440000', expected: true },
+                { id: 'invalid-uuid', expected: false },
+                { id: '123e4567-e89b-12d3-a456-426614174000', expected: true }
+            ];
+            
+            const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+            
+            console.log('🧪 Test UUID Validation:');
+            testCases.forEach(testCase => {
+                const result = uuidRegex.test(testCase.id);
+                const status = result === testCase.expected ? '✅' : '❌';
+                console.log(`${status} ${testCase.id} -> ${result} (expected: ${testCase.expected})`);
+            });
         }
         
         // Cleanup quando si esce dalla pagina
