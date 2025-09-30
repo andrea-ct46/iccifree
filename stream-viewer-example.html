@@ -352,11 +352,12 @@
         
         async function setupWebRTC() {
             const webrtc = new WebRTCStreaming(streamId, 'viewer');
-            
             webrtc.onRemoteStream = (stream) => {
-                document.getElementById('stream-video').srcObject = stream;
+                const video = document.getElementById('stream-video');
+                if (video) {
+                    try { video.srcObject = stream; } catch {}
+                }
             };
-            
             await webrtc.init();
         }
         

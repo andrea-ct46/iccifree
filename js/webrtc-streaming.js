@@ -5,6 +5,7 @@ class WebRTCStreamingV5 {
     this.pc = null;
     this.localStream = null;
     this.remoteVideo = null;
+    this.onRemoteStream = null;
 
     // Config ICE server
     this.iceServers = {
@@ -38,8 +39,11 @@ class WebRTCStreamingV5 {
 
     // 1️⃣ Cattura media locale
     this.localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-    const videoEl = document.getElementById("localVideo");
-    if (videoEl) videoEl.srcObject = this.localStream;
+    // Prefer element with id "localVideo", fallback to preview container video
+    const videoEl = document.getElementById("localVideo") || (document.getElementById("previewVideo")?.querySelector("video") || null);
+    if (videoEl) {
+      try { videoEl.srcObject = this.localStream; } catch {}
+    }
 
     // 2️⃣ Aggiungi tracce a peer
     this.localStream.getTracks().forEach(track => this.pc.addTrack(track, this.localStream));
@@ -65,11 +69,20 @@ class WebRTCStreamingV5 {
   async startViewer() {
     console.log("👀 Avvio viewer...");
 
-    this.remoteVideo = document.getElementById("remoteVideo");
+    // Support both ids used in pages
+    this.remoteVideo = document.getElementById("remoteVideo") || document.getElementById("stream-video");
 
     this.pc.ontrack = (event) => {
       console.log("📡 Ricevuto stream remoto");
-      if (this.remoteVideo) this.remoteVideo.srcObject = event.streams[0];
+      const incoming = event.streams[0];
+      if (typeof this.onRemoteStream === "function") {
+        try { this.onRemoteStream(incoming); } catch (e) { console.warn("onRemoteStream error", e); }
+        return;
+      }
+      const videoEl = this.remoteVideo || document.getElementById("stream-video") || document.getElementById("remoteVideo");
+      if (videoEl) {
+        try { videoEl.srcObject = incoming; } catch {}
+      }
     };
 
     this.pc.onicecandidate = async (event) => {

@@ -603,6 +603,14 @@
                 
                 // Inizializza WebRTC streaming
                 if (typeof WebRTCStreaming !== 'undefined') {
+                    // Crea tag video per preview se non presente
+                    const preview = document.getElementById('previewVideo');
+                    if (preview && !preview.querySelector('video')) {
+                        preview.innerHTML = `<video id="localVideo" class="video-preview" autoplay muted playsinline></video>`;
+                    } else if (preview && preview.querySelector('video')) {
+                        preview.querySelector('video').id = 'localVideo';
+                    }
+                    
                     window.webrtcInstance = new WebRTCStreaming(currentStream.id, 'broadcaster');
                     await window.webrtcInstance.init();
                 }
