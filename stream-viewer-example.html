@@ -237,7 +237,7 @@
     <!-- Stream Page -->
     <div class="stream-page">
         <div class="stream-video-container">
-            <video id="stream-video" class="stream-video" autoplay playsinline></video>
+            <video id="stream-video" class="stream-video" autoplay playsinline muted></video>
             
             <div class="stream-info-overlay">
                 <div class="streamer-info">
@@ -270,6 +270,10 @@
                 <div style="display:flex;flex-direction:column;align-items:center;">
                     <button class="action-btn" id="share-btn">↗</button>
                     <div class="action-label">Share</div>
+                </div>
+                <div style="display:flex;flex-direction:column;align-items:center;">
+                    <button class="action-btn" id="mute-btn">🔇</button>
+                    <div class="action-label" id="mute-label">Mute</div>
                 </div>
             </div>
 
@@ -305,13 +309,8 @@
         
         // Initialize
         document.addEventListener('DOMContentLoaded', async () => {
-            // Get current user
+            // Get current user (non obbligatorio per vedere il live)
             currentUser = await getCurrentUser();
-            
-            if (!currentUser) {
-                window.location.href = '/auth.html';
-                return;
-            }
             
             // Ensure user profile exists (FK for messages)
             await ensureUserProfile(currentUser);
@@ -449,6 +448,8 @@
             const giftBtn = document.getElementById('gift-btn');
             const commentBtn = document.getElementById('comment-btn');
             const shareBtn = document.getElementById('share-btn');
+            const muteBtn = document.getElementById('mute-btn');
+            const muteLabel = document.getElementById('mute-label');
 
             let likes = 0;
             likeBtn.addEventListener('click', () => {
@@ -478,6 +479,15 @@
                         alert('Link copiato');
                     }
                 } catch {}
+            });
+
+            muteBtn.addEventListener('click', () => {
+                const video = document.getElementById('stream-video');
+                if (!video) return;
+                video.muted = !video.muted;
+                muteBtn.textContent = video.muted ? '🔇' : '🔊';
+                muteLabel.textContent = video.muted ? 'Mute' : 'Unmute';
+                video.play?.().catch(() => {});
             });
         }
         
