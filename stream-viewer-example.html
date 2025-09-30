@@ -335,15 +335,21 @@
             try {
                 const { data, error } = await supabaseClient
                     .from('streams')
-                    .select('*, users:user_id(username, avatar_url)')
+                    .select(`
+                        id,
+                        title,
+                        description,
+                        user_id,
+                        profiles:profiles!streams_user_id_fkey (username, avatar_url)
+                    `)
                     .eq('id', streamId)
                     .single();
                 
                 if (error) throw error;
                 
                 streamerId = data.user_id;
-                document.getElementById('streamer-name').textContent = data.users.username;
-                document.getElementById('streamer-avatar').src = data.users.avatar_url || 'https://via.placeholder.com/40';
+                document.getElementById('streamer-name').textContent = data.profiles?.username || 'Streamer';
+                document.getElementById('streamer-avatar').src = data.profiles?.avatar_url || 'https://via.placeholder.com/40';
                 
             } catch (e) {
                 console.error('Error loading stream:', e);
