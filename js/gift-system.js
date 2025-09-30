@@ -135,11 +135,10 @@ class GiftSystem {
     async createUserGems(userId) {
         const { error } = await supabaseClient
             .from('user_gems')
-            .insert({ 
-                user_id: userId, 
-                balance: 0 
-            }, { returning: 'minimal' });
-        
+            .upsert(
+                { user_id: userId, balance: 0 },
+                { onConflict: 'user_id', ignoreDuplicates: true, returning: 'minimal' }
+            );
         if (error) console.error('Error creating gems account:', error);
     }
     
