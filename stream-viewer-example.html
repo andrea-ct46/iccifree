@@ -18,33 +18,31 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
         
+        /* TikTok-like full-screen vertical layout */
         .stream-page {
-            display: flex;
-            height: 100vh;
-        }
-        
-        .stream-main {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
             position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background: #000;
         }
         
         .stream-video-container {
-            flex: 1;
-            background: #1a1a1a;
-            position: relative;
+            position: absolute;
+            inset: 0;
             display: flex;
             align-items: center;
             justify-content: center;
+            background: #000;
         }
         
         .stream-video {
             width: 100%;
             height: 100%;
-            object-fit: contain;
+            object-fit: cover;
         }
         
+        /* Top overlay */
         .stream-info-overlay {
             position: absolute;
             top: 20px;
@@ -97,12 +95,60 @@
             gap: 8px;
         }
         
-        .chat-sidebar {
-            width: 350px;
-            background: #1a1a1a;
+        /* Right action rail */
+        .action-rail {
+            position: absolute;
+            right: 16px;
+            bottom: 120px;
             display: flex;
             flex-direction: column;
-            border-left: 1px solid #333;
+            gap: 14px;
+            z-index: 15;
+        }
+        .action-btn {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 22px;
+            border: 1px solid rgba(255,255,255,0.2);
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+        }
+        .action-label { text-align: center; font-size: 12px; color: #fff; margin-top: 4px; }
+        
+        /* Bottom info + chat input floating */
+        .bottom-info {
+            position: absolute;
+            left: 16px;
+            right: 100px;
+            bottom: 20px;
+            z-index: 15;
+            color: #fff;
+        }
+        .handle { font-weight: 700; margin-bottom: 6px; }
+        .title { color: #eee; opacity: 0.95; margin-bottom: 10px; }
+        .chat-bubble {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 24px;
+            padding: 10px 14px;
+            backdrop-filter: blur(10px);
+        }
+        .chat-bubble input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #fff;
+            font-size: 14px;
         }
         
         .chat-header {
@@ -174,15 +220,7 @@
         }
         
         @media (max-width: 768px) {
-            .stream-page {
-                flex-direction: column;
-            }
-            .chat-sidebar {
-                width: 100%;
-                height: 40vh;
-                border-left: none;
-                border-top: 1px solid #333;
-            }
+            .bottom-info { right: 80px; }
         }
     </style>
 </head>
@@ -198,41 +236,50 @@
     
     <!-- Stream Page -->
     <div class="stream-page">
-        <div class="stream-main">
-            <div class="stream-video-container">
-                <video id="stream-video" class="stream-video" autoplay playsinline></video>
+        <div class="stream-video-container">
+            <video id="stream-video" class="stream-video" autoplay playsinline></video>
+            
+            <div class="stream-info-overlay">
+                <div class="streamer-info">
+                    <img id="streamer-avatar" class="streamer-avatar" src="https://via.placeholder.com/40" alt="Streamer">
+                    <div>
+                        <div id="streamer-name" style="font-weight: 600;">Streamer</div>
+                        <div class="live-badge">● LIVE</div>
+                    </div>
+                </div>
                 
-                <div class="stream-info-overlay">
-                    <div class="streamer-info">
-                        <img id="streamer-avatar" class="streamer-avatar" src="https://via.placeholder.com/40" alt="Streamer">
-                        <div>
-                            <div id="streamer-name" style="font-weight: 600;">Streamer</div>
-                            <div class="live-badge">● LIVE</div>
-                        </div>
-                    </div>
-                    
-                    <div class="viewer-count">
-                        <span>👁️</span>
-                        <span id="viewer-count">0</span>
-                    </div>
+                <div class="viewer-count">
+                    <span>👁️</span>
+                    <span id="viewer-count">0</span>
                 </div>
             </div>
-        </div>
-        
-        <div class="chat-sidebar">
-            <div class="chat-header">
-                <h3 style="margin: 0;">Chat dal vivo</h3>
-            </div>
-            
-            <div class="chat-messages" id="chat-messages">
-                <div class="chat-message">
-                    <div class="message-author">Sistema</div>
-                    <div class="message-text">Benvenuto nella chat! 👋</div>
+
+            <div class="action-rail">
+                <div style="display:flex;flex-direction:column;align-items:center;">
+                    <button class="action-btn" id="like-btn">❤️</button>
+                    <div class="action-label" id="like-count">0</div>
+                </div>
+                <div style="display:flex;flex-direction:column;align-items:center;">
+                    <button class="action-btn" id="comment-btn">💬</button>
+                    <div class="action-label">Chat</div>
+                </div>
+                <div style="display:flex;flex-direction:column;align-items:center;">
+                    <button class="action-btn" id="gift-btn">🎁</button>
+                    <div class="action-label">Gift</div>
+                </div>
+                <div style="display:flex;flex-direction:column;align-items:center;">
+                    <button class="action-btn" id="share-btn">↗</button>
+                    <div class="action-label">Share</div>
                 </div>
             </div>
-            
-            <div class="chat-input-container">
-                <input type="text" class="chat-input" id="chat-input" placeholder="Invia un messaggio...">
+
+            <div class="bottom-info">
+                <div class="handle" id="handle">@streamer</div>
+                <div class="title" id="title">Titolo live...</div>
+                <div class="chat-bubble">
+                    <input type="text" id="chat-input" placeholder="Invia un messaggio..." />
+                    <span style="opacity:0.8;">💬</span>
+                </div>
             </div>
         </div>
     </div>
@@ -276,11 +323,9 @@
             // Setup WebRTC
             await setupWebRTC();
             
-            // Setup chat
+            // Setup chat + azioni
             setupChat();
-            
-            // Setup gift button
-            setupGiftButton();
+            setupActions();
         });
         
         async function loadStreamInfo() {
@@ -320,6 +365,44 @@
                     await sendMessage(input.value.trim());
                     input.value = '';
                 }
+            });
+        }
+
+        function setupActions() {
+            const likeBtn = document.getElementById('like-btn');
+            const likeCount = document.getElementById('like-count');
+            const giftBtn = document.getElementById('gift-btn');
+            const commentBtn = document.getElementById('comment-btn');
+            const shareBtn = document.getElementById('share-btn');
+
+            let likes = 0;
+            likeBtn.addEventListener('click', () => {
+                likes += 1;
+                likeCount.textContent = likes.toString();
+                likeBtn.style.transform = 'scale(1.15)';
+                setTimeout(() => (likeBtn.style.transform = 'scale(1)'), 150);
+            });
+
+            giftBtn.addEventListener('click', () => {
+                if (streamerId) {
+                    giftSystem.showSendGiftModal(streamId, streamerId);
+                }
+            });
+
+            commentBtn.addEventListener('click', () => {
+                document.getElementById('chat-input')?.focus();
+            });
+
+            shareBtn.addEventListener('click', async () => {
+                try {
+                    const url = window.location.href;
+                    if (navigator.share) {
+                        await navigator.share({ title: 'ICCI FREE Live', url });
+                    } else {
+                        await navigator.clipboard.writeText(url);
+                        alert('Link copiato');
+                    }
+                } catch {}
             });
         }
         
