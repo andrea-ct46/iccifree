@@ -20,12 +20,17 @@ CREATE TABLE IF NOT EXISTS public.signals (
 ALTER TABLE public.signals ENABLE ROW LEVEL SECURITY;
 
 -- Policy: lettura aperta (puoi restringere in seguito)
-CREATE POLICY IF NOT EXISTS "Signals are viewable by everyone"
-ON public.signals FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Signals are viewable by everyone" ON public.signals;
+CREATE POLICY "Signals are viewable by everyone"
+ON public.signals
+FOR SELECT
+USING (true);
 
 -- Policy: insert consentito agli utenti autenticati
-CREATE POLICY IF NOT EXISTS "Authenticated can insert signals"
-ON public.signals FOR INSERT TO authenticated
+DROP POLICY IF EXISTS "Authenticated can insert signals" ON public.signals;
+CREATE POLICY "Authenticated can insert signals"
+ON public.signals
+FOR INSERT TO authenticated
 WITH CHECK (true);
 
 -- Indici per performance
