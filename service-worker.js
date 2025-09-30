@@ -106,33 +106,22 @@ self.addEventListener('fetch', (event) => {
         return;
     }
     
-    // Cache-first for assets (CSS, JS, images)
+    // Cache-first for assets (CSS, JS, images) con fallback sicuro
     event.respondWith(
         caches.match(request)
             .then(cached => {
-                if (cached) {
-                    // Return cached, update in background
-                    fetch(request).then(response => {
-                        if (response.ok) {
-                            caches.open(CACHE_NAME).then(cache => {
-                                cache.put(request, response);
-                            });
+                const networkFetch = fetch(request)
+                    .then(response => {
+                        if (response && response.ok) {
+                            const clone = response.clone();
+                            caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
                         }
-                    });
-                    return cached;
-                }
-                
-                // Not in cache, fetch from network
-                return fetch(request).then(response => {
-                    if (response.ok) {
-                        const responseClone = response.clone();
-                        caches.open(CACHE_NAME).then(cache => {
-                            cache.put(request, responseClone);
-                        });
-                    }
-                    return response;
-                });
+                        return response;
+                    })
+                    .catch(() => cached || Response.error());
+                return cached || networkFetch;
             })
+            .catch(() => fetch(request).catch(() => new Response('', { status: 204 })))
     );
 });
 

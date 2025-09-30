@@ -172,6 +172,8 @@ supabaseClient.auth.onAuthStateChange((event, session) => {
 
 window.supabaseClient = supabaseClient;
 window.checkUser = checkUser;
+// Compat: alcune parti del codice usano getCurrentUser
+window.getCurrentUser = checkUser;
 window.hasCompletedProfile = hasCompletedProfile;
 window.logout = logout;
 window.showNotification = showNotification;
