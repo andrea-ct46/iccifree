@@ -1,163 +1,692 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Go Live</title>
-  <link rel="stylesheet" href="css/style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/webrtc-streaming.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Go Live - ICCI FREE</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Inizia il tuo stream su ICCI FREE - Streaming senza censura">
+    
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#FFD700">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
+    
+    <!-- Preconnect -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="js/webrtc-streaming.js">
+    
+    <style>
+        .golive-container {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            padding: 20px;
+        }
+        
+        .golive-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .stream-setup {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .setup-form {
+            background: #2a2a2a;
+            border-radius: 15px;
+            padding: 25px;
+            border: 2px solid #444;
+        }
+        
+        .preview-area {
+            background: #2a2a2a;
+            border-radius: 15px;
+            padding: 25px;
+            border: 2px solid #444;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 300px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            color: #FFD700;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #444;
+            border-radius: 10px;
+            background: #1a1a1a;
+            color: #fff;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+            box-sizing: border-box;
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #FFD700;
+        }
+        
+        .form-group textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        
+        .preview-video {
+            width: 100%;
+            max-width: 400px;
+            height: 225px;
+            background: #000;
+            border-radius: 10px;
+            border: 2px solid #444;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #888;
+            font-size: 1.2rem;
+        }
+        
+        .video-preview {
+            width: 100%;
+            height: 100%;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+        
+        .stream-controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .control-button {
+            flex: 1;
+            min-width: 120px;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .start-button {
+            background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
+            color: white;
+        }
+        
+        .start-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255, 68, 68, 0.3);
+        }
+        
+        .stop-button {
+            background: linear-gradient(135deg, #666 0%, #444 100%);
+            color: white;
+        }
+        
+        .stop-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .settings-button {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            color: #000;
+        }
+        
+        .settings-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255, 215, 0, 0.3);
+        }
+        
+        .stream-status {
+            display: none;
+            background: #2a2a2a;
+            border-radius: 15px;
+            padding: 25px;
+            border: 2px solid #444;
+            margin-top: 20px;
+        }
+        
+        .status-active {
+            border-color: #ff4444;
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ff4444;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .status-text {
+            color: #ff4444;
+            font-weight: bold;
+        }
+        
+        .stream-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+        
+        .stat-item {
+            background: #1a1a1a;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            color: #FFD700;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        
+        .stat-label {
+            color: #888;
+            font-size: 0.9rem;
+        }
+        
+        .stream-link {
+            background: #1a1a1a;
+            border: 2px solid #444;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        
+        .stream-link input {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: #FFD700;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        
+        .copy-button {
+            background: #FFD700;
+            color: #000;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            color: #FFD700;
+            padding: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .stream-setup {
+                grid-template-columns: 1fr;
+            }
+            
+            .stream-controls {
+                flex-direction: column;
+            }
+            
+            .control-button {
+                min-width: auto;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <h1>🎥 Avvia la tua Live</h1>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo" onclick="window.location.href='/'">
+                <span class="logo-icon">🔥</span>
+                <span class="logo-text">ICCI<span class="free">FREE</span></span>
+            </div>
+            
+            <div class="nav-links">
+                <a href="/" class="nav-link">Home</a>
+                <a href="/dashboard.html" class="nav-link">Dashboard</a>
+                <button class="nav-button" onclick="logout()">Logout</button>
+            </div>
+        </div>
+    </nav>
 
-    <div class="form">
-      <input id="streamTitle" placeholder="Titolo dello stream" />
-      <input id="streamDescription" placeholder="Descrizione" />
-      <input id="streamCategory" placeholder="Categoria" />
-      <button onclick="startStream()">🔴 Avvia Stream</button>
-      <button onclick="stopStream()">⏹️ Termina Stream</button>
+    <div class="golive-container">
+        <div class="golive-header">
+            <h1 style="color: #fff; margin: 0;">🔴 Go Live</h1>
+            <button class="nav-button" onclick="window.location.href='/dashboard.html'">
+                ← Torna alla Dashboard
+            </button>
+        </div>
+        
+        <div class="stream-setup">
+            <div class="setup-form">
+                <h3 style="color: #FFD700; margin-bottom: 20px;">Configurazione Stream</h3>
+                
+                <form id="streamForm">
+                    <div class="form-group">
+                        <label for="streamTitle">Titolo Stream</label>
+                        <input type="text" id="streamTitle" name="title" placeholder="Inserisci il titolo del tuo stream" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="streamDescription">Descrizione</label>
+                        <textarea id="streamDescription" name="description" placeholder="Descrivi il contenuto del tuo stream"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="streamCategory">Categoria</label>
+                        <select id="streamCategory" name="category">
+                            <option value="general">Generale</option>
+                            <option value="gaming">Gaming</option>
+                            <option value="talk">Talk Show</option>
+                            <option value="music">Musica</option>
+                            <option value="art">Arte</option>
+                            <option value="education">Educazione</option>
+                            <option value="sports">Sport</option>
+                            <option value="news">Notizie</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="preview-area">
+                <h3 style="color: #FFD700; margin-bottom: 20px;">Anteprima</h3>
+                <div class="preview-video" id="previewVideo">
+                    <span>📹</span>
+                    <span style="margin-left: 10px;">Anteprima Camera</span>
+                </div>
+                
+                <div class="stream-controls">
+                    <button class="control-button start-button" id="startButton" onclick="startStream()">
+                        <span>🔴</span>
+                        Inizia Stream
+                    </button>
+                    
+                    <button class="control-button stop-button" id="stopButton" onclick="stopStream()" style="display: none;">
+                        <span>⏹️</span>
+                        Termina Stream
+                    </button>
+                    
+                    <button class="control-button settings-button" onclick="openSettings()">
+                        <span>⚙️</span>
+                        Impostazioni
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stream-status" id="streamStatus">
+            <div class="status-indicator">
+                <div class="status-dot"></div>
+                <span class="status-text">STREAM ATTIVO</span>
+            </div>
+            
+            <div class="stream-stats">
+                <div class="stat-item">
+                    <div class="stat-value" id="viewerCount">0</div>
+                    <div class="stat-label">Viewer</div>
+                </div>
+                
+                <div class="stat-item">
+                    <div class="stat-value" id="streamDuration">00:00</div>
+                    <div class="stat-label">Durata</div>
+                </div>
+                
+                <div class="stat-item">
+                    <div class="stat-value" id="connectionStatus">Connesso</div>
+                    <div class="stat-label">Stato</div>
+                </div>
+            </div>
+            
+            <div class="stream-link">
+                <label style="color: #888; font-size: 0.9rem;">Link dello Stream:</label>
+                <input type="text" id="streamLink" readonly>
+                <button class="copy-button" onclick="copyStreamLink()">📋 Copia Link</button>
+            </div>
+        </div>
+        
+        <div class="loading" id="loading">
+            <p>Preparazione stream...</p>
+        </div>
     </div>
 
-    <div class="preview">
-      <video id="localVideo" autoplay muted playsinline></video>
-    </div>
-
-    <div class="link">
-      <label>Link per spettatori:</label>
-      <input id="streamLink" readonly />
-    </div>
-
-    <div id="notifications"></div>
-  </div>
-
-  <script>
-    // 🔧 CONFIGURAZIONE SUPABASE
-    const SUPABASE_URL = "https://itfndtgrfjvnavbitfgy.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml0Zm5kdGdyZmp2bmF2Yml0Zmd5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4ODc3MjIsImV4cCI6MjA3MzQ2MzcyMn0.73_f6oR5cQWL2Y69EMZ-FciDXkle_85okZ9pOOgmXu4"; // 🔹 sostituisci con la tua chiave pubblica
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    // 🔹 Variabili globali
-    let currentUser = { id: "test-user-123" }; // 🔧 da sostituire con autenticazione reale
-    let currentStream = null;
-    let streamDurationInterval = null;
-    let startTime = null;
-
-    // 🔔 Notifiche semplici
-    function showNotification(msg, type = "info") {
-      const el = document.getElementById("notifications");
-      el.innerText = msg;
-      el.className = type;
-      setTimeout(() => (el.innerText = ""), 3000);
-    }
-
-    // ⏳ Loader fittizio
-    function showLoading(state) {
-      console.log(state ? "⏳ Avvio..." : "✅ Pronto");
-    }
-
-    // ⏱️ Timer durata
-    function updateDuration() {
-      if (!startTime) return;
-      const diff = Math.floor((Date.now() - startTime.getTime()) / 1000);
-      console.log("Durata:", diff, "secondi");
-    }
-
-    // 🎛️ Aggiorna UI (placeholder)
-    function updateStreamUI(isLive) {
-      console.log(isLive ? "✅ Stream attivo" : "⏹️ Stream terminato");
-    }
-
-    // 🎥 Funzione per avviare lo stream
-    async function startStream() {
-      const title = document.getElementById("streamTitle").value;
-      const description = document.getElementById("streamDescription").value;
-      const category = document.getElementById("streamCategory").value;
-
-      if (!title.trim()) {
-        showNotification("Inserisci un titolo per lo stream", "error");
-        return;
-      }
-
-      showLoading(true);
-
-      try {
-        // 1️⃣ Crea record nel database
-        const { data: streamData, error } = await supabaseClient
-          .from("streams")
-          .insert({
-            user_id: currentUser.id,
-            title,
-            description,
-            category,
-            is_live: true,
-            started_at: new Date().toISOString(),
-          })
-          .select()
-          .single();
-
-        if (error) throw error;
-        currentStream = streamData;
-
-        // 2️⃣ Avvia WebRTC
-        if (typeof WebRTCStreaming !== "undefined") {
-          window.webrtcStreamer = new WebRTCStreaming(currentStream.id, "broadcaster");
-          await window.webrtcStreamer.init();
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase.js"></script>
+    <script src="js/webrtc-streaming.js"></script>
+    
+    <script>
+        let currentUser = null;
+        let currentStream = null;
+        let streamDurationInterval = null;
+        let startTime = null;
+        
+        // Inizializza
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('🔴 Go Live page loaded');
+            
+            // Aspetta che Supabase sia caricato
+            if (typeof supabaseClient === 'undefined') {
+                console.error('Supabase client non caricato');
+                showNotification('Errore caricamento applicazione', 'error');
+                return;
+            }
+            
+            // Verifica autenticazione
+            try {
+                currentUser = await checkUser();
+                console.log('Current user:', currentUser);
+                
+                if (!currentUser) {
+                    console.log('Nessun utente autenticato, redirect a auth');
+                    window.location.href = '/auth.html';
+                    return;
+                }
+                
+                // Debug: verifica formato ID utente
+                console.log('User ID:', currentUser.id);
+                console.log('User email:', currentUser.email);
+                console.log('User type:', typeof currentUser.id);
+                
+                // Verifica che l'ID sia un UUID valido
+                const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+                if (!uuidRegex.test(currentUser.id)) {
+                    console.error('Invalid user ID format detected:', currentUser.id);
+                    console.error('This might be a test user. Please login with a real account.');
+                    showNotification('ID utente non valido. Effettua il login con un account reale.', 'error');
+                    window.location.href = '/auth.html';
+                    return;
+                }
+                
+                console.log('Utente autenticato:', currentUser.email);
+                
+            } catch (error) {
+                console.error('Errore verifica utente:', error);
+                window.location.href = '/auth.html';
+                return;
+            }
+            
+            // Inizializza preview camera
+            await initCameraPreview();
+        });
+        
+        async function initCameraPreview() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: true, 
+                    audio: true 
+                });
+                
+                const previewVideo = document.getElementById('previewVideo');
+                previewVideo.innerHTML = `<video class="video-preview" autoplay muted></video>`;
+                
+                const video = previewVideo.querySelector('video');
+                video.srcObject = stream;
+                
+                // Salva stream per uso successivo
+                window.previewStream = stream;
+                
+            } catch (error) {
+                console.error('Errore accesso camera:', error);
+                document.getElementById('previewVideo').innerHTML = `
+                    <span style="color: #ff4444;">❌</span>
+                    <span style="margin-left: 10px;">Errore accesso camera</span>
+                `;
+                showNotification('Errore accesso camera/microfono', 'error');
+            }
         }
-
-        // 3️⃣ Mostra link spettatori
-        const streamLink = `${window.location.origin}/stream-viewer-example.html?id=${currentStream.id}`;
-        document.getElementById("streamLink").value = streamLink;
-
-        // 4️⃣ Timer e UI
-        startTime = new Date();
-        streamDurationInterval = setInterval(updateDuration, 1000);
-        updateStreamUI(true);
-        showNotification("Stream avviato con successo!", "success");
-      } catch (err) {
-        console.error("Errore avvio stream:", err);
-        showNotification("Errore avvio stream", "error");
-      } finally {
-        showLoading(false);
-      }
-    }
-
-    // ⏹️ Funzione per terminare lo stream
-    async function stopStream() {
-      if (!currentStream) return;
-
-      try {
-        // 1️⃣ Aggiorna DB
-        await supabaseClient
-          .from("streams")
-          .update({
-            is_live: false,
-            ended_at: new Date().toISOString(),
-          })
-          .eq("id", currentStream.id);
-
-        // 2️⃣ Ferma WebRTC
-        if (window.webrtcStreamer) {
-          await window.webrtcStreamer.stop();
+        
+        async function startStream() {
+            const title = document.getElementById('streamTitle').value;
+            const description = document.getElementById('streamDescription').value;
+            const category = document.getElementById('streamCategory').value;
+            
+            if (!title.trim()) {
+                showNotification('Inserisci un titolo per lo stream', 'error');
+                return;
+            }
+            
+            // Verifica che currentUser sia disponibile
+            if (!currentUser) {
+                showNotification('Errore autenticazione. Riprova il login.', 'error');
+                window.location.href = '/auth.html';
+                return;
+            }
+            
+            // Verifica che currentUser.id sia un UUID valido
+            const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+            if (!uuidRegex.test(currentUser.id)) {
+                console.error('Invalid user ID format:', currentUser.id);
+                showNotification('Errore ID utente. Riprova il login.', 'error');
+                window.location.href = '/auth.html';
+                return;
+            }
+            
+            showLoading(true);
+            
+            try {
+                // Verifica che l'utente abbia un profilo nel database
+                await ensureUserProfile(currentUser);
+                
+                // Crea stream nel database
+                const { data: streamData, error } = await supabaseClient
+                    .from('streams')
+                    .insert({
+                        user_id: currentUser.id,
+                        title: title,
+                        description: description,
+                        category: category,
+                        is_live: true,
+                        started_at: new Date().toISOString()
+                    })
+                    .select()
+                    .single();
+                
+                if (error) {
+                    console.error('Errore database:', error);
+                    console.error('Error details:', error.details);
+                    console.error('Error hint:', error.hint);
+                    
+                    // Gestione errori specifici
+                    if (error.code === '22P02') {
+                        throw new Error('Errore formato ID utente. Riprova il login.');
+                    } else if (error.code === '23503') {
+                        throw new Error('Utente non trovato nel database. Completa il profilo prima di fare streaming.');
+                    } else {
+                        throw new Error('Errore creazione stream: ' + error.message);
+                    }
+                }
+                
+                currentStream = streamData;
+                
+                // Inizializza WebRTC streaming
+                if (typeof WebRTCStreaming !== 'undefined') {
+                    await WebRTCStreaming.startBroadcast(currentStream.id);
+                }
+                
+                // Aggiorna UI
+                updateStreamUI(true);
+                
+                // Genera link stream
+                const streamLink = `${window.location.origin}/stream-viewer-example.html?id=${currentStream.id}`;
+                document.getElementById('streamLink').value = streamLink;
+                
+                // Avvia timer durata
+                startTime = new Date();
+                streamDurationInterval = setInterval(updateDuration, 1000);
+                
+                showNotification('Stream avviato con successo!', 'success');
+                
+            } catch (error) {
+                console.error('Errore avvio stream:', error);
+                showNotification('Errore avvio stream', 'error');
+            } finally {
+                showLoading(false);
+            }
         }
-
-        // 3️⃣ Ferma anteprima
-        if (window.previewStream) {
-          window.previewStream.getTracks().forEach(track => track.stop());
+        
+        async function stopStream() {
+            if (!currentStream) return;
+            
+            try {
+                // Termina stream nel database
+                await supabaseClient
+                    .from('streams')
+                    .update({ 
+                        is_live: false,
+                        ended_at: new Date().toISOString()
+                    })
+                    .eq('id', currentStream.id);
+                
+                // Termina WebRTC
+                if (typeof WebRTCStreaming !== 'undefined') {
+                    await WebRTCStreaming.stopBroadcast();
+                }
+                
+                // Termina preview stream
+                if (window.previewStream) {
+                    window.previewStream.getTracks().forEach(track => track.stop());
+                }
+                
+                // Aggiorna UI
+                updateStreamUI(false);
+                
+                // Ferma timer
+                if (streamDurationInterval) {
+                    clearInterval(streamDurationInterval);
+                }
+                
+                showNotification('Stream terminato', 'info');
+                
+            } catch (error) {
+                console.error('Errore terminazione stream:', error);
+                showNotification('Errore terminazione stream', 'error');
+            }
         }
-
-        // 4️⃣ UI
-        updateStreamUI(false);
-        if (streamDurationInterval) clearInterval(streamDurationInterval);
-        showNotification("Stream terminato", "info");
-      } catch (err) {
-        console.error("Errore terminazione stream:", err);
-        showNotification("Errore terminazione stream", "error");
-      }
-    }
-  </script>
+        
+        function updateStreamUI(isActive) {
+            if (isActive) {
+                document.getElementById('startButton').style.display = 'none';
+                document.getElementById('stopButton').style.display = 'flex';
+                document.getElementById('streamStatus').style.display = 'block';
+                document.getElementById('streamStatus').classList.add('status-active');
+            } else {
+                document.getElementById('startButton').style.display = 'flex';
+                document.getElementById('stopButton').style.display = 'none';
+                document.getElementById('streamStatus').style.display = 'none';
+                document.getElementById('streamStatus').classList.remove('status-active');
+                currentStream = null;
+            }
+        }
+        
+        function updateDuration() {
+            if (!startTime) return;
+            
+            const now = new Date();
+            const diff = Math.floor((now - startTime) / 1000);
+            const minutes = Math.floor(diff / 60);
+            const seconds = diff % 60;
+            
+            document.getElementById('streamDuration').textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+        
+        function copyStreamLink() {
+            const linkInput = document.getElementById('streamLink');
+            linkInput.select();
+            linkInput.setSelectionRange(0, 99999);
+            
+            try {
+                document.execCommand('copy');
+                showNotification('Link copiato!', 'success');
+            } catch (error) {
+                // Fallback per browser moderni
+                navigator.clipboard.writeText(linkInput.value).then(() => {
+                    showNotification('Link copiato!', 'success');
+                });
+            }
+        }
+        
+        function openSettings() {
+            showNotification('Impostazioni non ancora implementate', 'info');
+        }
+        
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+        
+        async function logout() {
+            try {
+                await supabaseClient.auth.signOut();
+                window.location.href = '/';
+            } catch (error) {
+                console.error('Errore logout:', error);
+                window.location.href = '/';
+            }
+        }
+        
+        // Cleanup quando si esce dalla pagina
+        window.addEventListener('beforeunload', () => {
+            if (currentStream) {
+                stopStream();
+            }
+        });
+    </script>
 </body>
 </html>
-
-
