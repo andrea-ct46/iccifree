@@ -6,6 +6,7 @@ class WebRTCStreamingV5 {
     this.localStream = null;
     this.remoteVideo = null;
     this.onRemoteStream = null;
+    this.answerApplied = false;
 
     // Config ICE server
     this.iceServers = {
@@ -133,8 +134,21 @@ class WebRTCStreamingV5 {
         async (payload) => {
           const signal = payload.new;
           if (signal.type === "answer" && this.mode === "broadcaster") {
-            console.log("📥 Ricevuta answer");
-            await this.pc.setRemoteDescription(new RTCSessionDescription(signal.payload));
+            try {
+              if (this.answerApplied) {
+                console.log("ℹ️ Answer già applicata, ignoro evento duplicato");
+                return;
+              }
+              if (this.pc && this.pc.signalingState === "have-local-offer") {
+                console.log("📥 Ricevuta answer (Realtime)");
+                await this.pc.setRemoteDescription(new RTCSessionDescription(signal.payload));
+                this.answerApplied = true;
+              } else {
+                console.log("ℹ️ Stato non compatibile per setRemoteDescription:", this.pc?.signalingState);
+              }
+            } catch (e) {
+              console.warn("setRemoteDescription (Realtime) error:", e);
+            }
           }
           if (signal.type === "ice" && signal.sender !== this.mode) {
             console.log("📥 ICE ricevuto");
@@ -153,6 +167,7 @@ class WebRTCStreamingV5 {
   async waitForAnswerWithPolling(maxSeconds = 20) {
     const start = Date.now();
     while (Date.now() - start < maxSeconds * 1000) {
+      if (this.answerApplied) return;
       try {
         const { data: answers, error } = await this.supabase
           .from("signals")
@@ -166,8 +181,14 @@ class WebRTCStreamingV5 {
         }
         if (answers && answers.length > 0) {
           const answer = answers[0].payload;
-          if (this.pc && this.pc.signalingState !== "stable") {
-            await this.pc.setRemoteDescription(new RTCSessionDescription(answer));
+          try {
+            if (!this.answerApplied && this.pc && this.pc.signalingState === "have-local-offer") {
+              console.log("📥 Ricevuta answer (Polling)");
+              await this.pc.setRemoteDescription(new RTCSessionDescription(answer));
+              this.answerApplied = true;
+            }
+          } catch (e) {
+            console.warn("setRemoteDescription (Polling) error:", e);
           }
           return;
         }
