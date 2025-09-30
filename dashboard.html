@@ -356,14 +356,15 @@
                     .from('user_gems')
                     .select('balance')
                     .eq('user_id', currentUser.id)
-                    .maybeSingle();
+                    .limit(1);
                 
                 if (error && error.code !== 'PGRST116') {
                     console.error('Errore caricamento gemme:', error);
                     return;
                 }
                 
-                const gems = data?.balance ?? 0;
+                const row = Array.isArray(data) ? data[0] : null;
+                const gems = row?.balance ?? 0;
                 document.getElementById('userGems').textContent = Number(gems).toLocaleString();
                 
             } catch (error) {

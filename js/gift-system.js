@@ -110,19 +110,20 @@ class GiftSystem {
                 .from('user_gems')
                 .select('balance')
                 .eq('user_id', userId)
-                .maybeSingle();
-            
+                .limit(1);
+
             if (error) {
                 console.error('Error getting gems:', error);
             }
-            
-            if (!data) {
+
+            const row = Array.isArray(data) ? data[0] : null;
+            if (!row) {
                 await this.createUserGems(userId);
                 this.userGems = 0;
                 return 0;
             }
             
-            this.userGems = data.balance || 0;
+            this.userGems = row.balance || 0;
             return this.userGems;
         } catch (e) {
             console.error('Error getting gems:', e);
@@ -137,7 +138,7 @@ class GiftSystem {
             .insert({ 
                 user_id: userId, 
                 balance: 0 
-            });
+            }, { returning: 'minimal' });
         
         if (error) console.error('Error creating gems account:', error);
     }
