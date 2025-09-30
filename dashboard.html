@@ -382,10 +382,8 @@
                         description,
                         viewer_count,
                         started_at,
-                        profiles!streams_user_id_fkey (
-                            username,
-                            display_name
-                        )
+                        user_id,
+                        profiles (username, display_name)
                     `)
                     .eq('is_live', true)
                     .order('viewer_count', { ascending: false });
