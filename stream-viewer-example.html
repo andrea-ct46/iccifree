@@ -322,6 +322,8 @@
             
             // Load stream info
             await loadStreamInfo();
+            // Subscribe to stream status changes
+            watchStreamLiveStatus();
             
             // Setup WebRTC
             await setupWebRTC();
@@ -405,6 +407,40 @@
                     input.value = '';
                 }
             });
+        }
+
+        function watchStreamLiveStatus() {
+            try {
+                // Realtime (se abilitato)
+                const channel = supabaseClient
+                    .channel(`streams-${streamId}`)
+                    .on(
+                        'postgres_changes',
+                        { event: 'UPDATE', schema: 'public', table: 'streams', filter: `id=eq.${streamId}` },
+                        (payload) => {
+                            const newRow = payload.new;
+                            if (newRow && newRow.is_live === false) {
+                                window.location.href = '/dashboard.html';
+                            }
+                        }
+                    )
+                    .subscribe();
+
+                // Polling fallback
+                const interval = setInterval(async () => {
+                    const { data } = await supabaseClient
+                        .from('streams')
+                        .select('is_live')
+                        .eq('id', streamId)
+                        .single();
+                    if (data && data.is_live === false) {
+                        clearInterval(interval);
+                        window.location.href = '/dashboard.html';
+                    }
+                }, 3000);
+            } catch (e) {
+                console.warn('watchStreamLiveStatus error', e);
+            }
         }
 
         function setupActions() {

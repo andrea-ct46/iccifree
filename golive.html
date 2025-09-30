@@ -669,6 +669,10 @@
                 }
                 
                 showNotification('Stream terminato', 'info');
+                // Redirect alla dashboard
+                setTimeout(() => {
+                    window.location.href = '/dashboard.html';
+                }, 800);
                 
             } catch (error) {
                 console.error('Errore terminazione stream:', error);
