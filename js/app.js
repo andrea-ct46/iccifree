@@ -152,23 +152,25 @@ document.querySelectorAll('.feature-card').forEach(card => {
 });
 
 // ============= ADD ANIMATION CSS =============
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(30px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-    
-    .animate-in {
-        animation: fadeInUp 0.6s ease-out;
-    }
-`;
-document.head.appendChild(style);
+(() => {
+	const appAnimationsStyle = document.createElement('style');
+	appAnimationsStyle.textContent = `
+		@keyframes fadeInUp {
+			from {
+				opacity: 0;
+				transform: translateY(30px);
+			}
+			to {
+				opacity: 1;
+				transform: translateY(0);
+			}
+		}
+		
+		.animate-in {
+			animation: fadeInUp 0.6s ease-out;
+		}
+	`;
+	document.head.appendChild(appAnimationsStyle);
+})();
 
 console.log('✅ App.js loaded');
