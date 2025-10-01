@@ -645,7 +645,7 @@
             <div class="nav-icon">🎁</div>
             <div class="nav-label">Gifts</div>
         </a>
-        <a href="#" class="nav-item" onclick="showProfile()">
+        <a href="#" class="nav-item" onclick="showMobileProfile()">
             <div class="nav-icon">👤</div>
             <div class="nav-label">Profilo</div>
         </a>
@@ -655,7 +655,7 @@
     <div class="mobile-menu-overlay" id="mobileMenuOverlay">
         <button class="menu-close" onclick="toggleMobileMenu()">×</button>
         <a href="/" class="mobile-menu-item">🏠 Home</a>
-        <a href="/dashboard.html" class="mobile-menu-item">📊 Dashboard</a>
+        <a href="#" class="mobile-menu-item" onclick="showDashboardInfo()">📊 Dashboard (PC/Tablet)</a>
         <a href="/auth.html" class="mobile-menu-item">🔐 Login</a>
         <a href="#" class="mobile-menu-item" onclick="showSettings()">⚙️ Impostazioni</a>
         <a href="#" class="mobile-menu-item" onclick="showAbout()">ℹ️ Info</a>
@@ -749,12 +749,129 @@
             watchStreams();
         }
         
-        function showProfile() {
+        function showMobileProfile() {
             updateBottomNav('profile');
             if (currentUser) {
-                window.location.href = '/dashboard.html';
+                showMobileUserProfile();
             } else {
                 window.location.href = '/auth.html';
+            }
+        }
+        
+        function showMobileUserProfile() {
+            // Show mobile profile modal instead of redirecting to dashboard
+            const profileHTML = `
+                <div id="mobile-profile-modal" style="
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(0, 0, 0, 0.9);
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 20px;
+                    z-index: 10000;
+                    color: white;
+                ">
+                    <div style="
+                        background: rgba(255, 255, 255, 0.1);
+                        backdrop-filter: blur(20px);
+                        border: 1px solid rgba(255, 215, 0, 0.3);
+                        border-radius: 20px;
+                        padding: 30px;
+                        max-width: 400px;
+                        width: 100%;
+                        text-align: center;
+                    ">
+                        <div style="
+                            width: 80px;
+                            height: 80px;
+                            border-radius: 50%;
+                            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            font-size: 2rem;
+                            margin: 0 auto 20px;
+                        ">👤</div>
+                        
+                        <h2 style="margin: 0 0 16px 0; color: #FFD700;">Profilo Utente</h2>
+                        
+                        <div style="margin-bottom: 20px;">
+                            <div style="margin-bottom: 8px;"><strong>Email:</strong> ${currentUser?.email || 'N/A'}</div>
+                            <div style="margin-bottom: 8px;"><strong>ID:</strong> ${currentUser?.id?.slice(0, 8) || 'N/A'}...</div>
+                            <div style="margin-bottom: 8px;"><strong>Dispositivo:</strong> Mobile</div>
+                        </div>
+                        
+                        <div style="margin-bottom: 20px;">
+                            <button onclick="showDashboardInfo()" style="
+                                background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+                                color: #000;
+                                border: none;
+                                padding: 12px 24px;
+                                border-radius: 25px;
+                                font-weight: 700;
+                                cursor: pointer;
+                                margin-bottom: 10px;
+                                width: 100%;
+                            ">
+                                📊 Dashboard (PC/Tablet)
+                            </button>
+                            
+                            <button onclick="logout()" style="
+                                background: transparent;
+                                color: #ff6b6b;
+                                border: 1px solid #ff6b6b;
+                                padding: 12px 24px;
+                                border-radius: 25px;
+                                font-weight: 700;
+                                cursor: pointer;
+                                width: 100%;
+                            ">
+                                🚪 Logout
+                            </button>
+                        </div>
+                        
+                        <button onclick="document.getElementById('mobile-profile-modal').remove()" style="
+                            background: transparent;
+                            color: #666;
+                            border: 1px solid #666;
+                            padding: 8px 16px;
+                            border-radius: 20px;
+                            font-size: 0.9rem;
+                            cursor: pointer;
+                        ">
+                            Chiudi
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', profileHTML);
+        }
+        
+        function showDashboardInfo() {
+            showNotification('📊 Dashboard disponibile solo su PC e Tablet per una migliore esperienza', 'info');
+        }
+        
+        async function logout() {
+            try {
+                const { error } = await supabaseClient.auth.signOut();
+                if (error) throw error;
+                
+                currentUser = null;
+                document.getElementById('mobile-profile-modal').remove();
+                showNotification('✅ Logout completato', 'success');
+                
+                // Update UI
+                updateAuthUI();
+                
+            } catch (error) {
+                console.error('Logout error:', error);
+                showNotification('❌ Errore logout', 'error');
             }
         }
         

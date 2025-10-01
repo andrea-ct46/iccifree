@@ -635,7 +635,7 @@ class MobileDetector {
     
     // ============= AUTO-REDIRECT TO MOBILE APP =============
     autoRedirectToMobileApp() {
-        if (this.isMobile || this.isTablet) {
+        if (this.isMobile) {
             console.log('📱 Mobile device detected - checking for redirect...');
             
             // Check if we're already on mobile-app.html
@@ -643,6 +643,7 @@ class MobileDetector {
             const isMobileApp = currentPage === 'mobile-app.html' || currentPage === '';
             
             // Don't redirect if already on mobile app or if it's a specific page
+            // Dashboard is EXCLUDED from mobile redirect - only PC and tablet
             const skipRedirectPages = ['mobile-app.html', 'auth.html', 'golive.html', 'dashboard.html'];
             const shouldSkip = skipRedirectPages.some(page => window.location.pathname.includes(page));
             
@@ -651,8 +652,111 @@ class MobileDetector {
                 window.location.href = '/mobile-app.html';
                 return true;
             }
+        } else if (this.isTablet) {
+            console.log('📱 Tablet device detected - checking for redirect...');
+            
+            // Tablets can access dashboard but still get mobile optimizations
+            const currentPage = window.location.pathname.split('/').pop();
+            const isMobileApp = currentPage === 'mobile-app.html' || currentPage === '';
+            
+            // Tablets skip redirect only for specific pages
+            const skipRedirectPages = ['mobile-app.html', 'auth.html', 'golive.html'];
+            const shouldSkip = skipRedirectPages.some(page => window.location.pathname.includes(page));
+            
+            // Dashboard is accessible on tablets but gets mobile optimizations
+            if (window.location.pathname.includes('dashboard.html')) {
+                console.log('📱 Tablet accessing dashboard - applying mobile optimizations');
+                return false; // Don't redirect, but apply mobile classes
+            }
+            
+            if (!isMobileApp && !shouldSkip) {
+                console.log('🔄 Redirecting tablet to mobile app...');
+                window.location.href = '/mobile-app.html';
+                return true;
+            }
         }
         return false;
+    }
+
+    // ============= HANDLE MOBILE DASHBOARD ACCESS =============
+    handleMobileDashboardAccess() {
+        if (this.isMobile && window.location.pathname.includes('dashboard.html')) {
+            console.log('📱 Mobile device trying to access dashboard - showing message');
+            
+            // Show message and redirect to mobile app
+            this.showMobileDashboardMessage();
+            return true;
+        }
+        return false;
+    }
+    
+    // ============= SHOW MOBILE DASHBOARD MESSAGE =============
+    showMobileDashboardMessage() {
+        const messageHTML = `
+            <div id="mobile-dashboard-message" style="
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.95);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+                z-index: 10000;
+                color: white;
+                text-align: center;
+            ">
+                <div style="
+                    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+                    color: #000;
+                    padding: 20px;
+                    border-radius: 20px;
+                    max-width: 400px;
+                    width: 100%;
+                ">
+                    <div style="font-size: 48px; margin-bottom: 16px;">📱</div>
+                    <h2 style="margin: 0 0 16px 0; font-size: 1.5rem;">Dashboard Disponibile su PC e Tablet</h2>
+                    <p style="margin: 0 0 20px 0; line-height: 1.5;">
+                        La dashboard è ottimizzata per schermi più grandi.<br>
+                        Su mobile, usa l'app ICCI FREE per accedere alle tue funzionalità.
+                    </p>
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <button onclick="window.location.href='/mobile-app.html'" style="
+                            background: #000;
+                            color: #FFD700;
+                            border: 2px solid #FFD700;
+                            padding: 12px 24px;
+                            border-radius: 25px;
+                            font-weight: 700;
+                            cursor: pointer;
+                        ">
+                            📱 Vai all'App Mobile
+                        </button>
+                        <button onclick="document.getElementById('mobile-dashboard-message').remove()" style="
+                            background: transparent;
+                            color: #666;
+                            border: 1px solid #666;
+                            padding: 8px 16px;
+                            border-radius: 20px;
+                            font-size: 0.9rem;
+                            cursor: pointer;
+                        ">
+                            Chiudi
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', messageHTML);
+        
+        // Auto-redirect after 5 seconds
+        setTimeout(() => {
+            window.location.href = '/mobile-app.html';
+        }, 5000);
     }
 
     // ============= INIT =============
@@ -661,6 +765,11 @@ class MobileDetector {
         
         // Detect device type
         this.detectDeviceType();
+        
+        // Handle mobile dashboard access
+        if (this.handleMobileDashboardAccess()) {
+            return; // Stop initialization if showing mobile message
+        }
         
         // Check for auto-redirect first
         if (this.autoRedirectToMobileApp()) {
