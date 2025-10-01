@@ -120,37 +120,50 @@ class ErrorHandler {
             position: fixed;
             bottom: 20px;
             right: 20px;
-            background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
-            color: white;
             padding: 16px 20px;
-            border-radius: 12px;
+            border-radius: 14px;
             z-index: 10000;
-            max-width: 400px;
-            box-shadow: 0 10px 30px rgba(255, 68, 68, 0.4);
+            max-width: 420px;
             animation: slideIn 0.3s ease;
             display: flex;
             align-items: center;
             gap: 12px;
             font-weight: 600;
+            color: #fff;
+            /* Glass effect */
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            backdrop-filter: blur(14px);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.45);
         `;
         
         const userMessage = this.getUserFriendlyMessage(error);
         
         toast.innerHTML = `
-            <span style="font-size: 24px;">⚠️</span>
+            <span style="font-size: 24px;">🛠️</span>
             <div style="flex: 1;">
-                <div style="font-weight: 700; margin-bottom: 4px;">Errore Temporaneo</div>
-                <div style="font-size: 14px; opacity: 0.9;">${userMessage}</div>
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                    <span style="
+                        display:inline-flex;align-items:center;gap:6px;
+                        padding:4px 8px;border-radius:999px;
+                        background: rgba(255, 215, 0, 0.18);
+                        border: 1px solid rgba(255, 215, 0, 0.32);
+                        color:#FFD700;font-size:12px;font-weight:800;">IN SVILUPPO</span>
+                    <span style="opacity:0.9;font-weight:700;">Aggiornamenti in corso</span>
+                </div>
+                <div style="font-size: 14px; opacity: 0.9;">
+                    ${userMessage || 'Stiamo migliorando questa sezione. Se necessario, aggiorna la pagina.'}
+                </div>
             </div>
             <button onclick="this.parentElement.remove()" style="
-                background: rgba(255,255,255,0.2);
-                border: none;
+                background: rgba(255,255,255,0.14);
+                border: 1px solid rgba(255,255,255,0.24);
                 color: white;
-                width: 24px;
-                height: 24px;
-                border-radius: 50%;
+                width: 28px;
+                height: 28px;
+                border-radius: 8px;
                 cursor: pointer;
-                font-weight: bold;
+                font-weight: 800;
             ">×</button>
         `;
         
