@@ -10,13 +10,18 @@ const STATIC_ASSETS = [
     '/dashboard.html',
     '/auth.html',
     '/golive.html',
+    '/stream-viewer-example.html',
+    '/mobile-app.html',
     '/css/style.css',
+    '/css/gift-system.css',
+    '/css/mobile-optimizations.css',
     '/js/app.js',
     '/js/supabase.js',
     '/js/analytics.js',
     '/js/error-handler.js',
     '/js/performance-optimizer.js',
     '/js/webrtc-streaming.js',
+    '/js/gift-system.js',
     // icona rimossa: usiamo badge inline per le notifiche
     '/manifest.json',
     OFFLINE_URL
