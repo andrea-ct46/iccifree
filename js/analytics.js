@@ -34,6 +34,9 @@ class Analytics {
         // Track performance
         this.trackPerformance();
         
+        // Track device info (mobile detection)
+        this.trackDeviceInfo();
+        
         // Flush batch periodicamente
         this.startAutoFlush();
         
@@ -184,14 +187,40 @@ class Analytics {
         }
     }
     
+    // ============= TRACK DEVICE INFO =============
+    trackDeviceInfo() {
+        // Wait for mobile detector to initialize
+        setTimeout(() => {
+            const deviceInfo = this.getDeviceInfo();
+            this.track('device_info', deviceInfo);
+        }, 100);
+    }
+    
     // ============= GET DEVICE INFO =============
     getDeviceInfo() {
         const ua = navigator.userAgent;
-        return {
+        const baseInfo = {
             type: /Mobile|Android|iPhone|iPad/.test(ua) ? 'mobile' : 'desktop',
             os: this.getOS(),
-            browser: this.getBrowser()
+            browser: this.getBrowser(),
+            userAgent: ua,
+            screenSize: `${window.innerWidth}x${window.innerHeight}`,
+            touchEnabled: 'ontouchstart' in window
         };
+        
+        // Add mobile detector info if available
+        if (window.MobileDetector) {
+            return {
+                ...baseInfo,
+                detectedType: window.MobileDetector.deviceType,
+                isMobile: window.MobileDetector.isMobile,
+                isTablet: window.MobileDetector.isTablet,
+                isDesktop: window.MobileDetector.isDesktop,
+                orientation: window.MobileDetector.orientation
+            };
+        }
+        
+        return baseInfo;
     }
     
     getOS() {

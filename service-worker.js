@@ -12,12 +12,13 @@ const STATIC_ASSETS = [
     '/golive.html',
     '/css/style.css',
     '/js/app.js',
+    '/js/mobile-detector.js',
     '/js/supabase.js',
     '/js/analytics.js',
     '/js/error-handler.js',
     '/js/performance-optimizer.js',
     '/js/webrtc-streaming.js',
-    // icona rimossa: usiamo badge inline per le notifiche
+    '/js/gift-system.js',
     '/manifest.json',
     OFFLINE_URL
 ];

@@ -241,6 +241,7 @@ class PerformanceOptimizer {
         this.measureCoreWebVitals();
         this.optimizeFonts();
         this.respectReducedMotion();
+        this.optimizeForMobile();
         
         // Re-observe su contenuto dinamico
         const mutationObserver = new MutationObserver(() => {
@@ -259,11 +260,36 @@ class PerformanceOptimizer {
         console.log('✅ Performance Optimizer attivo');
     }
     
+    // ============= OPTIMIZE FOR MOBILE =============
+    optimizeForMobile() {
+        // Check if mobile detector is available
+        if (window.MobileDetector && window.MobileDetector.isMobile) {
+            console.log('📱 Mobile detected - applying mobile optimizations...');
+            
+            // Reduce image quality on mobile
+            this.mobileImageQuality = 60;
+            
+            // Reduce animation complexity
+            document.documentElement.style.setProperty('--transition-fast', '0.2s');
+            document.documentElement.style.setProperty('--transition-medium', '0.2s');
+            document.documentElement.style.setProperty('--transition-slow', '0.3s');
+            
+            // Disable expensive effects
+            const expensiveElements = document.querySelectorAll('.feature-card, .hero-visual');
+            expensiveElements.forEach(el => {
+                el.style.willChange = 'auto';
+            });
+            
+            console.log('✅ Mobile performance optimizations applied');
+        }
+    }
+    
     // ============= GET METRICS =============
     getMetrics() {
         return {
             longTasks: this.performanceMetrics.filter(m => m.type === 'long-task'),
             imageCache: this.imageCache.size,
+            isMobile: window.MobileDetector ? window.MobileDetector.isMobile : false,
             timestamp: Date.now()
         };
     }

@@ -1,8 +1,15 @@
-/* ============= MOBILE OPTIMIZATIONS CSS ============= */
+/* ============= MOBILE OPTIMIZATIONS CSS - AUTO ACTIVATED ============= */
+/* Questo CSS si attiva automaticamente quando il dispositivo mobile viene rilevato */
 
 /* ===== MOBILE-SPECIFIC IMPROVEMENTS ===== */
 
-@media (max-width: 768px) {
+/* Auto-activated mobile styles */
+.mobile .mobile-optimized,
+.mobile * {
+    /* Mobile optimizations applied automatically */
+}
+
+@media (max-width: 768px), .mobile {
     
     /* ==== TOUCH OPTIMIZATION ==== */
     
