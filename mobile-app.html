@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ICCI FREE - Mobile App</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#000000">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        html, body { height: 100%; background: #0b0b0b; }
+    </style>
+</head>
+<body>
+    <div id="root" style="height:100vh;"></div>
+
+    <!-- React UMD + ReactDOM UMD + Babel for in-browser JSX compilation (dev only) -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script type="text/babel">
+      const { useState, useEffect } = React;
+
+      // Minimal icon components using emoji fallbacks (instead of lucide-react)
+      const Icon = ({ children, className }) => (
+        <span className={className} style={{ display:'inline-flex', alignItems:'center', justifyContent:'center' }}>{children}</span>
+      );
+      const Home = p => <Icon {...p}>🏠</Icon>;
+      const Search = p => <Icon {...p}>🔎</Icon>;
+      const Bell = p => <Icon {...p}>🔔</Icon>;
+      const Heart = p => <Icon {...p}>❤️</Icon>;
+      const MessageCircle = p => <Icon {...p}>💬</Icon>;
+      const Gift = p => <Icon {...p}>🎁</Icon>;
+      const DollarSign = p => <Icon {...p}>💲</Icon>;
+      const User = p => <Icon {...p}>👤</Icon>;
+      const Settings = p => <Icon {...p}>⚙️</Icon>;
+      const X = p => <Icon {...p}>✕</Icon>;
+      const Plus = p => <Icon {...p}>＋</Icon>;
+      const Compass = p => <Icon {...p}>🧭</Icon>;
+      const Camera = p => <Icon {...p}>📷</Icon>;
+      const CreditCard = p => <Icon {...p}>💳</Icon>;
+      const Wallet = p => <Icon {...p}>🪪</Icon>;
+
+      const ICCIFreeMobileApp = () => {
+        const [currentView, setCurrentView] = useState('home');
+        const [showGiftModal, setShowGiftModal] = useState(false);
+        const [showBuyGemsModal, setShowBuyGemsModal] = useState(false);
+        const [userGems, setUserGems] = useState(8750);
+        const [selectedCategory, setSelectedCategory] = useState('Food');
+        const [isLive, setIsLive] = useState(false);
+        const [currentUser, setCurrentUser] = useState(null);
+        const [liveStreams, setLiveStreams] = useState([]);
+
+        useEffect(() => {
+          // Mock user
+          setCurrentUser({ id:'user123', username:'Sofia', displayName:'Sofia', handle:'sohcalabro', followers:1200000, following:450, avatar:'👤', gems:8750 });
+          loadLiveStreams();
+        }, []);
+
+        const loadLiveStreams = () => {
+          const mock = [
+            { id: 1, title: 'Art & Chill 🎨', user: 'ArtFlowMaster', viewers: 234, thumbnail: '🎨', category: 'Art', isLive: true },
+            { id: 2, title: 'Gaming Pro 🎮', user: 'ProGamer', viewers: 567, thumbnail: '🎮', category: 'Gaming', isLive: true },
+            { id: 3, title: 'Music Live 🎵', user: 'DJMaster', viewers: 891, thumbnail: '🎵', category: 'Music', isLive: true },
+            { id: 4, title: 'Cooking Show 🍳', user: 'ChefPro', viewers: 445, thumbnail: '🍳', category: 'Food', isLive: true },
+            { id: 5, title: 'Tech Talk 💻', user: 'TechGuru', viewers: 678, thumbnail: '💻', category: 'Tech', isLive: true },
+            { id: 6, title: 'Fitness 💪', user: 'FitCoach', viewers: 923, thumbnail: '💪', category: 'Sports', isLive: true }
+          ];
+          setLiveStreams(mock);
+        };
+
+        const giftCategories = [
+          { id:'food', name:'Food', icon:'🍕' },
+          { id:'animals', name:'Animals', icon:'🐾' },
+          { id:'cars', name:'Cars', icon:'🚗' },
+          { id:'nature', name:'Nature', icon:'🌲' },
+          { id:'fantasy', name:'Fantasy', icon:'🔮' }
+        ];
+
+        const allGifts = {
+          'Food': [
+            { id: 1, name: 'Pizza Party', icon: '🍕', cost: 400, animation: 'bounce' },
+            { id: 2, name: 'Coffee Love', icon: '☕', cost: 300, animation: 'spin' },
+            { id: 3, name: 'Ice Cream', icon: '🍦', cost: 500, animation: 'shake' },
+            { id: 4, name: 'Burger King', icon: '🍔', cost: 600, animation: 'pulse' },
+            { id: 5, name: 'Sushi Roll', icon: '🍣', cost: 800, animation: 'float' },
+            { id: 6, name: 'Cake Boss', icon: '🎂', cost: 1200, animation: 'explode' }
+          ],
+          'Animals': [
+            { id: 7, name: 'Cute Panda', icon: '🐼', cost: 700, animation: 'bounce' },
+            { id: 8, name: 'Ocean Shark', icon: '🦈', cost: 1200, animation: 'swim' },
+            { id: 9, name: 'Lion King', icon: '🦁', cost: 1500, animation: 'roar' },
+            { id: 10, name: 'Unicorn', icon: '🦄', cost: 2000, animation: 'sparkle' },
+            { id: 11, name: 'Dragon', icon: '🐉', cost: 2500, animation: 'fire' },
+            { id: 12, name: 'Phoenix', icon: '🦅', cost: 3000, animation: 'rise' }
+          ],
+          'Cars': [
+            { id: 13, name: 'Race Car', icon: '🏎️', cost: 1000, animation: 'speed' },
+            { id: 14, name: 'Police Car', icon: '🚓', cost: 800, animation: 'flash' },
+            { id: 15, name: 'Fire Truck', icon: '🚒', cost: 900, animation: 'siren' },
+            { id: 16, name: 'Taxi', icon: '🚕', cost: 600, animation: 'drive' },
+            { id: 17, name: 'Limousine', icon: '🚙', cost: 1500, animation: 'luxury' },
+            { id: 18, name: 'Rocket', icon: '🚀', cost: 1800, animation: 'launch' }
+          ],
+          'Nature': [
+            { id: 19, name: 'Forest Giant', icon: '🌳', cost: 2500, animation: 'grow' },
+            { id: 20, name: 'Rainbow', icon: '🌈', cost: 1200, animation: 'arc' },
+            { id: 21, name: 'Mountain', icon: '⛰️', cost: 1800, animation: 'rise' },
+            { id: 22, name: 'Ocean Wave', icon: '🌊', cost: 1000, animation: 'wave' },
+            { id: 23, name: 'Sun', icon: '☀️', cost: 2000, animation: 'shine' },
+            { id: 24, name: 'Moon', icon: '🌙', cost: 2200, animation: 'glow' }
+          ],
+          'Fantasy': [
+            { id: 25, name: 'Royal Crown', icon: '👑', cost: 3000, animation: 'crown' },
+            { id: 26, name: 'Magic Wand', icon: '🪄', cost: 2500, animation: 'magic' },
+            { id: 27, name: 'Crystal Ball', icon: '🔮', cost: 2800, animation: 'predict' },
+            { id: 28, name: 'Star Power', icon: '⭐', cost: 3500, animation: 'star' },
+            { id: 29, name: 'Diamond', icon: '💎', cost: 4000, animation: 'shine' },
+            { id: 30, name: 'Galaxy', icon: '🌌', cost: 5000, animation: 'universe' }
+          ]
+        };
+
+        const gemPackages = [
+          { gems: 500, price: 4.99, bonus: null },
+          { gems: 1200, price: 9.99, bonus: '+10%' },
+          { gems: 2500, price: 19.99, bonus: '+15%', popular: true },
+          { gems: 5000, price: 34.99, bonus: '+20%' },
+          { gems: 10000, price: 64.99, bonus: '+25%' },
+          { gems: 25000, price: 149.99, bonus: '+30%' }
+        ];
+
+        const sendGift = (gift) => {
+          if (userGems >= gift.cost) {
+            setUserGems(gems => gems - gift.cost);
+            triggerGiftAnimation(gift);
+            setTimeout(() => setShowGiftModal(false), 800);
+          }
+        };
+
+        const triggerGiftAnimation = (gift) => {
+          console.log(`🎁 Gift sent: ${gift.name} with animation: ${gift.animation}`);
+        };
+
+        const buyGems = (pkg) => {
+          console.log(`💳 Buying ${pkg.gems} gems for $${pkg.price}`);
+          setShowBuyGemsModal(false);
+        };
+
+        const HomeView = () => (
+          <div className="relative w-full h-full bg-gradient-to-br from-gray-800 via-gray-900 to-black overflow-hidden">
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-9xl">🎨</div>
+            </div>
+            <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/60"></div>
+            <div className="absolute top-0 left-0 right-0 flex items-center justify-between p-4 bg-gradient-to-b from-black/60 to-transparent">
+              <button className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center">
+                <Search className="w-5 h-5 text-white" />
+              </button>
+              <div className="flex flex-col items-center">
+                <div className="text-3xl mb-1">🔥</div>
+                <span className="text-xs text-yellow-400 font-bold">Icci Free</span>
+              </div>
+              <button className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center relative">
+                <Bell className="w-5 h-5 text-white" />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+              </button>
+            </div>
+            <div className="absolute top-20 left-4">
+              <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md rounded-full px-3 py-1.5">
+                <span className="text-white font-bold text-sm">@ArtFlowMaster</span>
+                <button className="bg-yellow-500 text-black text-xs font-bold px-3 py-1 rounded-full">Segui</button>
+              </div>
+            </div>
+            <div className="absolute right-4 bottom-32 flex flex-col gap-4">
+              <button className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center"><Heart className="w-6 h-6 text-white" /></button>
+              <button className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center"><MessageCircle className="w-6 h-6 text-white" /></button>
+              <button onClick={() => setShowGiftModal(true)} className="w-12 h-12 bg-yellow-500/90 backdrop-blur-md rounded-full flex items-center justify-center animate-pulse"><Gift className="w-6 h-6 text-black" /></button>
+            </div>
+            <BottomNav currentView={currentView} setCurrentView={setCurrentView} />
+          </div>
+        );
+
+        const ExploreView = () => (
+          <div className="relative w-full h-full bg-gradient-to-b from-gray-900 to-black overflow-y-auto">
+            <div className="p-4 pt-6">
+              <div className="flex items-center justify-between mb-6">
+                <h1 className="text-2xl font-bold text-white">Esplora</h1>
+                <button className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center"><Search className="w-5 h-5 text-white" /></button>
+              </div>
+              <div className="flex gap-2 overflow-x-auto pb-4 mb-6 scrollbar-hide">
+                {['Tutti', 'Gaming', 'Music', 'Art', 'Sport', 'Tech', 'Food'].map(cat => (
+                  <button key={cat} className="px-4 py-2 bg-gray-800 rounded-full text-white font-semibold whitespace-nowrap hover:bg-yellow-500 hover:text-black transition-all">{cat}</button>
+                ))}
+              </div>
+              <div className="space-y-4 pb-24">
+                {liveStreams.map(stream => (
+                  <div key={stream.id} className="bg-gray-800 rounded-2xl overflow-hidden">
+                    <div className="relative aspect-video bg-gray-700 flex items-center justify-center">
+                      <div className="text-6xl">{stream.thumbnail}</div>
+                      <div className="absolute top-3 left-3 bg-red-500 px-3 py-1 rounded-full flex items-center gap-2"><span className="w-2 h-2 bg-white rounded-full animate-pulse"></span><span className="text-xs font-bold text-white">LIVE</span></div>
+                      <div className="absolute top-3 right-3 bg-black/70 backdrop-blur-sm px-2 py-1 rounded-full text-xs text-white font-bold">👁️ {stream.viewers}</div>
+                    </div>
+                    <div className="p-4 flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center font-bold text-black flex-shrink-0">{stream.user[0]}</div>
+                      <div className="flex-1">
+                        <h3 className="font-bold text-white mb-1">{stream.title}</h3>
+                        <p className="text-sm text-gray-400">@{stream.user}</p>
+                        <span className="inline-block mt-2 px-2 py-1 bg-gray-700 rounded-full text-xs text-gray-300">{stream.category}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <BottomNav currentView={currentView} setCurrentView={setCurrentView} />
+          </div>
+        );
+
+        const GoLiveView = () => (
+          <div className="relative w-full h-full bg-gradient-to-b from-gray-900 to-black overflow-y-auto">
+            <div className="p-6 pt-8">
+              <h1 className="text-3xl font-bold text-white mb-6">Avvia Live</h1>
+              {!isLive ? (
+                <div className="space-y-6">
+                  <div className="bg-gray-800 rounded-2xl p-6">
+                    <label className="block text-white font-semibold mb-2">Titolo Stream</label>
+                    <input type="text" placeholder="Dai un titolo al tuo stream..." className="w-full bg-gray-700 text-white rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-yellow-500" />
+                  </div>
+                  <div className="bg-gray-800 rounded-2xl p-6">
+                    <label className="block text-white font-semibold mb-2">Categoria</label>
+                    <select className="w-full bg-gray-700 text-white rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-yellow-500">
+                      <option>Gaming</option><option>Music</option><option>Art</option><option>Sport</option><option>Tech</option><option>Food</option>
+                    </select>
+                  </div>
+                  <div className="bg-gray-800 rounded-2xl p-6 aspect-video flex items-center justify-center"><div className="text-center"><Camera className="w-16 h-16 text-gray-600 mx-auto mb-3" /><p className="text-gray-400">Anteprima Camera</p></div></div>
+                  <button onClick={() => setIsLive(true)} className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white font-bold py-4 rounded-full flex items-center justify-center gap-2 shadow-lg hover:scale-105 transition-transform"><span className="w-3 h-3 bg-white rounded-full animate-pulse"></span><span>Vai Live</span></button>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  <div className="bg-red-500 rounded-2xl p-6 text-center"><div className="flex items-center justify-center gap-3 mb-2"><span className="w-4 h-4 bg-white rounded-full animate-pulse"></span><span className="text-2xl font-bold text-white">SEI IN DIRETTA</span></div><p className="text-white/80">234 spettatori</p></div>
+                  <div className="bg-gray-800 rounded-2xl p-6 space-y-4"><div className="flex justify-between"><span className="text-gray-400">Durata</span><span className="text-white font-bold">00:15:32</span></div><div className="flex justify-between"><span className="text-gray-400">Visualizzazioni</span><span className="text-white font-bold">234</span></div><div className="flex justify-between"><span className="text-gray-400">Regali ricevuti</span><span className="text-yellow-500 font-bold">💎 1,250</span></div></div>
+                  <button onClick={() => setIsLive(false)} className="w-full bg-gray-700 text-white font-bold py-4 rounded-full hover:bg-gray-600 transition-colors">Termina Stream</button>
+                </div>
+              )}
+            </div>
+            <BottomNav currentView={currentView} setCurrentView={setCurrentView} />
+          </div>
+        );
+
+        const WalletView = () => (
+          <div className="relative w-full h-full bg-gradient-to-b from-gray-900 to-black overflow-y-auto">
+            <div className="p-6 pt-8">
+              <div className="flex items-center justify-between mb-6"><h1 className="text-3xl font-bold text-white">Wallet</h1><button className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center"><Settings className="w-5 h-5 text-white" /></button></div>
+              <div className="bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-3xl p-6 mb-6 shadow-xl"><div className="flex items-center justify-between mb-4"><span className="text-black/70 font-semibold">Il Mio Saldo</span><Wallet className="w-6 h-6 text-black/70" /></div><div className="flex items-center gap-2 mb-2"><span className="text-5xl">💎</span><span className="text-5xl font-bold text-black">{userGems.toLocaleString()}</span></div><p className="text-black/70 text-sm">Icci Gems</p></div>
+              <button onClick={() => setShowBuyGemsModal(true)} className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white font-bold py-4 rounded-full flex items-center justify-center gap-2 mb-6 shadow-lg hover:scale-105 transition-transform"><Plus className="w-5 h-5" /><span>Compra Gems</span></button>
+              <h2 className="text-xl font-bold text_white mb-4 text-white">Transazioni Recenti</h2>
+              <div className="space-y-3 pb-24">{[{ type:'received', amount:500, from:'ProGamer', time:'2 ore fa' },{ type:'sent', amount:1200, to:'ArtFlow', time:'5 ore fa' },{ type:'purchased', amount:2500, time:'1 giorno fa' },{ type:'received', amount:800, from:'MusicLover', time:'2 giorni fa' }].map((tx,i)=>(
+                <div key={i} className="bg-gray-800 rounded-xl p-4 flex items-center justify-between"><div className="flex items-center gap-3"><div className={`w-10 h-10 rounded-full flex items-center justify-center ${tx.type==='received'?'bg-green-500/20':tx.type==='sent'?'bg-red-500/20':'bg-yellow-500/20'}`}><span className="text-xl">{tx.type==='received'?'📥':tx.type==='sent'?'📤':'💳'}</span></div><div><p className="text-white font-semibold">{tx.type==='received'&&`Da @${tx.from}`}{tx.type==='sent'&&`A @${tx.to}`}{tx.type==='purchased'&&'Acquisto Gems'}</p><p className="text-gray-400 text-sm">{tx.time}</p></div></div><div className={`${tx.type==='received'?'text-green-500':tx.type==='sent'?'text-red-500':'text-yellow-500'} font-bold`}>{tx.type==='sent'?'-':'+'}{tx.amount} 💎</div></div>
+              ))}</div>
+            </div>
+            <BottomNav currentView={currentView} setCurrentView={setCurrentView} />
+          </div>
+        );
+
+        const ProfileView = () => (
+          <div className="relative w-full h-full bg-gradient-to-br from-yellow-400 via-yellow-500 to-yellow-600 overflow-hidden">
+            <div className="absolute inset-0 overflow-hidden">{Array.from({length:20}).map((_,i)=>(<div key={i} className="absolute text-white opacity-70 animate-twinkle" style={{left:`${Math.random()*100}%`, top:`${Math.random()*100}%`, fontSize:`${Math.random()*20+10}px`, animationDelay:`${Math.random()*2}s`}}>✨</div>))}</div>
+            <button className="absolute top-6 right-6 w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg z-10"><Settings className="w-6 h-6 text-yellow-600" /></button>
+            <div className="relative z-10 flex flex-col items-center pt-16 px-6">
+              <div className="w-32 h-32 rounded-full bg-white p-1 shadow-2xl mb-4"><div className="w-full h-full rounded-full bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center text-5xl">{currentUser?.avatar}</div></div>
+              <h1 className="text-4xl font-bold text-white mb-1">{currentUser?.displayName}</h1>
+              <p className="text-white/80 text-lg mb-2">@{currentUser?.handle}</p>
+              <button className="bg-white/30 backdrop-blur-sm px-4 py-2 rounded-full flex items-center gap-2 text-white mb-6"><span className="text-sm">✏️</span></button>
+              <div className="flex gap-4 mb-8"><div className="bg_white/30 backdrop-blur-md rounded-3xl px-8 py-4 text-center bg-white/30"><div className="text-3xl font-bold text-white">{(currentUser?.followers/1000000).toFixed(1)}M</div><div className="text-white/80 text-sm">Followers</div></div><div className="bg-white/30 backdrop-blur-md rounded-3xl px-8 py-4 text-center"><div className="text-3xl font-bold text_white text-white">{currentUser?.following}</div><div className="text-white/80 text-sm">Following</div></div></div>
+              <div className="w-full bg-gray-900 rounded-t-3xl p-6 min-h-[300px]"><h2 className="text-white text-xl font-bold mb-4">Recent Live Streams</h2><div className="grid grid-cols-3 gap-3 pb-24">{liveStreams.slice(0,3).map(stream=> (<div key={stream.id} className="aspect-[3/4] bg-gray-800 rounded-2xl border-2 border-yellow-500 overflow-hidden relative group cursor-pointer"><div className="absolute inset-0 flex items-center justify-center text-5xl">{stream.thumbnail}</div><div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"><div className="text-white font-bold text-xs text-center p-2">{stream.title}</div></div><div className="absolute bottom-2 left-2 bg-black/70 backdrop-blur-sm px-2 py-1 rounded-full flex items-center gap-1"><span className="text-xs text-white">👁️</span><span className="text-xs text-white font-bold">{stream.viewers}</span></div></div>))}</div></div>
+            </div>
+            <BottomNav currentView={currentView} setCurrentView={setCurrentView} />
+          </div>
+        );
+
+        const GiftModal = () => (
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-lg flex items-center justify-center z-50 p-6">
+            <div className="bg-gray-800/95 rounded-3xl w-full max-w-md max-h-[80vh] overflow-hidden">
+              <div className="relative p-6 border-b border-gray-700">
+                <div className="absolute top-2 left-1/2 -translate-x-1/2 w-16 h-1 bg-yellow-500 rounded-full"></div>
+                <button onClick={() => setShowGiftModal(false)} className="absolute left-6 top-6 w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center"><X className="w-5 h-5 text-white" /></button>
+                <h2 className="text-2xl font-bold text-white text-center pt-2">Invia un Regalo</h2>
+              </div>
+              <div className="flex gap-2 p-4 overflow-x-auto scrollbar-hide border-b border-gray-700">
+                {giftCategories.map(cat => (
+                  <button key={cat.id} onClick={() => setSelectedCategory(cat.name)} className={`${selectedCategory===cat.name?'bg-yellow-500 text-black':'bg-gray-700 text-white'} flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap transition-all`}><span>{cat.icon}</span><span className="font-semibold text-sm">{cat.name}</span></button>
+                ))}
+                <button className="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center flex-shrink-0"><Search className="w-5 h-5 text-black" /></button>
+              </div>
+              <div className="p-4 overflow-y-auto max-h-96">
+                <div className="grid grid-cols-3 gap-4">
+                  {allGifts[selectedCategory]?.map(gift => (
+                    <button key={gift.id} onClick={() => sendGift(gift)} disabled={userGems < gift.cost} data-animation={gift.animation} className={`gift-item bg-gray-700/50 rounded-2xl p-4 flex flex-col items-center gap-2 transition-all ${userGems >= gift.cost ? 'hover:bg-gray-600 hover:scale-105' : 'opacity-50 cursor-not-allowed'}`}>
+                      <div className="text-5xl mb-2">{gift.icon}</div>
+                      <span className="text-white text-xs font-semibold text-center leading-tight">{gift.name}</span>
+                      <div className="flex items-center gap-1 text-yellow-500 font-bold text-sm"><span>💎</span><span>{gift.cost}</span><span>💎</span></div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="p-4 border-t border-gray-700 bg-gray-900/80 backdrop-blur"><div className="flex items-center justify-between"><div className="flex items-center gap-2"><span className="text-4xl">💎</span><span className="text-white font-bold text-2xl">{userGems.toLocaleString()} Gems</span></div><button onClick={() => { setShowGiftModal(false); setShowBuyGemsModal(true); }} className="w-12 h-12 bg-yellow-500 rounded-full flex items-center justify-center hover:scale-110 transition-transform"><Plus className="w-6 h-6 text-black" /></button></div></div>
+            </div>
+          </div>
+        );
+
+        const BuyGemsModal = () => (
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-lg flex items-center justify-center z-50 p-6">
+            <div className="bg-gray-800/95 rounded-3xl w-full max-w-md max-h-[80vh] overflow-y-auto">
+              <div className="relative p-6 border-b border-gray-700"><button onClick={() => setShowBuyGemsModal(false)} className="absolute left-6 top-6 w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center"><X className="w-5 h-5 text-white" /></button><h2 className="text-2xl font-bold text-white text-center">Compra Gems</h2><p className="text-gray-400 text-center text-sm mt-2">Scegli il tuo pacchetto</p></div>
+              <div className="p-4 space-y-3">{gemPackages.map((pkg, i)=> (
+                <button key={i} onClick={() => buyGems(pkg)} className={`relative w-full bg-gray-700 rounded-2xl p-4 border-2 transition-all hover:scale-105 ${pkg.popular?'border-yellow-500':'border-gray-600'}`}>
+                  {pkg.popular && (<div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-yellow-500 text-black text-xs font-bold px-3 py-1 rounded-full">PIÙ POPOLARE</div>)}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3"><span className="text-4xl">💎</span><div className="text-left"><div className="text-white font-bold text-xl">{pkg.gems.toLocaleString()}</div>{pkg.bonus && (<div className="text-green-400 text-xs font-semibold">{pkg.bonus} BONUS</div>)}</div></div>
+                    <div className="text-right"><div className="text-white font-bold text-2xl">${pkg.price}</div><div className="text-gray-400 text-xs">USD</div></div>
+                  </div>
+                </button>
+              ))}</div>
+              <div className="p-6 border-t border-gray-700"><h3 className="text-white font-semibold mb-3 text-center">Metodi di Pagamento</h3><div className="space-y-2"><button className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2"><CreditCard className="w-5 h-5" /><span>Carta di Credito</span></button><button className="w-full bg-[#0070ba] text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2"><span>PayPal</span></button></div><p className="text-gray-500 text-xs text-center mt-4">Pagamento sicuro con crittografia SSL</p></div>
+            </div>
+          </div>
+        );
+
+        const BottomNav = ({ currentView, setCurrentView }) => (
+          <div className="absolute bottom-0 left-0 right-0 pb-6 px-6 z-20">
+            <div className="bg-gradient-to-r from-yellow-600 via-yellow-500 to-yellow-600 rounded-full p-1.5 shadow-2xl">
+              <div className="flex items-center justify-around">
+                <NavButton icon={<Home className="w-6 h-6" />} label="Homepage" active={currentView==='home'} onClick={()=> setCurrentView('home')} />
+                <NavButton icon={<Compass className="w-6 h-6" />} label="Esplora" active={currentView==='explore'} onClick={()=> setCurrentView('explore')} />
+                <NavButton icon={<div className="w-16 h-16 bg-white rounded-full flex items-center justify-center -mt-8 shadow-xl"><span className="text-3xl">📷</span></div>} label="Go Live" isLarge onClick={()=> setCurrentView('golive')} />
+                <NavButton icon={<DollarSign className="w-6 h-6" />} label="Wallet" active={currentView==='wallet'} onClick={()=> setCurrentView('wallet')} />
+                <NavButton icon={<User className="w-6 h-6" />} label="Profilo" active={currentView==='profile'} onClick={()=> setCurrentView('profile')} />
+              </div>
+            </div>
+          </div>
+        );
+
+        const NavButton = ({ icon, label, active, isLarge, onClick }) => (
+          <button onClick={onClick} className={`flex flex-col items-center gap-1 ${isLarge?'':'py-2 px-1'} ${active?'opacity-100':'opacity-70'}`}>
+            <div className={active?'text-black':'text-white'}>{icon}</div>
+            {!isLarge && (<span className={`text-[9px] font-semibold leading-tight text-center max-w-[60px] ${active?'text-black':'text-white'}`}>{label}</span>)}
+          </button>
+        );
+
+        return (
+          <div className="w-full h-screen bg-gray-900 flex items-center justify-center overflow-hidden">
+            <div className="relative w-[390px] h-[844px] bg-black rounded-[50px] shadow-2xl overflow-hidden border-8 border-gray-800">
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-7 bg-black rounded-b-3xl z-50"></div>
+              <div className="relative w-full h-full bg-black overflow-hidden">
+                {currentView==='home' && <HomeView />}
+                {currentView==='explore' && <ExploreView />}
+                {currentView==='golive' && <GoLiveView />}
+                {currentView==='wallet' && <WalletView />}
+                {currentView==='profile' && <ProfileView />}
+                {showGiftModal && <GiftModal />}
+                {showBuyGemsModal && <BuyGemsModal />}
+              </div>
+              <style>{`
+                @keyframes twinkle { 0%,100%{opacity:.3;transform:scale(1)} 50%{opacity:1;transform:scale(1.2)} }
+                .animate-twinkle { animation: twinkle 3s infinite; }
+                .scrollbar-hide::-webkit-scrollbar { display: none; }
+                .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+                .gift-item[data-animation="bounce"]:hover { animation: bounce .5s ease }
+                .gift-item[data-animation="spin"]:hover { animation: spin .5s ease }
+                .gift-item[data-animation="pulse"]:hover { animation: pulse .5s ease }
+                @keyframes bounce { 0%,100%{transform:translateY(0) scale(1.05)} 50%{transform:translateY(-10px) scale(1.05)} }
+                @keyframes spin { from{transform:rotate(0) scale(1.05)} to{transform:rotate(360deg) scale(1.05)} }
+                @keyframes pulse { 0%,100%{transform:scale(1.05)} 50%{transform:scale(1.15)} }
+              `}</style>
+            </div>
+          </div>
+        );
+      };
+
+      ReactDOM.createRoot(document.getElementById('root')).render(<ICCIFreeMobileApp />);
+    </script>
+</body>
+</html>
+
