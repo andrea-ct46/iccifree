@@ -222,6 +222,28 @@
         @media (max-width: 768px) {
             .bottom-info { right: 80px; }
         }
+
+        /* Desktop chat (Twitch-like) */
+        .desktop-chat { display: none; }
+        @media (min-width: 1024px) {
+            .desktop-chat {
+                position: absolute;
+                top: 0;
+                right: 0;
+                width: 360px;
+                height: 100vh;
+                background: rgba(0,0,0,0.7);
+                backdrop-filter: blur(12px);
+                border-left: 1px solid rgba(255,255,255,0.12);
+                display: flex;
+                flex-direction: column;
+                z-index: 20;
+            }
+            .desktop-chat .chat-header { padding: 16px; border-bottom: 1px solid rgba(255,255,255,0.12); }
+            .desktop-chat .chat-messages { flex: 1; overflow-y: auto; padding: 16px; }
+            .desktop-chat .chat-input-container { padding: 12px; border-top: 1px solid rgba(255,255,255,0.12); }
+            .desktop-chat .chat-input { width: 100%; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; padding: 10px 12px; color: #fff; }
+        }
     </style>
 </head>
 <body>
@@ -286,6 +308,17 @@
                 </div>
             </div>
         </div>
+
+        <!-- Desktop Chat Sidebar -->
+        <div class="desktop-chat">
+            <div class="chat-header">
+                <h3 style="margin:0">Chat</h3>
+            </div>
+            <div class="chat-messages" id="chat-messages"></div>
+            <div class="chat-input-container">
+                <input type="text" class="chat-input" id="chat-input-desktop" placeholder="Invia un messaggio...">
+            </div>
+        </div>
     </div>
     
     <!-- Gift Button -->
@@ -303,9 +336,12 @@
     <script>
         // Get stream ID from URL
         const urlParams = new URLSearchParams(window.location.search);
-        const streamId = urlParams.get('id') || 'demo-stream';
+        let streamId = urlParams.get('id') || 'demo-stream';
         let streamerId = null;
         let currentUser = null;
+        let webrtc = null;
+        let liveStreams = [];
+        let currentIndex = 0;
         
         // Initialize
         document.addEventListener('DOMContentLoaded', async () => {
@@ -322,6 +358,9 @@
                 document.getElementById('user-gems-balance').textContent = '0';
             }
             
+            // Carica lista live streams (per swipe mobile)
+            await loadLiveStreamsList();
+            
             // Load stream info
             await loadStreamInfo();
             // Subscribe to stream status changes
@@ -333,6 +372,11 @@
             // Setup chat + azioni
             setupChat();
             setupActions();
+
+            // Abilita swipe su mobile
+            if (window.matchMedia('(max-width: 768px)').matches) {
+                enableMobileSwipe();
+            }
         });
         
         async function loadStreamInfo() {
@@ -361,7 +405,10 @@
         }
         
         async function setupWebRTC() {
-            const webrtc = new WebRTCStreaming(streamId, 'viewer');
+            if (webrtc && webrtc.stop) {
+                try { await webrtc.stop(); } catch {}
+            }
+            webrtc = new WebRTCStreaming(streamId, 'viewer');
             webrtc.onRemoteStream = (stream) => {
                 const video = document.getElementById('stream-video');
                 if (video) {
@@ -375,6 +422,62 @@
                 const v = document.getElementById('stream-video');
                 v?.play?.().catch(() => {});
             } catch {}
+        }
+
+        async function loadLiveStreamsList() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('streams')
+                    .select('id')
+                    .eq('is_live', true)
+                    .order('viewer_count', { ascending: false });
+                if (!error && Array.isArray(data)) {
+                    liveStreams = data.map(x => x.id);
+                    const idx = liveStreams.indexOf(streamId);
+                    currentIndex = idx >= 0 ? idx : 0;
+                }
+            } catch (e) { console.warn('loadLiveStreamsList error', e); }
+        }
+
+        function enableMobileSwipe() {
+            const container = document.querySelector('.stream-page');
+            if (!container) return;
+            let startY = 0;
+            let endY = 0;
+            let swiping = false;
+            container.addEventListener('touchstart', (e) => {
+                startY = e.changedTouches[0].clientY;
+                swiping = true;
+            }, { passive: true });
+            container.addEventListener('touchend', async (e) => {
+                if (!swiping) return;
+                swiping = false;
+                endY = e.changedTouches[0].clientY;
+                const delta = endY - startY;
+                if (Math.abs(delta) < 60 || liveStreams.length === 0) return;
+                if (delta < 0) {
+                    // swipe up -> next
+                    currentIndex = (currentIndex + 1) % liveStreams.length;
+                } else {
+                    // swipe down -> prev
+                    currentIndex = (currentIndex - 1 + liveStreams.length) % liveStreams.length;
+                }
+                const nextId = liveStreams[currentIndex];
+                if (nextId && nextId !== streamId) {
+                    await navigateToStream(nextId);
+                }
+            }, { passive: true });
+        }
+
+        async function navigateToStream(newStreamId) {
+            try {
+                streamId = newStreamId;
+                const url = new URL(window.location.href);
+                url.searchParams.set('id', streamId);
+                window.history.replaceState({}, '', url.toString());
+                await loadStreamInfo();
+                await setupWebRTC();
+            } catch (e) { console.warn('navigateToStream error', e); }
         }
         
         async function ensureUserProfile(user) {
@@ -401,18 +504,23 @@
         }
         
         function setupChat() {
-            const input = document.getElementById('chat-input');
-            
-            input.addEventListener('keypress', async (e) => {
-                if (e.key === 'Enter' && input.value.trim()) {
-                    if (!currentUser) {
-                        window.location.href = '/auth.html';
-                        return;
+            const inputMobile = document.getElementById('chat-input');
+            const inputDesktop = document.getElementById('chat-input-desktop');
+            const handler = async (input) => {
+                if (!input) return;
+                input.addEventListener('keypress', async (e) => {
+                    if (e.key === 'Enter' && input.value.trim()) {
+                        if (!currentUser) {
+                            window.location.href = '/auth.html';
+                            return;
+                        }
+                        await sendMessage(input.value.trim());
+                        input.value = '';
                     }
-                    await sendMessage(input.value.trim());
-                    input.value = '';
-                }
-            });
+                });
+            };
+            handler(inputMobile);
+            handler(inputDesktop);
         }
 
         function watchStreamLiveStatus() {
