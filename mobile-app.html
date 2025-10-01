@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>ICCI FREE Mobile - Stream Without Limits</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="ICCI FREE Mobile - La piattaforma di streaming live senza censura. Esprimi le tue opinioni liberamente con latenza <1 secondo.">
+    <meta name="keywords" content="streaming, live, webrtc, no censura, libertà espressione, mobile, app">
+    <meta name="author" content="ICCI FREE Team">
+    
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#FFD700">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ICCI FREE">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23FFD700'/><text x='50' y='70' font-size='60' text-anchor='middle'>🔥</text></svg>">
+    
+    <!-- Preconnect -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/mobile-optimizations.css">
+    <link rel="stylesheet" href="css/gift-system.css">
+    
+    <style>
+        /* ============= MOBILE-ONLY STYLES ============= */
+        
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            color: white;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+            /* Safe area support for iPhone notch */
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
+        }
+        
+        /* ============= MOBILE NAVIGATION ============= */
+        
+        .mobile-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 1000;
+            /* Safe area support */
+            padding-top: max(10px, env(safe-area-inset-top));
+            height: max(60px, calc(60px + env(safe-area-inset-top)));
+        }
+        
+        .mobile-logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #FFD700;
+        }
+        
+        .mobile-menu-btn {
+            background: none;
+            border: none;
+            color: #FFD700;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: background 0.3s ease;
+        }
+        
+        .mobile-menu-btn:active {
+            background: rgba(255, 215, 0, 0.2);
+        }
+        
+        /* ============= MOBILE CONTENT AREA ============= */
+        
+        .mobile-content {
+            margin-top: max(60px, calc(60px + env(safe-area-inset-top)));
+            min-height: calc(100vh - max(60px, calc(60px + env(safe-area-inset-top))));
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+        }
+        
+        /* ============= MOBILE HOME SCREEN ============= */
+        
+        .mobile-home {
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .mobile-hero {
+            text-align: center;
+            padding: 40px 0;
+        }
+        
+        .mobile-hero h1 {
+            font-size: 2.5rem;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .mobile-hero p {
+            font-size: 1.1rem;
+            color: #ccc;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        
+        /* ============= MOBILE ACTION BUTTONS ============= */
+        
+        .mobile-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin: 30px 0;
+        }
+        
+        .mobile-btn {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            color: #000;
+            border: none;
+            padding: 16px 24px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            min-height: 56px;
+        }
+        
+        .mobile-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .mobile-btn.secondary {
+            background: transparent;
+            color: #FFD700;
+            border: 2px solid #FFD700;
+        }
+        
+        .mobile-btn.secondary:active {
+            background: rgba(255, 215, 0, 0.1);
+        }
+        
+        /* ============= MOBILE LIVE STREAMS ============= */
+        
+        .mobile-streams {
+            margin-top: 40px;
+        }
+        
+        .mobile-streams h2 {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: #FFD700;
+        }
+        
+        .streams-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .stream-card-mobile {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 16px;
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stream-card-mobile::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+        }
+        
+        .stream-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        
+        .stream-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+        
+        .stream-info h3 {
+            font-size: 1.1rem;
+            margin: 0;
+            color: white;
+        }
+        
+        .stream-info p {
+            font-size: 0.9rem;
+            color: #ccc;
+            margin: 0;
+        }
+        
+        .live-badge-mobile {
+            background: #ff0000;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-left: auto;
+        }
+        
+        .stream-stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+        }
+        
+        .viewer-count {
+            color: #FFD700;
+            font-weight: 600;
+        }
+        
+        .stream-action {
+            background: rgba(255, 215, 0, 0.2);
+            border: 1px solid #FFD700;
+            color: #FFD700;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .stream-action:active {
+            background: rgba(255, 215, 0, 0.3);
+        }
+        
+        /* ============= MOBILE BOTTOM NAV ============= */
+        
+        .mobile-bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 215, 0, 0.2);
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0;
+            /* Safe area support */
+            padding-bottom: max(12px, env(safe-area-inset-bottom));
+            z-index: 1000;
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            color: #666;
+            text-decoration: none;
+            padding: 8px;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            min-width: 60px;
+        }
+        
+        .nav-item.active {
+            color: #FFD700;
+        }
+        
+        .nav-item:active {
+            background: rgba(255, 215, 0, 0.1);
+        }
+        
+        .nav-icon {
+            font-size: 20px;
+        }
+        
+        .nav-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        
+        /* ============= MOBILE MENU OVERLAY ============= */
+        
+        .mobile-menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(20px);
+            z-index: 2000;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .mobile-menu-overlay.active {
+            display: flex;
+        }
+        
+        .mobile-menu-item {
+            color: white;
+            text-decoration: none;
+            font-size: 1.5rem;
+            font-weight: 600;
+            padding: 20px;
+            text-align: center;
+            border-radius: 16px;
+            margin: 8px 0;
+            transition: all 0.3s ease;
+            min-width: 200px;
+        }
+        
+        .mobile-menu-item:active {
+            background: rgba(255, 215, 0, 0.2);
+            color: #FFD700;
+        }
+        
+        .menu-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: #FFD700;
+            font-size: 32px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+        }
+        
+        .menu-close:active {
+            background: rgba(255, 215, 0, 0.2);
+        }
+        
+        /* ============= MOBILE STREAMING VIEW ============= */
+        
+        .mobile-stream-view {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #000;
+            z-index: 3000;
+            display: none;
+        }
+        
+        .mobile-stream-view.active {
+            display: block;
+        }
+        
+        .mobile-stream-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .mobile-stream-controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+        
+        .mobile-stream-info {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(20px);
+            padding: 12px 16px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .mobile-back-btn {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(20px);
+            border: none;
+            color: white;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .mobile-stream-actions {
+            position: absolute;
+            right: 20px;
+            bottom: 120px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            z-index: 10;
+        }
+        
+        .mobile-action-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .mobile-action-btn:active {
+            transform: scale(0.9);
+            background: rgba(255, 215, 0, 0.3);
+        }
+        
+        .mobile-stream-bottom {
+            position: absolute;
+            left: 20px;
+            right: 100px;
+            bottom: 20px;
+            z-index: 10;
+        }
+        
+        .mobile-stream-title {
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .mobile-stream-handle {
+            color: #FFD700;
+            font-size: 0.9rem;
+            margin-bottom: 12px;
+        }
+        
+        .mobile-chat-input {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 24px;
+            padding: 12px 16px;
+            color: white;
+            font-size: 14px;
+            width: 100%;
+        }
+        
+        .mobile-chat-input::placeholder {
+            color: #666;
+        }
+        
+        /* ============= LOADING STATES ============= */
+        
+        .mobile-loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 200px;
+            color: #FFD700;
+        }
+        
+        .mobile-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 215, 0, 0.3);
+            border-top-color: #FFD700;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 16px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* ============= PULL TO REFRESH ============= */
+        
+        .pull-to-refresh {
+            position: absolute;
+            top: -60px;
+            left: 0;
+            right: 0;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #FFD700;
+            font-size: 14px;
+            transition: transform 0.3s ease;
+        }
+        
+        .pull-to-refresh.active {
+            transform: translateY(60px);
+        }
+        
+        /* ============= RESPONSIVE ADJUSTMENTS ============= */
+        
+        @media (max-width: 375px) {
+            .mobile-hero h1 {
+                font-size: 2rem;
+            }
+            
+            .mobile-btn {
+                padding: 14px 20px;
+                font-size: 1rem;
+            }
+        }
+        
+        @media (orientation: landscape) and (max-height: 500px) {
+            .mobile-hero {
+                padding: 20px 0;
+            }
+            
+            .mobile-hero h1 {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Mobile Navigation -->
+    <nav class="mobile-nav">
+        <div class="mobile-logo">
+            <span>🔥</span>
+            <span>ICCI<span style="color: white;">FREE</span></span>
+        </div>
+        <button class="mobile-menu-btn" onclick="toggleMobileMenu()">☰</button>
+    </nav>
+
+    <!-- Mobile Content -->
+    <div class="mobile-content">
+        <!-- Pull to Refresh Indicator -->
+        <div class="pull-to-refresh" id="pullToRefresh">
+            🔄 Rilascia per aggiornare
+        </div>
+
+        <!-- Home Screen -->
+        <div class="mobile-home" id="mobileHome">
+            <div class="mobile-hero">
+                <h1>Stream Without Limits</h1>
+                <p>La piattaforma di streaming live senza censura. Esprimi le tue opinioni liberamente.</p>
+            </div>
+
+            <div class="mobile-actions">
+                <a href="#" class="mobile-btn" onclick="goLive()">
+                    <span>🔴</span>
+                    <span>Go Live</span>
+                </a>
+                <a href="#" class="mobile-btn secondary" onclick="watchStreams()">
+                    <span>👁️</span>
+                    <span>Guarda Live</span>
+                </a>
+                <a href="/auth.html" class="mobile-btn secondary" onclick="login()">
+                    <span>🔐</span>
+                    <span>Login</span>
+                </a>
+            </div>
+
+            <!-- Live Streams -->
+            <div class="mobile-streams">
+                <h2>🔥 Stream Live</h2>
+                <div id="streamsContainer">
+                    <div class="mobile-loading">
+                        <div class="mobile-spinner"></div>
+                        <p>Caricamento stream...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav class="mobile-bottom-nav">
+        <a href="#" class="nav-item active" onclick="showHome()">
+            <div class="nav-icon">🏠</div>
+            <div class="nav-label">Home</div>
+        </a>
+        <a href="#" class="nav-item" onclick="showLive()">
+            <div class="nav-icon">📺</div>
+            <div class="nav-label">Live</div>
+        </a>
+        <a href="#" class="nav-item" onclick="goLive()">
+            <div class="nav-icon">🔴</div>
+            <div class="nav-label">Stream</div>
+        </a>
+        <a href="#" class="nav-item" onclick="showGifts()">
+            <div class="nav-icon">🎁</div>
+            <div class="nav-label">Gifts</div>
+        </a>
+        <a href="#" class="nav-item" onclick="showProfile()">
+            <div class="nav-icon">👤</div>
+            <div class="nav-label">Profilo</div>
+        </a>
+    </nav>
+
+    <!-- Mobile Menu Overlay -->
+    <div class="mobile-menu-overlay" id="mobileMenuOverlay">
+        <button class="menu-close" onclick="toggleMobileMenu()">×</button>
+        <a href="/" class="mobile-menu-item">🏠 Home</a>
+        <a href="/dashboard.html" class="mobile-menu-item">📊 Dashboard</a>
+        <a href="/auth.html" class="mobile-menu-item">🔐 Login</a>
+        <a href="#" class="mobile-menu-item" onclick="showSettings()">⚙️ Impostazioni</a>
+        <a href="#" class="mobile-menu-item" onclick="showAbout()">ℹ️ Info</a>
+    </div>
+
+    <!-- Mobile Stream View -->
+    <div class="mobile-stream-view" id="mobileStreamView">
+        <video class="mobile-stream-video" id="mobileStreamVideo" autoplay playsinline></video>
+        
+        <div class="mobile-stream-controls">
+            <button class="mobile-back-btn" onclick="closeStream()">←</button>
+            <div class="mobile-stream-info">
+                <div class="stream-avatar">👤</div>
+                <div>
+                    <div id="mobileStreamerName">Streamer</div>
+                    <div class="live-badge-mobile">● LIVE</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mobile-stream-actions">
+            <button class="mobile-action-btn" onclick="toggleLike()">❤️</button>
+            <button class="mobile-action-btn" onclick="toggleMute()">🔊</button>
+            <button class="mobile-action-btn" onclick="showGiftModal()">🎁</button>
+            <button class="mobile-action-btn" onclick="shareStream()">↗️</button>
+        </div>
+
+        <div class="mobile-stream-bottom">
+            <div class="mobile-stream-title" id="mobileStreamTitle">Titolo Stream</div>
+            <div class="mobile-stream-handle" id="mobileStreamHandle">@streamer</div>
+            <input type="text" class="mobile-chat-input" placeholder="Invia un messaggio..." id="mobileChatInput">
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/mobile-detector.js"></script>
+    <script src="js/supabase.js"></script>
+    <script src="js/webrtc-streaming.js"></script>
+    <script src="js/gift-system.js"></script>
+    <script src="js/analytics.js"></script>
+    
+    <script>
+        // ============= MOBILE APP LOGIC =============
+        
+        let currentUser = null;
+        let liveStreams = [];
+        let currentStream = null;
+        let webrtc = null;
+        let pullToRefreshActive = false;
+        let startY = 0;
+        let currentY = 0;
+        
+        // Initialize mobile app
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('📱 Mobile App initializing...');
+            
+            // Get current user
+            currentUser = await checkUser();
+            
+            // Load live streams
+            await loadLiveStreams();
+            
+            // Setup pull to refresh
+            setupPullToRefresh();
+            
+            // Setup touch gestures
+            setupTouchGestures();
+            
+            // Update UI based on auth status
+            updateAuthUI();
+            
+            console.log('✅ Mobile App ready');
+        });
+        
+        // ============= MOBILE NAVIGATION =============
+        
+        function toggleMobileMenu() {
+            const overlay = document.getElementById('mobileMenuOverlay');
+            overlay.classList.toggle('active');
+        }
+        
+        function showHome() {
+            updateBottomNav('home');
+            document.getElementById('mobileHome').style.display = 'block';
+            document.getElementById('mobileStreamView').classList.remove('active');
+        }
+        
+        function showLive() {
+            updateBottomNav('live');
+            watchStreams();
+        }
+        
+        function showProfile() {
+            updateBottomNav('profile');
+            if (currentUser) {
+                window.location.href = '/dashboard.html';
+            } else {
+                window.location.href = '/auth.html';
+            }
+        }
+        
+        function showGifts() {
+            updateBottomNav('gifts');
+            if (window.giftSystem) {
+                window.giftSystem.showBuyGemsModal();
+            }
+        }
+        
+        function updateBottomNav(activeItem) {
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            const navItems = document.querySelectorAll('.nav-item');
+            const itemMap = {
+                'home': 0,
+                'live': 1,
+                'stream': 2,
+                'gifts': 3,
+                'profile': 4
+            };
+            
+            if (navItems[itemMap[activeItem]]) {
+                navItems[itemMap[activeItem]].classList.add('active');
+            }
+        }
+        
+        // ============= STREAMING FUNCTIONS =============
+        
+        function goLive() {
+            if (!currentUser) {
+                window.location.href = '/auth.html';
+                return;
+            }
+            window.location.href = '/golive.html';
+        }
+        
+        async function watchStreams() {
+            updateBottomNav('live');
+            await loadLiveStreams();
+        }
+        
+        async function loadLiveStreams() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('streams')
+                    .select('id, title, description, viewer_count, started_at, user_id')
+                    .eq('is_live', true)
+                    .order('viewer_count', { ascending: false });
+                
+                if (error) throw error;
+                
+                liveStreams = data || [];
+                renderMobileStreams();
+                
+            } catch (error) {
+                console.error('Error loading streams:', error);
+                document.getElementById('streamsContainer').innerHTML = `
+                    <div class="mobile-loading">
+                        <p>❌ Errore caricamento stream</p>
+                    </div>
+                `;
+            }
+        }
+        
+        function renderMobileStreams() {
+            const container = document.getElementById('streamsContainer');
+            
+            if (liveStreams.length === 0) {
+                container.innerHTML = `
+                    <div class="mobile-loading">
+                        <p>📺 Nessuno stream attivo</p>
+                        <p style="font-size: 0.9rem; color: #666;">Sii il primo a iniziare uno stream!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = `
+                <div class="streams-list">
+                    ${liveStreams.map(stream => `
+                        <div class="stream-card-mobile" onclick="openMobileStream('${stream.id}')">
+                            <div class="stream-header">
+                                <div class="stream-avatar">👤</div>
+                                <div class="stream-info">
+                                    <h3>${stream.title}</h3>
+                                    <p>Live da ${new Date(stream.started_at).toLocaleTimeString()}</p>
+                                </div>
+                                <div class="live-badge-mobile">● LIVE</div>
+                            </div>
+                            <div class="stream-stats">
+                                <div class="viewer-count">👁️ ${stream.viewer_count} watching</div>
+                                <button class="stream-action" onclick="event.stopPropagation(); openMobileStream('${stream.id}')">
+                                    Guarda
+                                </button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        async function openMobileStream(streamId) {
+            try {
+                // Show stream view
+                document.getElementById('mobileStreamView').classList.add('active');
+                document.getElementById('mobileHome').style.display = 'none';
+                
+                // Get stream info
+                const { data: stream } = await supabaseClient
+                    .from('streams')
+                    .select('title, description, user_id')
+                    .eq('id', streamId)
+                    .single();
+                
+                if (stream) {
+                    document.getElementById('mobileStreamTitle').textContent = stream.title;
+                    document.getElementById('mobileStreamHandle').textContent = `@user_${stream.user_id.slice(0, 8)}`;
+                }
+                
+                // Initialize WebRTC
+                if (webrtc) {
+                    await webrtc.stop();
+                }
+                
+                webrtc = new WebRTCStreaming(streamId, 'viewer');
+                webrtc.onRemoteStream = (stream) => {
+                    const video = document.getElementById('mobileStreamVideo');
+                    if (video) {
+                        video.srcObject = stream;
+                        video.play().catch(() => {});
+                    }
+                };
+                
+                await webrtc.init();
+                
+                // Track analytics
+                if (window.Analytics) {
+                    window.Analytics.track('mobile_stream_view', { streamId });
+                }
+                
+            } catch (error) {
+                console.error('Error opening stream:', error);
+                showNotification('Errore apertura stream', 'error');
+                closeStream();
+            }
+        }
+        
+        function closeStream() {
+            document.getElementById('mobileStreamView').classList.remove('active');
+            document.getElementById('mobileHome').style.display = 'block';
+            
+            if (webrtc) {
+                webrtc.stop();
+                webrtc = null;
+            }
+            
+            const video = document.getElementById('mobileStreamVideo');
+            if (video) {
+                video.srcObject = null;
+            }
+        }
+        
+        // ============= MOBILE ACTIONS =============
+        
+        function toggleLike() {
+            // Implement like functionality
+            showNotification('❤️ Like aggiunto!', 'success');
+        }
+        
+        function toggleMute() {
+            const video = document.getElementById('mobileStreamVideo');
+            if (video) {
+                video.muted = !video.muted;
+                showNotification(video.muted ? '🔇 Audio disattivato' : '🔊 Audio attivato', 'info');
+            }
+        }
+        
+        function showGiftModal() {
+            if (!currentUser) {
+                window.location.href = '/auth.html';
+                return;
+            }
+            
+            if (window.giftSystem && currentStream) {
+                window.giftSystem.showSendGiftModal(currentStream.id, currentStream.user_id);
+            }
+        }
+        
+        async function shareStream() {
+            try {
+                const url = window.location.href;
+                if (navigator.share) {
+                    await navigator.share({
+                        title: 'ICCI FREE Live Stream',
+                        text: 'Guarda questo stream su ICCI FREE!',
+                        url: url
+                    });
+                } else {
+                    await navigator.clipboard.writeText(url);
+                    showNotification('🔗 Link copiato!', 'success');
+                }
+            } catch (error) {
+                console.error('Share error:', error);
+            }
+        }
+        
+        // ============= PULL TO REFRESH =============
+        
+        function setupPullToRefresh() {
+            const container = document.querySelector('.mobile-content');
+            let startY = 0;
+            let currentY = 0;
+            let pullDistance = 0;
+            
+            container.addEventListener('touchstart', (e) => {
+                if (window.scrollY === 0) {
+                    startY = e.touches[0].clientY;
+                }
+            }, { passive: true });
+            
+            container.addEventListener('touchmove', (e) => {
+                if (window.scrollY === 0 && startY > 0) {
+                    currentY = e.touches[0].clientY;
+                    pullDistance = currentY - startY;
+                    
+                    if (pullDistance > 0) {
+                        e.preventDefault();
+                        const refreshIndicator = document.getElementById('pullToRefresh');
+                        
+                        if (pullDistance > 100) {
+                            refreshIndicator.classList.add('active');
+                            refreshIndicator.textContent = '🔄 Rilascia per aggiornare';
+                        } else {
+                            refreshIndicator.classList.remove('active');
+                            refreshIndicator.textContent = '⬇️ Trascina per aggiornare';
+                        }
+                    }
+                }
+            }, { passive: false });
+            
+            container.addEventListener('touchend', () => {
+                if (pullDistance > 100) {
+                    refreshContent();
+                }
+                
+                startY = 0;
+                currentY = 0;
+                pullDistance = 0;
+                document.getElementById('pullToRefresh').classList.remove('active');
+            }, { passive: true });
+        }
+        
+        async function refreshContent() {
+            const refreshIndicator = document.getElementById('pullToRefresh');
+            refreshIndicator.textContent = '🔄 Aggiornamento...';
+            
+            try {
+                await loadLiveStreams();
+                showNotification('✅ Contenuto aggiornato!', 'success');
+            } catch (error) {
+                showNotification('❌ Errore aggiornamento', 'error');
+            }
+            
+            setTimeout(() => {
+                refreshIndicator.textContent = '⬇️ Trascina per aggiornare';
+            }, 1000);
+        }
+        
+        // ============= TOUCH GESTURES =============
+        
+        function setupTouchGestures() {
+            // Swipe navigation
+            let startX = 0;
+            let startY = 0;
+            
+            document.addEventListener('touchstart', (e) => {
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+            }, { passive: true });
+            
+            document.addEventListener('touchend', (e) => {
+                const endX = e.changedTouches[0].clientX;
+                const endY = e.changedTouches[0].clientY;
+                const diffX = startX - endX;
+                const diffY = startY - endY;
+                
+                // Horizontal swipe
+                if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 100) {
+                    if (diffX > 0) {
+                        // Swipe left
+                        handleSwipeLeft();
+                    } else {
+                        // Swipe right
+                        handleSwipeRight();
+                    }
+                }
+            }, { passive: true });
+        }
+        
+        function handleSwipeLeft() {
+            console.log('👈 Swipe left');
+            // Navigate to next section or stream
+        }
+        
+        function handleSwipeRight() {
+            console.log('👉 Swipe right');
+            // Navigate to previous section or stream
+        }
+        
+        // ============= AUTH FUNCTIONS =============
+        
+        function login() {
+            window.location.href = '/auth.html';
+        }
+        
+        function updateAuthUI() {
+            if (currentUser) {
+                // Update UI for logged in user
+                const loginBtn = document.querySelector('a[onclick="login()"]');
+                if (loginBtn) {
+                    loginBtn.innerHTML = '<span>👤</span><span>Dashboard</span>';
+                    loginBtn.onclick = () => window.location.href = '/dashboard.html';
+                }
+            }
+        }
+        
+        // ============= UTILITY FUNCTIONS =============
+        
+        function showSettings() {
+            showNotification('⚙️ Impostazioni non ancora implementate', 'info');
+        }
+        
+        function showAbout() {
+            showNotification('ℹ️ ICCI FREE v2.0 - Mobile App', 'info');
+        }
+        
+        // ============= NOTIFICATION SYSTEM =============
+        
+        function showNotification(message, type = 'info') {
+            if (window.showNotification) {
+                window.showNotification(message, type);
+                return;
+            }
+            
+            // Fallback notification
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 80px;
+                left: 20px;
+                right: 20px;
+                background: rgba(0, 0, 0, 0.9);
+                color: white;
+                padding: 16px;
+                border-radius: 12px;
+                z-index: 10000;
+                text-align: center;
+                font-weight: 600;
+                border-left: 4px solid #FFD700;
+            `;
+            
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+        
+        // ============= ORIENTATION HANDLING =============
+        
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => {
+                // Adjust UI for orientation change
+                const video = document.getElementById('mobileStreamVideo');
+                if (video) {
+                    video.style.objectFit = window.orientation === 0 ? 'cover' : 'contain';
+                }
+            }, 100);
+        });
+        
+        // ============= PWA INSTALL PROMPT =============
+        
+        let deferredPrompt;
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            // Show install button after a delay
+            setTimeout(() => {
+                showInstallPrompt();
+            }, 5000);
+        });
+        
+        function showInstallPrompt() {
+            const installBtn = document.createElement('button');
+            installBtn.innerHTML = '📱 Installa App';
+            installBtn.style.cssText = `
+                position: fixed;
+                bottom: 80px;
+                left: 20px;
+                right: 20px;
+                background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+                color: #000;
+                border: none;
+                padding: 16px;
+                border-radius: 25px;
+                font-weight: 700;
+                z-index: 1000;
+                box-shadow: 0 4px 20px rgba(255, 215, 0, 0.4);
+            `;
+            
+            installBtn.addEventListener('click', async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    console.log(`PWA install outcome: ${outcome}`);
+                    deferredPrompt = null;
+                    installBtn.remove();
+                }
+            });
+            
+            document.body.appendChild(installBtn);
+            
+            // Auto-hide after 10 seconds
+            setTimeout(() => {
+                if (installBtn.parentElement) {
+                    installBtn.remove();
+                }
+            }, 10000);
+        }
+        
+        console.log('✅ Mobile App loaded');
+    </script>
+</body>
+</html>

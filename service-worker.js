@@ -7,10 +7,12 @@ const OFFLINE_URL = '/offline.html';
 const STATIC_ASSETS = [
     '/',
     '/index.html',
+    '/mobile-app.html',
     '/dashboard.html',
     '/auth.html',
     '/golive.html',
     '/css/style.css',
+    '/css/mobile-optimizations.css',
     '/js/app.js',
     '/js/mobile-detector.js',
     '/js/supabase.js',

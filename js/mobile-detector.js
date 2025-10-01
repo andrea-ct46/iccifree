@@ -633,12 +633,39 @@ class MobileDetector {
         };
     }
     
+    // ============= AUTO-REDIRECT TO MOBILE APP =============
+    autoRedirectToMobileApp() {
+        if (this.isMobile || this.isTablet) {
+            console.log('📱 Mobile device detected - checking for redirect...');
+            
+            // Check if we're already on mobile-app.html
+            const currentPage = window.location.pathname.split('/').pop();
+            const isMobileApp = currentPage === 'mobile-app.html' || currentPage === '';
+            
+            // Don't redirect if already on mobile app or if it's a specific page
+            const skipRedirectPages = ['mobile-app.html', 'auth.html', 'golive.html', 'dashboard.html'];
+            const shouldSkip = skipRedirectPages.some(page => window.location.pathname.includes(page));
+            
+            if (!isMobileApp && !shouldSkip) {
+                console.log('🔄 Redirecting to mobile app...');
+                window.location.href = '/mobile-app.html';
+                return true;
+            }
+        }
+        return false;
+    }
+
     // ============= INIT =============
     init() {
         console.log('📱 Mobile Detector initializing...');
         
         // Detect device type
         this.detectDeviceType();
+        
+        // Check for auto-redirect first
+        if (this.autoRedirectToMobileApp()) {
+            return; // Stop initialization if redirecting
+        }
         
         // Detect orientation
         this.detectOrientation();
