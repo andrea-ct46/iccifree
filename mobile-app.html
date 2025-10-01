@@ -18,6 +18,8 @@
     <!-- React UMD + ReactDOM UMD + Babel for in-browser JSX compilation (dev only) -->
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
     <script type="text/babel">
@@ -54,21 +56,72 @@
         const [liveStreams, setLiveStreams] = useState([]);
 
         useEffect(() => {
-          // Mock user
-          setCurrentUser({ id:'user123', username:'Sofia', displayName:'Sofia', handle:'sohcalabro', followers:1200000, following:450, avatar:'👤', gems:8750 });
-          loadLiveStreams();
+          (async () => {
+            try {
+              const user = await (window.checkUser ? window.checkUser() : null);
+              setCurrentUser(user);
+              if (user) {
+                await ensureUserProfile(user);
+                await loadUserGems(user.id);
+              }
+              await loadLiveStreams();
+            } catch (e) {
+              console.warn('Mobile init error', e);
+              await loadLiveStreams();
+            }
+          })();
         }, []);
 
-        const loadLiveStreams = () => {
-          const mock = [
-            { id: 1, title: 'Art & Chill 🎨', user: 'ArtFlowMaster', viewers: 234, thumbnail: '🎨', category: 'Art', isLive: true },
-            { id: 2, title: 'Gaming Pro 🎮', user: 'ProGamer', viewers: 567, thumbnail: '🎮', category: 'Gaming', isLive: true },
-            { id: 3, title: 'Music Live 🎵', user: 'DJMaster', viewers: 891, thumbnail: '🎵', category: 'Music', isLive: true },
-            { id: 4, title: 'Cooking Show 🍳', user: 'ChefPro', viewers: 445, thumbnail: '🍳', category: 'Food', isLive: true },
-            { id: 5, title: 'Tech Talk 💻', user: 'TechGuru', viewers: 678, thumbnail: '💻', category: 'Tech', isLive: true },
-            { id: 6, title: 'Fitness 💪', user: 'FitCoach', viewers: 923, thumbnail: '💪', category: 'Sports', isLive: true }
-          ];
-          setLiveStreams(mock);
+        async function ensureUserProfile(user) {
+          try {
+            const { data, error } = await supabaseClient
+              .from('profiles')
+              .select('id')
+              .eq('id', user.id)
+              .single();
+            if (error && error.code === 'PGRST116') {
+              await supabaseClient
+                .from('profiles')
+                .insert({
+                  id: user.id,
+                  username: (user.email || '').split('@')[0] || user.id.slice(0,8),
+                  display_name: user.user_metadata?.full_name || (user.email || '').split('@')[0] || 'User',
+                  created_at: new Date().toISOString()
+                });
+            }
+          } catch {}
+        }
+
+        function emojiForCategory(cat) {
+          const map = { Art:'🎨', Gaming:'🎮', Music:'🎵', Food:'🍳', Tech:'💻', Sports:'💪', Talk:'🎤', News:'📰' };
+          return map[cat] || '🎥';
+        }
+        const loadLiveStreams = async () => {
+          try {
+            const { data, error } = await supabaseClient
+              .from('streams')
+              .select('id, title, category, viewer_count, user_id')
+              .eq('is_live', true)
+              .order('viewer_count', { ascending: false });
+            if (error) throw error;
+            const mapped = (data || []).map(s => ({ id: s.id, title: s.title, user: (s.user_id || '').slice(0,8), viewers: s.viewer_count || 0, thumbnail: emojiForCategory(s.category), category: s.category || 'General', isLive: true }));
+            setLiveStreams(mapped);
+          } catch (e) {
+            console.warn('loadLiveStreams error', e);
+            setLiveStreams([]);
+          }
+        };
+
+        const loadUserGems = async (userId) => {
+          try {
+            const { data } = await supabaseClient
+              .from('user_gems')
+              .select('balance')
+              .eq('user_id', userId)
+              .limit(1);
+            const row = Array.isArray(data) ? data[0] : null;
+            setUserGems(row?.balance || 0);
+          } catch {}
         };
 
         const giftCategories = [
@@ -143,8 +196,20 @@
           console.log(`🎁 Gift sent: ${gift.name} with animation: ${gift.animation}`);
         };
 
-        const buyGems = (pkg) => {
-          console.log(`💳 Buying ${pkg.gems} gems for $${pkg.price}`);
+        const buyGems = async (pkg) => {
+          if (!currentUser) { window.location.href = '/auth.html'; return; }
+          try {
+            const { data } = await supabaseClient
+              .from('user_gems')
+              .select('balance')
+              .eq('user_id', currentUser.id)
+              .single();
+            const current = data?.balance || 0;
+            await supabaseClient
+              .from('user_gems')
+              .upsert({ user_id: currentUser.id, balance: current + pkg.gems });
+            setUserGems(v => v + pkg.gems);
+          } catch (e) { console.warn('buyGems error', e); }
           setShowBuyGemsModal(false);
         };
 
