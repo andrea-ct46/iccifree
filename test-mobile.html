@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🔥 ICCI FREE - Mobile Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #000;
+            color: #fff;
+            overflow: hidden;
+            height: 100vh;
+            position: fixed;
+            width: 100%;
+        }
+        
+        .container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        
+        .video-area {
+            flex: 1;
+            background: linear-gradient(45deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 3s ease infinite;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .demo-content {
+            text-align: center;
+            z-index: 10;
+        }
+        
+        .demo-title {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .demo-subtitle {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            opacity: 0.8;
+        }
+        
+        .swipe-hint {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            writing-mode: vertical-rl;
+            font-size: 0.9rem;
+            opacity: 0.6;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+        
+        .overlay-ui {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+        }
+        
+        .top-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 100px;
+            background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, transparent 100%);
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding-bottom: 20px;
+            pointer-events: all;
+        }
+        
+        .logo {
+            color: #FFD700;
+            font-size: 1.2rem;
+            font-weight: 800;
+        }
+        
+        .side-actions {
+            position: absolute;
+            right: 15px;
+            bottom: 120px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            pointer-events: all;
+        }
+        
+        .action-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: none;
+            color: #fff;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .action-btn:active {
+            transform: scale(0.9);
+            background: rgba(255, 215, 0, 0.3);
+        }
+        
+        .bottom-info {
+            position: absolute;
+            bottom: 120px;
+            left: 15px;
+            right: 80px;
+            pointer-events: all;
+        }
+        
+        .stream-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .stream-user {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            color: #000;
+            font-weight: 700;
+        }
+        
+        .username {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .live-badge {
+            background: #ff0000;
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        
+        .bottom-nav {
+            height: 80px;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(20px);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            border-top: 1px solid rgba(255, 215, 0, 0.2);
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            color: rgba(255, 255, 255, 0.6);
+            padding: 8px 12px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .nav-item.active {
+            color: #FFD700;
+        }
+        
+        .nav-item:active {
+            transform: scale(0.95);
+            background: rgba(255, 215, 0, 0.1);
+        }
+        
+        .nav-icon {
+            font-size: 1.2rem;
+        }
+        
+        .nav-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        
+        .nav-center {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            color: #000;
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .status {
+            position: absolute;
+            top: 120px;
+            left: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            z-index: 100;
+        }
+        
+        .status h3 {
+            color: #FFD700;
+            margin-bottom: 10px;
+        }
+        
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+        
+        .success { color: #4CAF50; }
+        .error { color: #f44336; }
+        .warning { color: #ff9800; }
+        
+        .test-buttons {
+            position: absolute;
+            bottom: 200px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .test-btn {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            color: #000;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+        
+        .test-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .notification {
+            position: fixed;
+            top: 100px;
+            left: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            color: #fff;
+            padding: 15px;
+            border-radius: 20px;
+            text-align: center;
+            z-index: 1000;
+            transform: translateY(-100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        
+        .notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Video Area -->
+        <div class="video-area" id="videoArea">
+            <div class="demo-content">
+                <div class="demo-title">🔥 ICCI FREE</div>
+                <div class="demo-subtitle">TikTok-Style Mobile App</div>
+                <div style="font-size: 0.9rem; opacity: 0.7;">Swipe ⬆️⬇️ per navigare</div>
+            </div>
+            
+            <div class="swipe-hint">⬆️ Swipe ⬇️</div>
+        </div>
+        
+        <!-- Overlay UI -->
+        <div class="overlay-ui">
+            <!-- Top Bar -->
+            <div class="top-bar">
+                <div class="logo">🔥 ICCI FREE</div>
+            </div>
+            
+            <!-- Side Actions -->
+            <div class="side-actions">
+                <button class="action-btn" onclick="toggleLike()">❤️</button>
+                <button class="action-btn" onclick="showNotification('💬 Chat in arrivo!')">💬</button>
+                <button class="action-btn" onclick="showNotification('🎁 Regali in arrivo!')">🎁</button>
+                <button class="action-btn" onclick="shareApp()">↗️</button>
+                <button class="action-btn" onclick="showNotification('👤 Profilo in arrivo!')">👤</button>
+            </div>
+            
+            <!-- Bottom Info -->
+            <div class="bottom-info">
+                <div class="stream-title" id="streamTitle">🎮 Epic Gaming Session - Fortnite Battle Royale!</div>
+                <div class="stream-user">
+                    <div class="user-avatar" id="userAvatar">🎮</div>
+                    <div class="username" id="username">@gamer_pro_2024</div>
+                    <div class="live-badge">LIVE</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Status Panel -->
+        <div class="status" id="statusPanel">
+            <h3>🔧 Test Status</h3>
+            <div class="status-item">
+                <span>Mobile Detection:</span>
+                <span id="mobileStatus" class="success">✅ OK</span>
+            </div>
+            <div class="status-item">
+                <span>Touch Events:</span>
+                <span id="touchStatus" class="success">✅ OK</span>
+            </div>
+            <div class="status-item">
+                <span>Swipe Navigation:</span>
+                <span id="swipeStatus" class="warning">⚠️ Test</span>
+            </div>
+            <div class="status-item">
+                <span>Animations:</span>
+                <span id="animStatus" class="success">✅ OK</span>
+            </div>
+        </div>
+        
+        <!-- Test Buttons -->
+        <div class="test-buttons">
+            <button class="test-btn" onclick="testSwipe('up')">Test Swipe ⬆️</button>
+            <button class="test-btn" onclick="testSwipe('down')">Test Swipe ⬇️</button>
+            <button class="test-btn" onclick="testTouch()">Test Touch</button>
+            <button class="test-btn" onclick="hideStatus()">Hide Status</button>
+        </div>
+        
+        <!-- Bottom Navigation -->
+        <div class="bottom-nav">
+            <div class="nav-item active">
+                <div class="nav-icon">🏠</div>
+                <div class="nav-label">Home</div>
+            </div>
+            <div class="nav-item" onclick="showNotification('🔍 Scopri in arrivo!')">
+                <div class="nav-icon">🔍</div>
+                <div class="nav-label">Scopri</div>
+            </div>
+            <div class="nav-item nav-center" onclick="goLive()">
+                <div class="nav-icon">🔴</div>
+            </div>
+            <div class="nav-item" onclick="showNotification('💬 Inbox in arrivo!')">
+                <div class="nav-icon">💬</div>
+                <div class="nav-label">Inbox</div>
+            </div>
+            <div class="nav-item" onclick="showNotification('👤 Profilo in arrivo!')">
+                <div class="nav-icon">👤</div>
+                <div class="nav-label">Profilo</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============= MOBILE TEST APP =============
+        
+        let currentStream = 0;
+        let isLiked = false;
+        
+        const streams = [
+            {
+                title: '🎮 Epic Gaming Session - Fortnite Battle Royale!',
+                username: '@gamer_pro_2024',
+                avatar: '🎮'
+            },
+            {
+                title: '🎵 Acoustic Guitar Live - Taking Requests!',
+                username: '@music_lover_official',
+                avatar: '🎸'
+            },
+            {
+                title: '💬 Just Chatting - AMA About Everything!',
+                username: '@chat_master_live',
+                avatar: '💭'
+            },
+            {
+                title: '🍳 Cooking Italian Pasta Live!',
+                username: '@chef_italia',
+                avatar: '👨‍🍳'
+            },
+            {
+                title: '🎨 Digital Art Creation - Anime Style!',
+                username: '@artist_creative',
+                avatar: '🎨'
+            }
+        ];
+        
+        // Touch handling
+        let startY = 0;
+        let currentY = 0;
+        let isScrolling = false;
+        
+        // Setup touch events
+        document.addEventListener('touchstart', (e) => {
+            startY = e.touches[0].clientY;
+            isScrolling = false;
+            
+            // Visual feedback
+            addTouchFeedback(e.touches[0].clientX, e.touches[0].clientY);
+            
+            document.getElementById('touchStatus').innerHTML = '✅ Touch Start';
+        }, { passive: true });
+        
+        document.addEventListener('touchmove', (e) => {
+            if (!startY) return;
+            
+            currentY = e.touches[0].clientY;
+            const diff = startY - currentY;
+            
+            if (Math.abs(diff) > 10) {
+                isScrolling = true;
+                document.getElementById('touchStatus').innerHTML = '✅ Touch Move';
+            }
+        }, { passive: true });
+        
+        document.addEventListener('touchend', (e) => {
+            if (!isScrolling || !startY) return;
+            
+            const diff = startY - currentY;
+            const threshold = 50;
+            
+            if (Math.abs(diff) > threshold) {
+                if (diff > 0) {
+                    // Swipe up - next stream
+                    nextStream();
+                    document.getElementById('swipeStatus').innerHTML = '✅ Swipe Up';
+                } else {
+                    // Swipe down - previous stream
+                    previousStream();
+                    document.getElementById('swipeStatus').innerHTML = '✅ Swipe Down';
+                }
+            }
+            
+            startY = 0;
+            currentY = 0;
+            isScrolling = false;
+        }, { passive: true });
+        
+        // Navigation functions
+        function nextStream() {
+            currentStream = (currentStream + 1) % streams.length;
+            updateStream();
+            showSwipeEffect('up');
+            
+            if (navigator.vibrate) {
+                navigator.vibrate(50);
+            }
+        }
+        
+        function previousStream() {
+            currentStream = currentStream === 0 ? streams.length - 1 : currentStream - 1;
+            updateStream();
+            showSwipeEffect('down');
+            
+            if (navigator.vibrate) {
+                navigator.vibrate(50);
+            }
+        }
+        
+        function updateStream() {
+            const stream = streams[currentStream];
+            document.getElementById('streamTitle').textContent = stream.title;
+            document.getElementById('username').textContent = stream.username;
+            document.getElementById('userAvatar').textContent = stream.avatar;
+            
+            // Reset like
+            isLiked = false;
+            document.querySelector('.side-actions .action-btn').style.background = 'rgba(255, 255, 255, 0.2)';
+        }
+        
+        function showSwipeEffect(direction) {
+            const effect = document.createElement('div');
+            effect.style.cssText = `
+                position: fixed;
+                ${direction === 'up' ? 'bottom: 200px' : 'top: 200px'};
+                left: 50%;
+                transform: translateX(-50%);
+                color: #FFD700;
+                font-size: 2rem;
+                z-index: 1000;
+                pointer-events: none;
+                animation: swipeAnim 0.5s ease-out;
+            `;
+            effect.textContent = direction === 'up' ? '⬆️' : '⬇️';
+            
+            document.body.appendChild(effect);
+            setTimeout(() => effect.remove(), 500);
+        }
+        
+        // Add CSS animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes swipeAnim {
+                0% { opacity: 0; transform: translateX(-50%) scale(0.5); }
+                50% { opacity: 1; transform: translateX(-50%) scale(1.2); }
+                100% { opacity: 0; transform: translateX(-50%) scale(1); }
+            }
+            @keyframes touchRipple {
+                0% { transform: scale(0); opacity: 1; }
+                100% { transform: scale(2); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Action functions
+        function toggleLike() {
+            isLiked = !isLiked;
+            const btn = document.querySelector('.side-actions .action-btn');
+            
+            if (isLiked) {
+                btn.style.background = 'rgba(255, 20, 147, 0.8)';
+                showNotification('❤️ Like aggiunto!');
+                
+                if (navigator.vibrate) {
+                    navigator.vibrate([50, 50, 50]);
+                }
+            } else {
+                btn.style.background = 'rgba(255, 255, 255, 0.2)';
+                showNotification('💔 Like rimosso');
+            }
+        }
+        
+        function shareApp() {
+            if (navigator.share) {
+                navigator.share({
+                    title: 'ICCI FREE - Mobile App',
+                    text: 'Guarda questo stream su ICCI FREE!',
+                    url: window.location.href
+                });
+            } else {
+                navigator.clipboard.writeText(window.location.href);
+                showNotification('🔗 Link copiato!');
+            }
+        }
+        
+        function goLive() {
+            showNotification('🔴 Go Live in arrivo!');
+        }
+        
+        function addTouchFeedback(x, y) {
+            const feedback = document.createElement('div');
+            feedback.style.cssText = `
+                position: fixed;
+                left: ${x - 50}px;
+                top: ${y - 50}px;
+                width: 100px;
+                height: 100px;
+                border-radius: 50%;
+                background: radial-gradient(circle, rgba(255, 215, 0, 0.3) 0%, transparent 70%);
+                pointer-events: none;
+                z-index: 1000;
+                animation: touchRipple 0.6s ease-out;
+            `;
+            
+            document.body.appendChild(feedback);
+            setTimeout(() => feedback.remove(), 600);
+        }
+        
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => notification.classList.add('show'), 10);
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 2500);
+        }
+        
+        // Test functions
+        function testSwipe(direction) {
+            if (direction === 'up') {
+                nextStream();
+            } else {
+                previousStream();
+            }
+        }
+        
+        function testTouch() {
+            addTouchFeedback(window.innerWidth / 2, window.innerHeight / 2);
+            showNotification('👆 Touch test completato!');
+        }
+        
+        function hideStatus() {
+            const status = document.getElementById('statusPanel');
+            const buttons = document.querySelector('.test-buttons');
+            
+            if (status.style.display === 'none') {
+                status.style.display = 'block';
+                buttons.style.display = 'flex';
+            } else {
+                status.style.display = 'none';
+                buttons.style.display = 'none';
+            }
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            showNotification('🎬 TikTok-Style App caricata!');
+            
+            // Auto-hide status after 5 seconds
+            setTimeout(() => {
+                document.getElementById('statusPanel').style.display = 'none';
+                document.querySelector('.test-buttons').style.display = 'none';
+            }, 5000);
+        });
+        
+        console.log('✅ Mobile Test App loaded');
+    </script>
+</body>
+</html>

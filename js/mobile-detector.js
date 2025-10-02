@@ -633,50 +633,50 @@ class MobileDetector {
         };
     }
     
-    // ============= AUTO-REDIRECT TO MOBILE APP =============
-    autoRedirectToMobileApp() {
-        if (this.isMobile) {
-            console.log('📱 Mobile device detected - checking for redirect...');
-            
-            // Check if we're already on mobile-app.html
-            const currentPage = window.location.pathname.split('/').pop();
-            const isMobileApp = currentPage === 'mobile-app.html' || currentPage === '';
-            
-            // Don't redirect if already on mobile app or if it's a specific page
-            // Dashboard is EXCLUDED from mobile redirect - only PC and tablet
-            const skipRedirectPages = ['mobile-app.html', 'auth.html', 'golive.html', 'dashboard.html'];
-            const shouldSkip = skipRedirectPages.some(page => window.location.pathname.includes(page));
-            
-            if (!isMobileApp && !shouldSkip) {
-                console.log('🔄 Redirecting to mobile app...');
-                window.location.href = '/mobile-app.html';
-                return true;
+        // ============= AUTO-REDIRECT TO MOBILE APP =============
+        autoRedirectToMobileApp() {
+            if (this.isMobile) {
+                console.log('📱 Mobile device detected - checking for redirect...');
+
+                // Check current page
+                const currentPage = window.location.pathname.split('/').pop();
+                const isMobileTikTok = currentPage === 'mobile-tiktok.html';
+                const isMobileApp = currentPage === 'mobile-app.html' || currentPage === '';
+
+                // Don't redirect if already on TikTok mobile or specific pages
+                const skipRedirectPages = ['mobile-tiktok.html', 'mobile-app.html', 'auth.html', 'golive.html', 'dashboard.html'];
+                const shouldSkip = skipRedirectPages.some(page => window.location.pathname.includes(page));
+
+                if (!isMobileTikTok && !isMobileApp && !shouldSkip) {
+                    console.log('🔄 Redirecting to TikTok-style mobile app...');
+                    window.location.href = '/mobile-tiktok.html';
+                    return true;
+                }
+            } else if (this.isTablet) {
+                console.log('📱 Tablet device detected - checking for redirect...');
+
+                // Tablets can access dashboard but get mobile app for better UX
+                const currentPage = window.location.pathname.split('/').pop();
+                const isMobileTikTok = currentPage === 'mobile-tiktok.html';
+
+                // Tablets can access dashboard but prefer mobile experience
+                const skipRedirectPages = ['mobile-tiktok.html', 'mobile-app.html', 'auth.html', 'golive.html'];
+                const shouldSkip = skipRedirectPages.some(page => window.location.pathname.includes(page));
+
+                // Dashboard is accessible on tablets but gets mobile optimizations
+                if (window.location.pathname.includes('dashboard.html')) {
+                    console.log('📱 Tablet accessing dashboard - applying mobile optimizations');
+                    return false; // Don't redirect, but apply mobile classes
+                }
+
+                if (!isMobileTikTok && !shouldSkip) {
+                    console.log('🔄 Redirecting tablet to TikTok-style mobile app...');
+                    window.location.href = '/mobile-tiktok.html';
+                    return true;
+                }
             }
-        } else if (this.isTablet) {
-            console.log('📱 Tablet device detected - checking for redirect...');
-            
-            // Tablets can access dashboard but still get mobile optimizations
-            const currentPage = window.location.pathname.split('/').pop();
-            const isMobileApp = currentPage === 'mobile-app.html' || currentPage === '';
-            
-            // Tablets skip redirect only for specific pages
-            const skipRedirectPages = ['mobile-app.html', 'auth.html', 'golive.html'];
-            const shouldSkip = skipRedirectPages.some(page => window.location.pathname.includes(page));
-            
-            // Dashboard is accessible on tablets but gets mobile optimizations
-            if (window.location.pathname.includes('dashboard.html')) {
-                console.log('📱 Tablet accessing dashboard - applying mobile optimizations');
-                return false; // Don't redirect, but apply mobile classes
-            }
-            
-            if (!isMobileApp && !shouldSkip) {
-                console.log('🔄 Redirecting tablet to mobile app...');
-                window.location.href = '/mobile-app.html';
-                return true;
-            }
+            return false;
         }
-        return false;
-    }
 
     // ============= HANDLE MOBILE DASHBOARD ACCESS =============
     handleMobileDashboardAccess() {

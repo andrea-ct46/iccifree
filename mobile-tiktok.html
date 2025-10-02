@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>ICCI FREE - Mobile App</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#FFD700">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ICCI FREE">
+    
+    <!-- Icons -->
+    <link rel="icon" href="favicon.ico">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/tiktok-mobile.css">
+</head>
+<body>
+    <div class="tiktok-app" id="tiktokApp">
+        <!-- Video Container -->
+        <div class="video-container" id="videoContainer">
+            <video class="video-player" id="videoPlayer" autoplay muted playsinline loop></video>
+            
+            <!-- Loading State -->
+            <div class="loading" id="loadingState">
+                <div class="spinner"></div>
+                <p>Caricamento stream...</p>
+            </div>
+            
+            <!-- No Streams State -->
+            <div class="no-streams" id="noStreamsState" style="display: none;">
+                <div class="no-streams-icon">📺</div>
+                <h3>Nessuno stream live</h3>
+                <p>Sii il primo a iniziare uno stream!</p>
+                <button class="cta-btn" onclick="TikTokApp.goLive()">🔴 Go Live</button>
+            </div>
+        </div>
+        
+        <!-- Overlay Elements -->
+        <div class="overlay">
+            <!-- Top Bar -->
+            <div class="top-bar">
+                <div class="logo">🔥 ICCI FREE</div>
+            </div>
+            
+            <!-- Side Actions -->
+            <div class="side-actions">
+                <button class="action-btn" id="likeBtn" onclick="TikTokApp.toggleLike()">❤️</button>
+                <button class="action-btn" onclick="TikTokApp.showComments()">💬</button>
+                <button class="action-btn" onclick="TikTokApp.showGifts()">🎁</button>
+                <button class="action-btn" onclick="TikTokApp.shareStream()">↗️</button>
+                <button class="action-btn" onclick="TikTokApp.showProfile()">👤</button>
+            </div>
+            
+            <!-- Bottom Info -->
+            <div class="bottom-info">
+                <div class="stream-title" id="streamTitle">Titolo dello stream live...</div>
+                <div class="stream-user">
+                    <div class="user-avatar" id="userAvatar">👤</div>
+                    <div class="username" id="username">@streamer</div>
+                    <div class="live-badge">LIVE</div>
+                </div>
+                <div class="stream-stats">
+                    <div class="stat-item">
+                        <span>👁️</span>
+                        <span id="viewerCount">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>❤️</span>
+                        <span id="likeCount">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>💎</span>
+                        <span id="gemsCount">0</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Chat Overlay -->
+            <div class="chat-overlay" id="chatOverlay"></div>
+            
+            <!-- Swipe Indicator -->
+            <div class="swipe-indicator">⬆️ Swipe ⬇️</div>
+        </div>
+        
+        <!-- Bottom Navigation -->
+        <div class="bottom-nav">
+            <div class="nav-item active" onclick="TikTokApp.showHome()">
+                <div class="nav-icon">🏠</div>
+                <div class="nav-label">Home</div>
+            </div>
+            <div class="nav-item" onclick="TikTokApp.showDiscover()">
+                <div class="nav-icon">🔍</div>
+                <div class="nav-label">Scopri</div>
+            </div>
+            <div class="nav-item nav-center" onclick="TikTokApp.goLive()">
+                <div class="nav-icon">🔴</div>
+            </div>
+            <div class="nav-item" onclick="TikTokApp.showInbox()">
+                <div class="nav-icon">💬</div>
+                <div class="nav-label">Inbox</div>
+            </div>
+            <div class="nav-item" onclick="TikTokApp.showProfile()">
+                <div class="nav-icon">👤</div>
+                <div class="nav-label">Profilo</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase.js"></script>
+    <script src="js/tiktok-mobile.js"></script>
+</body>
+</html>
