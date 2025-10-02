@@ -1,0 +1,1044 @@
+/* ============= GIFT ANIMATIONS CSS - CUSTOMIZABLE SYSTEM ============= */
+
+/* ============= VARIABLES ============= */
+:root {
+    --gold-primary: #FFD700;
+    --gold-secondary: #FFA500;
+    --animation-duration: 0.6s;
+    --particle-duration: 3s;
+}
+
+/* ============= GIFT MODAL STYLES ============= */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.gift-modal,
+.buy-gems-modal {
+    background: #0a0a0a;
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 20px;
+    width: 100%;
+    max-width: 400px;
+    max-height: 90vh;
+    overflow-y: auto;
+    transform: scale(0.8) translateY(50px);
+    transition: all 0.3s ease;
+}
+
+.modal-overlay.active .gift-modal,
+.modal-overlay.active .buy-gems-modal {
+    transform: scale(1) translateY(0);
+}
+
+/* ============= GIFT MODAL HEADER ============= */
+.gift-modal-header,
+.buy-gems-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.gift-modal-header h2,
+.buy-gems-header h2 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.modal-close-btn {
+    background: none;
+    border: none;
+    color: #FFD700;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    transition: background 0.2s ease;
+}
+
+.modal-close-btn:hover {
+    background: rgba(255, 215, 0, 0.1);
+}
+
+/* ============= USER GEMS DISPLAY ============= */
+.user-gems-display {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: rgba(255, 215, 0, 0.1);
+    border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.gems-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.gems-count {
+    font-weight: 700;
+    color: #FFD700;
+}
+
+.buy-gems-btn-small {
+    background: #FFD700;
+    color: #000;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s ease;
+}
+
+.buy-gems-btn-small:active {
+    transform: scale(0.95);
+}
+
+/* ============= GIFT CATEGORIES ============= */
+.gift-categories {
+    display: flex;
+    gap: 8px;
+    padding: 20px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.gift-categories::-webkit-scrollbar {
+    display: none;
+}
+
+.category-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    color: #ccc;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.category-btn.active {
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+    color: #000;
+    border-color: #FFD700;
+}
+
+.category-btn:active {
+    transform: scale(0.95);
+}
+
+/* ============= GIFTS GRID ============= */
+.gifts-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    padding: 20px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.gift-item {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    border-radius: 12px;
+    padding: 16px 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.gift-item:active {
+    transform: scale(0.95);
+}
+
+.gift-item.selected {
+    border-color: #FFD700;
+    background: rgba(255, 215, 0, 0.1);
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+}
+
+.gift-item.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.gift-item.disabled:active {
+    transform: none;
+}
+
+.gift-icon {
+    font-size: 2rem;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.gift-name {
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+    line-height: 1.2;
+}
+
+.gift-cost {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #FFD700;
+}
+
+.gift-tier {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.gift-tier.tier-1 { background: #4CAF50; }
+.gift-tier.tier-2 { background: #2196F3; }
+.gift-tier.tier-3 { background: #9C27B0; }
+.gift-tier.tier-4 { background: #FF9800; }
+.gift-tier.tier-5 { background: #F44336; }
+
+/* ============= GIFT MODAL FOOTER ============= */
+.gift-modal-footer {
+    padding: 20px;
+    border-top: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.send-gift-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+    color: #000;
+    border: none;
+    padding: 16px;
+    border-radius: 25px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    min-height: 48px;
+}
+
+.send-gift-btn:disabled {
+    background: #666;
+    color: #999;
+    cursor: not-allowed;
+}
+
+.send-gift-btn:not(:disabled):active {
+    transform: scale(0.98);
+}
+
+/* ============= BUY GEMS MODAL STYLES ============= */
+.current-balance {
+    padding: 20px;
+}
+
+.balance-card {
+    background: rgba(255, 215, 0, 0.1);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.balance-icon {
+    font-size: 2rem;
+}
+
+.balance-info {
+    flex: 1;
+}
+
+.balance-label {
+    font-size: 0.9rem;
+    color: #ccc;
+    margin-bottom: 4px;
+}
+
+.balance-amount {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #FFD700;
+}
+
+/* ============= GEM PACKAGES ============= */
+.gem-packages {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    padding: 20px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.gem-package {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    border-radius: 16px;
+    padding: 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.gem-package.popular {
+    border-color: #FFD700;
+    background: rgba(255, 215, 0, 0.1);
+}
+
+.gem-package.selected {
+    border-color: #FFD700;
+    background: rgba(255, 215, 0, 0.15);
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+}
+
+.gem-package:active {
+    transform: scale(0.98);
+}
+
+.popular-badge {
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #FFD700;
+    color: #000;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.package-gems {
+    margin-bottom: 12px;
+    position: relative;
+}
+
+.gems-amount {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #FFD700;
+    margin-left: 4px;
+}
+
+.bonus-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: #4CAF50;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 8px;
+    font-size: 0.6rem;
+    font-weight: 700;
+}
+
+.package-price {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 12px;
+}
+
+.buy-package-btn {
+    background: #FFD700;
+    color: #000;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    width: 100%;
+    transition: all 0.2s ease;
+}
+
+.buy-package-btn:active {
+    transform: scale(0.95);
+}
+
+/* ============= PAYMENT METHODS ============= */
+.payment-methods {
+    padding: 20px;
+    border-top: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.payment-methods h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+    text-align: center;
+}
+
+.payment-options {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.payment-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.payment-icon {
+    font-size: 1.2rem;
+}
+
+/* ============= SECURITY NOTICE ============= */
+.security-notice {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 16px 20px;
+    background: rgba(76, 175, 80, 0.1);
+    border-top: 1px solid rgba(76, 175, 80, 0.3);
+    font-size: 0.8rem;
+    color: #4CAF50;
+    font-weight: 600;
+}
+
+/* ============= PURCHASE CONFIRMATION ============= */
+.confirmation-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 15000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.confirmation-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.purchase-confirmation {
+    background: #0a0a0a;
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 20px;
+    padding: 30px;
+    text-align: center;
+    max-width: 300px;
+    width: 100%;
+}
+
+.confirmation-content h3 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+.purchase-details {
+    background: rgba(255, 215, 0, 0.1);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.purchase-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.purchase-bonus {
+    color: #4CAF50;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.confirmation-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.confirm-btn {
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+    color: #000;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 25px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.confirm-btn:active {
+    transform: scale(0.95);
+}
+
+.cancel-btn {
+    background: transparent;
+    color: #ccc;
+    border: 1px solid #666;
+    padding: 10px 24px;
+    border-radius: 25px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.cancel-btn:active {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* ============= GIFT ANIMATIONS - PREVIEW SYSTEM ============= */
+
+/* Bounce Animation */
+.gift-item[data-animation="bounce"]:active,
+.gift-preview-bounce {
+    animation: gift-bounce var(--animation-duration) ease;
+}
+
+@keyframes gift-bounce {
+    0%, 100% { transform: scale(1); }
+    25% { transform: scale(1.1) translateY(-5px); }
+    50% { transform: scale(1.2) translateY(-10px); }
+    75% { transform: scale(1.1) translateY(-5px); }
+}
+
+/* Shake Animation */
+.gift-item[data-animation="shake"]:active,
+.gift-preview-shake {
+    animation: gift-shake var(--animation-duration) ease;
+}
+
+@keyframes gift-shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px) rotate(-2deg); }
+    20%, 40%, 60%, 80% { transform: translateX(5px) rotate(2deg); }
+}
+
+/* Spin Animation */
+.gift-item[data-animation="spin"]:active,
+.gift-preview-spin {
+    animation: gift-spin var(--animation-duration) ease;
+}
+
+@keyframes gift-spin {
+    0% { transform: rotate(0deg) scale(1); }
+    50% { transform: rotate(180deg) scale(1.2); }
+    100% { transform: rotate(360deg) scale(1); }
+}
+
+/* Pop Animation */
+.gift-item[data-animation="pop"]:active,
+.gift-preview-pop {
+    animation: gift-pop var(--animation-duration) ease;
+}
+
+@keyframes gift-pop {
+    0% { transform: scale(1); }
+    30% { transform: scale(0.8); }
+    60% { transform: scale(1.3); }
+    100% { transform: scale(1); }
+}
+
+/* Celebrate Animation */
+.gift-item[data-animation="celebrate"]:active,
+.gift-preview-celebrate {
+    animation: gift-celebrate var(--animation-duration) ease;
+}
+
+@keyframes gift-celebrate {
+    0%, 100% { transform: scale(1) rotate(0deg); }
+    25% { transform: scale(1.1) rotate(-5deg); }
+    50% { transform: scale(1.2) rotate(5deg); }
+    75% { transform: scale(1.1) rotate(-3deg); }
+}
+
+/* Wiggle Animation */
+.gift-item[data-animation="wiggle"]:active,
+.gift-preview-wiggle {
+    animation: gift-wiggle var(--animation-duration) ease;
+}
+
+@keyframes gift-wiggle {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(5deg) scale(1.05); }
+    50% { transform: rotate(-5deg) scale(1.1); }
+    75% { transform: rotate(3deg) scale(1.05); }
+}
+
+/* Hug Animation */
+.gift-item[data-animation="hug"]:active,
+.gift-preview-hug {
+    animation: gift-hug var(--animation-duration) ease;
+}
+
+@keyframes gift-hug {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.3) rotateY(180deg); }
+}
+
+/* Sparkle Animation */
+.gift-item[data-animation="sparkle"]:active,
+.gift-preview-sparkle {
+    animation: gift-sparkle var(--animation-duration) ease;
+}
+
+@keyframes gift-sparkle {
+    0%, 100% { 
+        transform: scale(1);
+        filter: brightness(1) drop-shadow(0 0 0 transparent);
+    }
+    50% { 
+        transform: scale(1.2);
+        filter: brightness(1.5) drop-shadow(0 0 10px #FFD700);
+    }
+}
+
+/* Fire Animation */
+.gift-item[data-animation="fire"]:active,
+.gift-preview-fire {
+    animation: gift-fire var(--animation-duration) ease;
+}
+
+@keyframes gift-fire {
+    0%, 100% { 
+        transform: scale(1);
+        filter: hue-rotate(0deg);
+    }
+    25% { 
+        transform: scale(1.1) translateY(-3px);
+        filter: hue-rotate(30deg);
+    }
+    50% { 
+        transform: scale(1.2) translateY(-6px);
+        filter: hue-rotate(60deg);
+    }
+    75% { 
+        transform: scale(1.1) translateY(-3px);
+        filter: hue-rotate(30deg);
+    }
+}
+
+/* Race Animation */
+.gift-item[data-animation="race"]:active,
+.gift-preview-race {
+    animation: gift-race var(--animation-duration) ease;
+}
+
+@keyframes gift-race {
+    0% { transform: translateX(-20px) scale(0.8); }
+    50% { transform: translateX(20px) scale(1.2); }
+    100% { transform: translateX(0) scale(1); }
+}
+
+/* Speed Animation */
+.gift-item[data-animation="speed"]:active,
+.gift-preview-speed {
+    animation: gift-speed var(--animation-duration) ease;
+}
+
+@keyframes gift-speed {
+    0%, 100% { transform: skewX(0deg) scale(1); }
+    50% { transform: skewX(-10deg) scale(1.1) translateX(10px); }
+}
+
+/* Fly Animation */
+.gift-item[data-animation="fly"]:active,
+.gift-preview-fly {
+    animation: gift-fly var(--animation-duration) ease;
+}
+
+@keyframes gift-fly {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    25% { transform: translateY(-10px) rotate(-5deg); }
+    50% { transform: translateY(-15px) rotate(0deg); }
+    75% { transform: translateY(-10px) rotate(5deg); }
+}
+
+/* Launch Animation */
+.gift-item[data-animation="launch"]:active,
+.gift-preview-launch {
+    animation: gift-launch var(--animation-duration) ease;
+}
+
+@keyframes gift-launch {
+    0% { transform: translateY(0) scale(1); }
+    30% { transform: translateY(-5px) scale(1.1); }
+    60% { transform: translateY(-20px) scale(1.3); }
+    100% { transform: translateY(0) scale(1); }
+}
+
+/* Soar Animation */
+.gift-item[data-animation="soar"]:active,
+.gift-preview-soar {
+    animation: gift-soar var(--animation-duration) ease;
+}
+
+@keyframes gift-soar {
+    0%, 100% { transform: translateY(0) scale(1) rotate(0deg); }
+    50% { transform: translateY(-15px) scale(1.2) rotate(360deg); }
+}
+
+/* Bloom Animation */
+.gift-item[data-animation="bloom"]:active,
+.gift-preview-bloom {
+    animation: gift-bloom var(--animation-duration) ease;
+}
+
+@keyframes gift-bloom {
+    0% { transform: scale(0.5) rotate(0deg); opacity: 0.5; }
+    50% { transform: scale(1.3) rotate(180deg); opacity: 1; }
+    100% { transform: scale(1) rotate(360deg); opacity: 1; }
+}
+
+/* Grow Animation */
+.gift-item[data-animation="grow"]:active,
+.gift-preview-grow {
+    animation: gift-grow var(--animation-duration) ease;
+}
+
+@keyframes gift-grow {
+    0% { transform: scale(0.3) translateY(20px); }
+    50% { transform: scale(1.2) translateY(-5px); }
+    100% { transform: scale(1) translateY(0); }
+}
+
+/* Arc Animation */
+.gift-item[data-animation="arc"]:active,
+.gift-preview-arc {
+    animation: gift-arc var(--animation-duration) ease;
+}
+
+@keyframes gift-arc {
+    0%, 100% { transform: translateX(0) translateY(0) scale(1); }
+    25% { transform: translateX(-10px) translateY(-10px) scale(1.1); }
+    50% { transform: translateX(0) translateY(-15px) scale(1.2); }
+    75% { transform: translateX(10px) translateY(-10px) scale(1.1); }
+}
+
+/* Zap Animation */
+.gift-item[data-animation="zap"]:active,
+.gift-preview-zap {
+    animation: gift-zap var(--animation-duration) ease;
+}
+
+@keyframes gift-zap {
+    0%, 100% { 
+        transform: scale(1);
+        filter: brightness(1);
+    }
+    10%, 30%, 50%, 70%, 90% { 
+        transform: scale(1.1);
+        filter: brightness(2);
+    }
+    20%, 40%, 60%, 80% { 
+        transform: scale(0.95);
+        filter: brightness(0.5);
+    }
+}
+
+/* Cosmic Animation */
+.gift-item[data-animation="cosmic"]:active,
+.gift-preview-cosmic {
+    animation: gift-cosmic var(--animation-duration) ease;
+}
+
+@keyframes gift-cosmic {
+    0%, 100% { 
+        transform: scale(1) rotate(0deg);
+        filter: hue-rotate(0deg) brightness(1);
+    }
+    25% { 
+        transform: scale(1.1) rotate(90deg);
+        filter: hue-rotate(90deg) brightness(1.2);
+    }
+    50% { 
+        transform: scale(1.3) rotate(180deg);
+        filter: hue-rotate(180deg) brightness(1.5);
+    }
+    75% { 
+        transform: scale(1.1) rotate(270deg);
+        filter: hue-rotate(270deg) brightness(1.2);
+    }
+}
+
+/* Magic Animation */
+.gift-item[data-animation="magic"]:active,
+.gift-preview-magic {
+    animation: gift-magic var(--animation-duration) ease;
+}
+
+@keyframes gift-magic {
+    0%, 100% { 
+        transform: scale(1) rotate(0deg);
+        filter: drop-shadow(0 0 0 transparent);
+    }
+    33% { 
+        transform: scale(1.2) rotate(120deg);
+        filter: drop-shadow(0 0 10px #9C27B0);
+    }
+    66% { 
+        transform: scale(1.1) rotate(240deg);
+        filter: drop-shadow(0 0 15px #FFD700);
+    }
+}
+
+/* Mystical Animation */
+.gift-item[data-animation="mystical"]:active,
+.gift-preview-mystical {
+    animation: gift-mystical var(--animation-duration) ease;
+}
+
+@keyframes gift-mystical {
+    0%, 100% { 
+        transform: scale(1);
+        opacity: 1;
+        filter: blur(0px);
+    }
+    50% { 
+        transform: scale(1.3);
+        opacity: 0.8;
+        filter: blur(2px) drop-shadow(0 0 20px #2196F3);
+    }
+}
+
+/* Royal Animation */
+.gift-item[data-animation="royal"]:active,
+.gift-preview-royal {
+    animation: gift-royal var(--animation-duration) ease;
+}
+
+@keyframes gift-royal {
+    0%, 100% { 
+        transform: scale(1) translateY(0);
+        filter: drop-shadow(0 0 0 transparent);
+    }
+    25% { 
+        transform: scale(1.1) translateY(-5px);
+        filter: drop-shadow(0 0 10px #FFD700);
+    }
+    50% { 
+        transform: scale(1.2) translateY(-10px);
+        filter: drop-shadow(0 0 20px #FFD700);
+    }
+    75% { 
+        transform: scale(1.1) translateY(-5px);
+        filter: drop-shadow(0 0 10px #FFD700);
+    }
+}
+
+/* Shine Animation */
+.gift-item[data-animation="shine"]:active,
+.gift-preview-shine {
+    animation: gift-shine var(--animation-duration) ease;
+}
+
+@keyframes gift-shine {
+    0%, 100% { 
+        transform: scale(1) rotate(0deg);
+        filter: brightness(1) drop-shadow(0 0 0 transparent);
+    }
+    50% { 
+        transform: scale(1.2) rotate(180deg);
+        filter: brightness(2) drop-shadow(0 0 25px #FFD700);
+    }
+}
+
+/* Majestic Animation */
+.gift-item[data-animation="majestic"]:active,
+.gift-preview-majestic {
+    animation: gift-majestic var(--animation-duration) ease;
+}
+
+@keyframes gift-majestic {
+    0%, 100% { 
+        transform: scale(1) translateY(0) rotate(0deg);
+        filter: drop-shadow(0 0 0 transparent) hue-rotate(0deg);
+    }
+    25% { 
+        transform: scale(1.1) translateY(-8px) rotate(5deg);
+        filter: drop-shadow(0 0 15px #FFD700) hue-rotate(30deg);
+    }
+    50% { 
+        transform: scale(1.3) translateY(-15px) rotate(0deg);
+        filter: drop-shadow(0 0 30px #FFD700) hue-rotate(60deg);
+    }
+    75% { 
+        transform: scale(1.1) translateY(-8px) rotate(-5deg);
+        filter: drop-shadow(0 0 15px #FFD700) hue-rotate(30deg);
+    }
+}
+
+/* ============= FLYING GIFT ANIMATION ============= */
+.flying-gift {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 20000;
+    pointer-events: none;
+    opacity: 0;
+    transition: all 2s ease-out;
+}
+
+.flying-gift.animate {
+    opacity: 1;
+    transform: translate(-50%, -150vh) scale(2);
+}
+
+.flying-gift-icon {
+    font-size: 3rem;
+    filter: drop-shadow(0 0 20px #FFD700);
+    animation: flying-gift-pulse 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes flying-gift-pulse {
+    0% { transform: scale(1); }
+    100% { transform: scale(1.1); }
+}
+
+/* ============= PARTICLE EFFECTS ============= */
+.gift-particle {
+    position: fixed;
+    top: 20%;
+    font-size: 1.5rem;
+    pointer-events: none;
+    z-index: 15000;
+    animation: particle-fall var(--particle-duration) ease-out forwards;
+}
+
+@keyframes particle-fall {
+    0% {
+        opacity: 1;
+        transform: translateY(0) rotate(0deg) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(100vh) rotate(360deg) scale(0.5);
+    }
+}
+
+/* ============= TEMPLATE FOR NEW ANIMATIONS ============= */
+/*
+To add a new animation, copy this template and replace "template" with your animation name:
+
+.gift-item[data-animation="template"]:active,
+.gift-preview-template {
+    animation: gift-template var(--animation-duration) ease;
+}
+
+@keyframes gift-template {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2) rotate(180deg); }
+    100% { transform: scale(1); }
+}
+
+Then add animation: 'template' to your gift object in gift-system-mobile.js
+*/
+
+/* ============= RESPONSIVE ADJUSTMENTS ============= */
+@media (max-width: 375px) {
+    .gifts-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+    
+    .gem-packages {
+        grid-template-columns: 1fr;
+    }
+    
+    .gift-item {
+        padding: 12px 6px;
+    }
+    
+    .gift-icon {
+        font-size: 1.5rem;
+    }
+}
+
+/* ============= ACCESSIBILITY ============= */
+@media (prefers-reduced-motion: reduce) {
+    .gift-item[data-animation] {
+        animation: none !important;
+    }
+    
+    .flying-gift,
+    .gift-particle {
+        animation: none !important;
+        opacity: 0 !important;
+    }
+}
+
+/* ============= HIGH CONTRAST MODE ============= */
+@media (prefers-contrast: high) {
+    .gift-item {
+        border-width: 2px;
+    }
+    
+    .gift-item.selected {
+        border-width: 3px;
+    }
+}
