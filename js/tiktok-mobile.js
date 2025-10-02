@@ -543,7 +543,11 @@ const TikTokApp = {
     },
     
     showComments: function() {
-        this.showNotification('💬 Chat in sviluppo!');
+        if (window.TikTokModals) {
+            window.TikTokModals.showChatModal();
+        } else {
+            this.showNotification('💬 Chat in caricamento...');
+        }
     },
     
     showGifts: function() {
@@ -555,7 +559,11 @@ const TikTokApp = {
             return;
         }
         
-        this.showNotification('🎁 Sistema regali in arrivo!');
+        if (window.TikTokModals) {
+            window.TikTokModals.showGiftsModal();
+        } else {
+            this.showNotification('🎁 Sistema regali in caricamento...');
+        }
     },
     
     shareStream: async function() {
@@ -584,7 +592,11 @@ const TikTokApp = {
         if (!this.currentUser) {
             window.location.href = '/auth.html';
         } else {
-            this.showNotification('👤 Profilo in sviluppo!');
+            if (window.TikTokModals) {
+                window.TikTokModals.showProfileModal();
+            } else {
+                this.showNotification('👤 Profilo in caricamento...');
+            }
         }
     },
     
@@ -596,7 +608,11 @@ const TikTokApp = {
     
     showDiscover: function() {
         this.updateNavigation('discover');
-        this.showNotification('🔍 Scopri in sviluppo!');
+        if (window.TikTokModals) {
+            window.TikTokModals.showDiscoverModal();
+        } else {
+            this.showNotification('🔍 Scopri in caricamento...');
+        }
     },
     
     goLive: function() {
@@ -612,7 +628,11 @@ const TikTokApp = {
     
     showInbox: function() {
         this.updateNavigation('inbox');
-        this.showNotification('💬 Inbox in sviluppo!');
+        if (window.TikTokModals) {
+            window.TikTokModals.showInboxModal();
+        } else {
+            this.showNotification('💬 Inbox in caricamento...');
+        }
     },
     
     updateNavigation: function(active) {

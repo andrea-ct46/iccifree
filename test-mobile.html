@@ -383,6 +383,7 @@
             <button class="test-btn" onclick="testSwipe('up')">Test Swipe ⬆️</button>
             <button class="test-btn" onclick="testSwipe('down')">Test Swipe ⬇️</button>
             <button class="test-btn" onclick="testTouch()">Test Touch</button>
+            <button class="test-btn" onclick="testAllButtons()">Test All Buttons</button>
             <button class="test-btn" onclick="hideStatus()">Hide Status</button>
         </div>
         
@@ -641,6 +642,26 @@
         function testTouch() {
             addTouchFeedback(window.innerWidth / 2, window.innerHeight / 2);
             showNotification('👆 Touch test completato!');
+        }
+        
+        function testAllButtons() {
+            // Test sequence for all buttons
+            const tests = [
+                { name: 'Like Button', action: () => toggleLike() },
+                { name: 'Share Button', action: () => shareApp() },
+                { name: 'Navigation', action: () => showNotification('🧭 Navigation OK') },
+                { name: 'Touch Feedback', action: () => addTouchFeedback(200, 300) },
+                { name: 'Animations', action: () => showSwipeEffect('up') }
+            ];
+            
+            tests.forEach((test, index) => {
+                setTimeout(() => {
+                    test.action();
+                    showNotification(`✅ ${test.name} Test`);
+                }, index * 1000);
+            });
+            
+            showNotification('🔧 Testing all buttons...');
         }
         
         function hideStatus() {
