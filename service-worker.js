@@ -23,6 +23,7 @@ const STATIC_ASSETS = [
     '/js/mobile-app.js',
     '/js/tiktok-mobile.js',
     '/js/tiktok-modals.js',
+    '/js/database-integration.js',
     '/js/supabase.js',
     '/js/supabase-mobile.js',
     '/js/analytics.js',

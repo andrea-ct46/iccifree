@@ -73,7 +73,34 @@ const TikTokApp = {
         this.showLoading();
         
         try {
-            // Try to load real streams from Supabase
+            // Try to load real streams using Database Integration
+            if (window.DatabaseIntegration) {
+                const liveStreams = await window.DatabaseIntegration.getLiveStreams(20);
+                if (liveStreams && liveStreams.length > 0) {
+                    this.streams = liveStreams.map(stream => ({
+                        id: stream.stream_id,
+                        title: stream.title,
+                        username: stream.username,
+                        displayName: stream.display_name,
+                        avatar: stream.avatar_url || this.getRandomAvatar(),
+                        viewers: stream.viewers_count,
+                        likes: stream.likes_count,
+                        gems: stream.gifts_received,
+                        videoUrl: null,
+                        category: stream.category,
+                        tags: stream.tags,
+                        isLive: true,
+                        thumbnail: stream.thumbnail_url
+                    }));
+                    
+                    this.updateStreamInfo();
+                    this.hideLoading();
+                    console.log('📺 Live streams loaded from database:', this.streams.length);
+                    return;
+                }
+            }
+            
+            // Fallback: Try direct Supabase query
             if (window.supabaseClient) {
                 const { data: realStreams, error } = await window.supabaseClient
                     .from('streams')
