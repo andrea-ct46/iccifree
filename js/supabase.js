@@ -3,9 +3,11 @@
 console.log('🔧 Caricamento Supabase ottimizzato...');
 
 // Configurazione
-const SUPABASE_URL = 'https://itfndtgrfjvnavbitfgy.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml0Zm5kdGdyZmp2bmF2Yml0Zmd5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4ODc3MjIsImV4cCI6MjA3MzQ2MzcyMn0.73_f6oR5cQWL2Y69EMZ-FciDXkle_85okZ9pOOgmXu4';
-
+//const SUPABASE_URL = 'https://itfndtgrfjvnavbitfgy.supabase.co';
+//onst SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml0Zm5kdGdyZmp2bmF2Yml0Zmd5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4ODc3MjIsImV4cCI6MjA3MzQ2MzcyMn0.73_f6oR5cQWL2Y69EMZ-FciDXkle_85okZ9pOOgmXu4';
+const SUPABASE_URL = '';
+const SUPABASE_ANON_KEY = '';
+// Set your Supabase credentials via environment variables or config when deploying.
 // Verifica Supabase library
 if (typeof supabase === 'undefined') {
     console.error('❌ Supabase library non caricata!');
